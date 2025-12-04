@@ -1,0 +1,45 @@
+services:
+  backend:
+    build: ./backend
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - "5000:5000"
+      - "9229:9229"
+
+    volumes:
+      - ./backend:/app
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_SSL=false
+      - DOCKERIZED=true
+    depends_on:
+      - postgres
+    env_file:
+      - ./postgres/.env
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app # 내 코드(src, package.json)를 컨테이너에 연결
+      - /app/node_modules # node_modules는 내 컴퓨터가 아닌 Docker 컨테이너 안에서만 관리
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    env_file:
+      - ./postgres/.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:

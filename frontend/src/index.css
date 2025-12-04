@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@layer components {
+  .spinner {
+    margin: 3.2rem auto 1.6rem;
+    width: 60px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid #164e63;
+    border-right-color: #dbeafe;
+    animation: rotate 1s infinite linear;
+  }
+
+  .spinner-mini {
+    margin: 0;
+    width: 20px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid #164e63;
+    border-right-color: transparent;
+    animation: rotate 1s infinite linear;
+  }
+
+  @keyframes rotate {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+}
+
+.animate-highlight {
+  animation: flash-border 2s ease-in-out;
+  border-color: #3b82f6; /* Tailwind's blue-500 */
+  border-width: 2px;
+}
+
+@keyframes flash-border {
+  0% {
+    border-color: #3b82f6;
+  }
+  100% {
+    border-color: transparent;
+  }
+}
