@@ -11,6 +11,9 @@ import {
   verifyPassword,
 } from "../utils/auth";
 
+// 🤔 미들웨어
+import { veryfyUserAuth } from "../middleware/auth.middleware"; 
+
 const router = express.Router();
 
 router.post("/signup", async (req, res) => {
@@ -74,7 +77,10 @@ router.post("/login", async (req, res) => {
 
     if (passwordMatches) {
       const loggedInUser = await findUserByEmail(email.trim());
-      const tokens = generateTokens({ id: loggedInUser.id });
+      const tokens = generateTokens({
+        id: loggedInUser.id,
+        role: loggedInUser.role,
+      });
 
       res.status(200).json({
         message: "You have successfully logged in! Welcome back.",

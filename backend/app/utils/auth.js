@@ -12,19 +12,24 @@ export async function verifyPassword(password, hashedPassword) {
   return await bcrypt.compare(password, hashedPassword);
 }
 
-export function generateTokens(accountId) {
+export function generateTokens(account) {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not defined");
   }
 
+  const data = {
+    accountId: account.id,
+    role: account.role,
+  };
+
   return {
     accessToken: jwt.sign(
-      { accountId, tokenType: "access" },
+      { ...data, tokenType: "access" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     ),
     refreshToken: jwt.sign(
-      { accountId, tokenType: "refresh" },
+      { ...data, tokenType: "refresh" },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     ),

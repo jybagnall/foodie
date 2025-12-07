@@ -13,12 +13,7 @@ const AuthContext = React.createContext({
 });
 
 export function AuthContextProvider({ children }) {
-  const publicRoutes = new Set([
-    "/login",
-    "/signup",
-    "/reset-password",
-    "/update-password",
-  ]);
+  const publicRoutes = new Set(["/login", "/signup"]);
 
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
@@ -33,6 +28,10 @@ export function AuthContextProvider({ children }) {
         const decoded = jwtDecode(accessToken);
         setDecodedUser(decoded);
         console.log("✅decodedUser", decodedUser); // payload 정보 출력
+
+        if (decoded.role === "admin") {
+          navigate("/admin/dashboard");
+        }
       } catch {
         setDecodedUser(null);
       }

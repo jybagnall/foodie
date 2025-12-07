@@ -8,6 +8,7 @@ import Stripe from "stripe";
 import { fileURLToPath } from "url";
 
 import accountRoutes from "./app/routes/account";
+import adminRoutes from "./app/routes/admin";
 import menuRoutes from "./app/routes/menu";
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use(
 );
 
 app.use("/api/accounts", accountRoutes);
+app.use("/api/admins", adminRoutes);
 app.use("/api/menu", menuRoutes);
 
 app.use((req, res, next) => {

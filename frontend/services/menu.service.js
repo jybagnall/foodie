@@ -5,8 +5,15 @@ class MenuService {
     this.client = new Client(abortController, authContext);
   }
 
+  async createMenu(formData) {
+    const data = await this.client.post("/api/menu/create-menu", formData);
+    return data;
+  }
+
   async getMenu() {
     const data = await this.client.post("/api/menu/get-menu");
     return data;
   }
 }
+
+export default MenuService;

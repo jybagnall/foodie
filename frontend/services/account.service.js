@@ -5,17 +5,34 @@ class AccountService {
     this.client = new Client(abortController, authContext);
   }
 
-  async getTokenPair(refreshToken) {
-    // AccountService가 Client의 post() 메서드를 호출
-    const data = await this.client.post("/api/accounts/refresh-tokens", {
-      refreshToken,
+  async createUserAccount(name, email, password) {
+    const data = await this.client.post("/api/accounts/signup", {
+      name,
+      email,
+      password,
     });
     return data;
   }
 
-  async getUserInfo() {
-    const data = await this.client.get(`/api/accounts/user`);
+  async createAdminAccount(name, email, password, inviteToken) {
+    const data = await this.client.post("/api/admins/admin-signup", {
+      name,
+      email,
+      password,
+      inviteToken,
+    });
     return data;
+  }
+
+  async changePassword(password) {
+    const data = await this.client.patch("/api/accounts/change-password", {
+      password,
+    });
+    return data;
+  }
+
+  async deleteAccount() {
+    await this.client.delete("/api/accounts/delete-account");
   }
 
   async editUserAccount(formData) {
@@ -26,16 +43,16 @@ class AccountService {
     return data;
   }
 
-  async deleteAccount() {
-    await this.client.delete("/api/accounts/delete-account");
+  async getTokenPair(refreshToken) {
+    // AccountService가 Client의 post() 메서드를 호출
+    const data = await this.client.post("/api/accounts/refresh-tokens", {
+      refreshToken,
+    });
+    return data;
   }
 
-  async createUserAccount(name, email, password) {
-    const data = await this.client.post("/api/accounts/signup", {
-      name,
-      email,
-      password,
-    });
+  async getUserInfo() {
+    const data = await this.client.get(`/api/accounts/user`);
     return data;
   }
 
@@ -59,15 +76,6 @@ class AccountService {
       resetToken,
       password,
     });
-
-    return data;
-  }
-
-  async changePassword(password) {
-    const data = await this.client.patch("/api/accounts/change-password", {
-      password,
-    });
-
     return data;
   }
 }

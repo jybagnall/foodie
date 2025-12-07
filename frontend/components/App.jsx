@@ -9,15 +9,17 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { CartContextProvider } from "../contexts/CartContext";
 import AuthContext, { AuthContextProvider } from "../contexts/AuthContext";
-import Header from "../components/top_layout/Header";
-import Meals from "../components/main_layout/Meals";
-import ShippingForm from "../components/main_layout/ShippingForm";
-import CartModal from "../components/top_layout/CartModal";
-import Login from "../components/top_layout/Login";
-import Signup from "../components/top_layout/Signup";
-import ForgotPassword from "../components/top_layout/ForgotPassword";
-import Spinner from "../components/UI/Spinner";
-import PageNotFound from "../components/UI/PageNotFound";
+import Header from "./top_layout/Header";
+import Meals from "./main_layout/Meals";
+import ShippingForm from "./main_layout/ShippingForm";
+import AdminRoute from "./admin/AdminRoute";
+import UploadNewMenu from "./admin/UploadNewMenu";
+import CartModal from "./top_layout/CartModal";
+import Login from "./top_layout/Login";
+import Signup from "./top_layout/Signup";
+import ForgotPassword from "./top_layout/ForgotPassword";
+import Spinner from "./UI/Spinner";
+import PageNotFound from "./UI/PageNotFound";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 export default function App() {
@@ -43,6 +45,14 @@ export default function App() {
                       ) : (
                         <Navigate to="/login" state={{ from: "/checkout" }} />
                       ) // 리디렉팅할 때의 경로를 저장해놓음
+                    }
+                  />
+                  <Route
+                    path="/admin/dashboard"
+                    element={
+                      <AdminRoute>
+                        <UploadNewMenu />
+                      </AdminRoute>
                     }
                   />
                   <Route path="/" element={<Meals />} />

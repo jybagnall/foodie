@@ -1,16 +1,16 @@
 import pool from "../config/db";
 import Account from "../models/account";
 
-export async function createAccount(name, email, password) {
+export async function createAccount(name, email, password, role = "user") {
   const account = Account.createAccount(name, email, password);
 
   const q = `
-    INSERT INTO users (name, email, password)
-    VALUES ($1, $2, $3)
-    RETURNING id, name, email"
+    INSERT INTO users (name, email, password, role)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, name, email, role"
     `;
 
-  const values = [account.name, account.email, account.passwordHash];
+  const values = [account.name, account.email, account.passwordHash, role];
 
   try {
     const result = await pool.query(q, values);
