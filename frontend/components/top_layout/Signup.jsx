@@ -20,7 +20,7 @@ export default function Signup() {
     formState: { errors },
   } = useForm();
 
-  const onSignupSubmit = async (name, email, password) => {
+  const onSignupSubmit = async ({ name, email, password }) => {
     const accountService = new AccountService(
       new AbortController(),
       authContext
@@ -72,9 +72,7 @@ export default function Signup() {
 
           <form
             className="flex flex-col gap-5"
-            onSubmit={handleSubmit((name, email, password) =>
-              onSignupSubmit(name, email, password)
-            )}
+            onSubmit={handleSubmit(onSignupSubmit)}
           >
             <Input
               label="Your Name"
