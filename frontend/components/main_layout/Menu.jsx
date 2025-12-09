@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import MealItem from "./MealItem";
+import MealItem from "./MenuItem";
 
 const API_BASE = "http://localhost:5000";
 

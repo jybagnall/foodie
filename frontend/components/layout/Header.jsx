@@ -1,7 +1,7 @@
 import Button from "../UI/Button.jsx";
 import CartContext from "../../contexts/CartContext.jsx";
 import { useContext, useState } from "react";
-import CartModal from "./CartModal.jsx";
+import CartModal from "../top_layout/CartModal.jsx";
 
 export default function Header() {
   const { numOfItems } = useContext(CartContext);

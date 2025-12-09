@@ -52,7 +52,22 @@ export default function ShippingForm() {
             label="Street"
             type="text"
             id="street"
-            register={register("street", { required: "Street is required" })}
+            register={register("street", {
+              required: "Street is required",
+              minLength: {
+                value: 3,
+                message: "Street name must be at least 3 characters long.",
+              },
+              maxLength: {
+                value: 100,
+                message: "Street name cannot exceed 100 characters.",
+              },
+              validate: {
+                noSpacesOnly: (value) =>
+                  value.trim().length > 0 ||
+                  "Street cannot be blank or spaces only.",
+              },
+            })}
             error={errors.street}
           />
 
@@ -61,16 +76,47 @@ export default function ShippingForm() {
               label="Postal code"
               type="number"
               id="postal-code"
-              register={register("postalCode", {
+              register={register("postal_code", {
                 required: "Postal code is required",
+                minLength: {
+                  value: 4,
+                  message: "Postal code must be at least 4 digits.",
+                },
+                maxLength: {
+                  value: 10,
+                  message: "Postal code cannot exceed 10 digits.",
+                },
+                validate: {
+                  isNumber: (value) =>
+                    /^\d+$/.test(value) ||
+                    "Postal code must contain only numbers.",
+                },
               })}
-              error={errors.postalCode}
+              error={errors.postal_code}
             />
             <Input
               label="City"
               type="text"
               id="city"
-              register={register("city", { required: "City is required" })}
+              register={register("city", {
+                required: "City is required",
+                minLength: {
+                  value: 2,
+                  message: "City name must be at least 2 characters.",
+                },
+                maxLength: {
+                  value: 50,
+                  message: "City name cannot exceed 50 characters.",
+                },
+                validate: {
+                  onlyLetters: (value) =>
+                    /^[A-Za-z\s]+$/.test(value) ||
+                    "City name must contain only letters.",
+                  noSpacesOnly: (value) =>
+                    value.trim().length > 0 ||
+                    "City cannot be blank or spaces only.",
+                },
+              })}
               error={errors.city}
             />
           </div>

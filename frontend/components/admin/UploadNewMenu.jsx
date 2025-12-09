@@ -22,9 +22,11 @@ export default function UploadNewMenu() {
     reset,
   } = useForm();
 
+  // register("image")로 등록된 값을 지켜보고 변수로 저장
+  // 파일 입력은 항상 배열로 전달됨 & 배열의 첫번째 값이 이미지
   const watchFile = watch("image");
 
-  // 🤔🤔
+  // 브라우저가 파일을 미리보기 주소로 바꿔줌 (URL.createObjectURL)
   useEffect(() => {
     if (watchFile && watchFile[0]) {
       const file = watchFile[0];
@@ -42,7 +44,7 @@ export default function UploadNewMenu() {
 
     if (watchFile && watchFile[0]) {
       formData.append("image", watchFile[0]);
-    } // ?
+    }
     formData.append("name", name);
     formData.append("price", price);
     formData.append("description", description);
@@ -50,7 +52,7 @@ export default function UploadNewMenu() {
     setIsUploadProcessing(true);
     try {
       await menuService.createMenu(formData);
-      navigate("/admin/admin-dashboard", { replace: true }); // ?
+      navigate("/admin/dashboard", { replace: true }); // ?
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
@@ -58,7 +60,7 @@ export default function UploadNewMenu() {
       setErrorMsg(returnedErrorMsg);
     } finally {
       setIsUploadProcessing(false);
-      reset(); // 🤔
+      reset(); // 모든 input 필드 값을 초기 상태로
       setPreviewUrl(null);
     }
   };
@@ -97,7 +99,20 @@ export default function UploadNewMenu() {
               type="text"
               id="name"
               register={register("name", {
-                required: true,
+                required: "Menu name is required.",
+                minLength: {
+                  value: 2,
+                  message: "Menu name must be at least 2 characters long.",
+                },
+                maxLength: {
+                  value: 50,
+                  message: "Menu name must be under 50 characters.",
+                },
+                validate: {
+                  noSpacesOnly: (value) =>
+                    value.trim().length > 0 ||
+                    "Menu name cannot be blank or spaces only.",
+                },
               })}
               error={errors.name}
             />
@@ -106,8 +121,15 @@ export default function UploadNewMenu() {
               type="number"
               id="price"
               register={register("price", {
-                required: true,
-                min: 0,
+                required: "Price is required.",
+                min: {
+                  value: 1,
+                  message: "Price must be greater than 0.",
+                },
+                validate: {
+                  isNumber: (value) =>
+                    !isNaN(value) || "Price must be a number.",
+                },
               })}
               error={errors.price}
             />
@@ -116,7 +138,20 @@ export default function UploadNewMenu() {
               type="text"
               id="description"
               register={register("description", {
-                required: "Please enter description.",
+                required: "Please enter a description.",
+                minLength: {
+                  value: 5,
+                  message: "Description must be at least 5 characters long.",
+                },
+                maxLength: {
+                  value: 200,
+                  message: "Description cannot exceed 200 characters.",
+                },
+                validate: {
+                  noSpacesOnly: (value) =>
+                    value.trim().length > 0 ||
+                    "Description cannot be blank or spaces only.",
+                },
               })}
               error={errors.description}
             />
@@ -128,16 +163,17 @@ export default function UploadNewMenu() {
               accept="image/*"
               register={register("image", {
                 validate: {
+                  // value: 업로드한 파일, 배열
                   fileType: (value) => {
                     if (!value[0]) return "Please select a file.";
 
                     const type = value[0].type;
                     if (
-                      ["image/jpeg", "image/jpg", "image/png"].includes(type)
+                      !["image/jpeg", "image/jpg", "image/png"].includes(type)
                     ) {
                       return "Only JPG, JPEG and PNG files are allowed.";
                     }
-                    return true;
+                    return true; // 유효성 검사 통과
                   },
                 },
               })}

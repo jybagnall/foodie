@@ -33,7 +33,7 @@ export async function getHashedPassword(email) {
 
 export async function findUserByEmail(email) {
   const q = `
-  SELECT id, username FROM users
+  SELECT id, name FROM users
   WHERE email = $1
   `;
 

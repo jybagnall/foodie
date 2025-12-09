@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { currencyFormatter } from "../../utils/format";
 import Button from "../UI/Button";
 import CartContext from "../../contexts/CartContext";
-import CartFeedback from "./CartFeedback";
+import CartFeedback from "../user_feedback/CartFeedback";
 
 export default function MealItem({ meal }) {
   const { addItem } = useContext(CartContext);
