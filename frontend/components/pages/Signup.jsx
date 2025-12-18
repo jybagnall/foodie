@@ -4,8 +4,8 @@ import AccountService from "../../services/account.service";
 import AuthContext from "../../contexts/AuthContext";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
-import Spinner from "../UI/Spinner";
-import ErrorAlert from "../UI/ErrorAlert";
+import Spinner from "../user_feedback/Spinner";
+import ErrorAlert from "../user_feedback/ErrorAlert";
 
 export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
@@ -23,7 +23,7 @@ export default function Signup() {
   const onSignupSubmit = async ({ name, email, password }) => {
     const accountService = new AccountService(
       new AbortController(),
-      authContext
+      authContext,
     );
 
     setIsSignupProcessing(true);
@@ -31,7 +31,7 @@ export default function Signup() {
       const { tokenPair } = await accountService.createUserAccount(
         name,
         email,
-        password
+        password,
       );
       authContext.applyAuthTokens(tokenPair);
       //navigate("/", { replace: true });

@@ -5,8 +5,8 @@ import { useContext, useEffect, useState } from "react";
 import AccountService from "../../services/account.service";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
-import Spinner from "../UI/Spinner";
-import ErrorAlert from "../UI/ErrorAlert";
+import Spinner from "../user_feedback/Spinner";
+import ErrorAlert from "../user_feedback/ErrorAlert";
 
 // 로그인 실패시 띄울 화면이 정의되지 않음
 // 비밀번호가 보였으면 좋겠음
@@ -35,7 +35,7 @@ export default function Login() {
 
     const accountService = new AccountService(
       new AbortController(),
-      authContext
+      authContext,
     );
 
     try {

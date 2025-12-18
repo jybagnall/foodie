@@ -1,10 +1,14 @@
 import Button from "../UI/Button.jsx";
 import CartContext from "../../contexts/CartContext.jsx";
+import AuthContext from "../../contexts/AuthContext.jsx";
 import { useContext, useState } from "react";
-import CartModal from "../top_layout/CartModal.jsx";
+import CartModal from "./CartModal.jsx";
+import CurrentCart from "./CurrentCart.jsx";
+import UserStatus from "./UserStatus.jsx";
 
 export default function Header() {
   const { numOfItems } = useContext(CartContext);
+  const { accessToken, decodedUser } = useContext(AuthContext);
   const [displayCart, setDisplayCart] = useState(false);
 
   return (
@@ -13,6 +17,7 @@ export default function Header() {
         <CartModal open={displayCart} onClose={() => setDisplayCart(false)} />
       )}
 
+      {/* <header className="flex justify-between items-center py-6 px-[10%] bg-[#1f2937]"> */}
       <header className="flex justify-between items-center py-12 px-[10%]">
         <div className="flex items-center gap-4">
           <img
@@ -22,13 +27,15 @@ export default function Header() {
           />
           <h1 className="text-2xl font-bold text-yellow-300">Foodie</h1>
         </div>
-        <nav>
+
+        <nav className="flex items-center gap-8">
+          <UserStatus accessToken={accessToken} decodedUser={decodedUser} />
           <Button
             textOnly
             onClick={() => setDisplayCart(true)}
             propStyle="text-yellow-300 hover:text-yellow-400"
           >
-            Cart({numOfItems} )
+            <CurrentCart numOfItems={numOfItems} />
           </Button>
         </nav>
       </header>

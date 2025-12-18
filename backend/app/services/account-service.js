@@ -1,5 +1,5 @@
-import pool from "../config/db";
-import Account from "../models/account";
+import pool from "../config/db.js";
+import Account from "../models/account.js";
 
 export async function createAccount(name, email, password, role = "user") {
   const account = Account.createAccount(name, email, password);

@@ -38,6 +38,7 @@ export default function CartModal({ open, onClose }) {
   useEffect(() => {
     document.title = "Cart | Foodie";
   }, []);
+
   return (
     <div>
       <Dialog open={open} onClose={onClose} className="relative z-10">

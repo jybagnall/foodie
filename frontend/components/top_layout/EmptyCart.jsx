@@ -1,8 +1,7 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { XMarkIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import CartContext from "../../contexts/CartContext";
-import Button from "../UI/Button";
 
 export default function EmptyCart({ open, onClose }) {
   const { numOfCheckedItems } = useContext(CartContext);
@@ -28,9 +27,9 @@ export default function EmptyCart({ open, onClose }) {
               </p>
             </div>
 
-            <div className="flex justify-between items-center mt-3 pt-4">
+            <div className="flex justify-center items-center -mt-3 pt-4">
               <h2 className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-md text-gray-800">
-                Check out menu
+                Browse menu
               </h2>{" "}
               {/* 🚩🚩🚩 */}
             </div>

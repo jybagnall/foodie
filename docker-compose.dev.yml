@@ -1,6 +1,8 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-dev
     working_dir: /app
     command: npm run dev
     ports:
@@ -9,6 +11,7 @@ services:
 
     volumes:
       - ./backend:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=development
       - DB_HOST=postgres
@@ -16,12 +19,15 @@ services:
       - DB_SSL=false
       - DOCKERIZED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     env_file:
       - ./postgres/.env
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile-dev
     ports:
       - "5173:5173"
     volumes:
@@ -39,7 +45,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jiyoung -d foodie"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

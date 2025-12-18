@@ -1,12 +1,16 @@
+import express from "express";
+
 import {
   verifyAdminInvitation,
   invalidateAdminInvitation,
   createAdminInvitation,
-} from "../services/admin-service";
-import { createAccount, findUserByEmail } from "../services/account-service";
-import { generateTokens } from "../utils/auth";
-import { verifyAdminAuth } from "../middleware/auth.middleware";
-import { sendAdminInvitationEmail } from "../utils/email-admin";
+} from "../services/admin-service.js";
+import { createAccount, findUserByEmail } from "../services/account-service.js";
+import { generateTokens } from "../utils/auth.js";
+import { verifyAdminAuth } from "../middleware/auth.middleware.js";
+import { sendAdminInvitationEmail } from "../utils/email-admin.js";
+
+const router = express.Router();
 
 router.post("/admin-signup", async (req, res) => {
   try {
@@ -68,3 +72,4 @@ router.post("/invite", verifyAdminAuth, async (req, res) => {
   }
 });
  
+export default router;

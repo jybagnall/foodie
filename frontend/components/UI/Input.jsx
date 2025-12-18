@@ -1,7 +1,7 @@
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
-export default function Input({ label, id, register, error, ...props }) {
+export default function Input({ label, id, type, register, error, ...props }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
 

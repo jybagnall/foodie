@@ -3,16 +3,16 @@ import {
   getHashedPassword,
   createAccount,
   findUserByEmail,
-} from "../services/account-service";
+} from "../services/account-service.js";
 import {
   generateTokens,
   getUserFromToken,
   hashPassword,
   verifyPassword,
-} from "../utils/auth";
+} from "../utils/auth.js";
 
 // 🤔 미들웨어
-import { veryfyUserAuth } from "../middleware/auth.middleware"; 
+import { veryfyUserAuth } from "../middleware/auth.middleware.js"; 
 
 const router = express.Router();
 
@@ -99,3 +99,6 @@ router.post("/login", async (req, res) => {
       .json({ error: "A server error occurred. Please try again later." });
   }
 });
+
+
+export default router;

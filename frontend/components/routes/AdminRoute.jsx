@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import AuthContext from "../../contexts/AuthContext";
-import Spinner from "../UI/Spinner";
+import Spinner from "../user_feedback/Spinner";
 
 export default function AdminRoute({ children }) {
   const { decodedUser, isAuthLoading } = useContext(AuthContext);

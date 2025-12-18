@@ -7,11 +7,12 @@ import dotenv from "dotenv";
 import Stripe from "stripe";
 import { fileURLToPath } from "url";
 
-import accountRoutes from "./app/routes/account";
-import adminRoutes from "./app/routes/admin";
-import menuRoutes from "./app/routes/menu";
+import accountRoutes from "./app/routes/account.js";
+import adminRoutes from "./app/routes/admin.js";
+import menuRoutes from "./app/routes/menu.js";
 
 dotenv.config();
+
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ app.use(
     origin: process.env.FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE"],
-  })
+  }),
 );
 
 app.use("/api/accounts", accountRoutes);
@@ -42,7 +43,7 @@ app.use("/api/menu", menuRoutes);
 
 app.use((req, res, next) => {
   console.log(
-    `🚩req at [${new Date().toISOString()}]: ${req.method} ${req.url}`
+    `🚩req at [${new Date().toISOString()}]: ${req.method} ${req.url}`,
   );
   next();
 });

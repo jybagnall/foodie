@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import pool from "../config/db";
+import pool from "../config/db.js";
 
 export async function verifyAdminInvitation(token, email) {
   const q = `

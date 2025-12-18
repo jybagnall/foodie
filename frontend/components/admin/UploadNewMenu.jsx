@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { useEffect, useRef, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuService from "../../services/menu.service";
-import Spinner from "../UI/Spinner";
+import Spinner from "../user_feedback/Spinner";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";

@@ -13,7 +13,7 @@ const AuthContext = React.createContext({
 });
 
 export function AuthContextProvider({ children }) {
-  const publicRoutes = new Set(["/login", "/signup"]);
+  const publicRoutes = new Set(["/", "/login", "/signup"]);
 
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
@@ -63,7 +63,7 @@ export function AuthContextProvider({ children }) {
       } catch (err) {
         console.log(
           "User not logged in or refreshToken is invalid",
-          err.message
+          err.message,
         );
         if (!abortController.signal.aborted) {
           // 요청이 중단된 것이 아니고,
@@ -80,7 +80,7 @@ export function AuthContextProvider({ children }) {
     };
 
     // 로그인 상태여야 볼 수 있는 페이지인데 토큰이 없다면
-    if (!accessToken && !publicRoutes.includes(location.pathname)) {
+    if (!accessToken && !publicRoutes.has(location.pathname)) {
       restoreAccessToken(); // 자동 로그인 로직 수행
     } else {
       setIsAuthLoading(false);
