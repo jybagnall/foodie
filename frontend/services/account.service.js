@@ -14,16 +14,6 @@ class AccountService {
     return data;
   }
 
-  async createAdminAccount(name, email, password, inviteToken) {
-    const data = await this.client.post("/api/admins/admin-signup", {
-      name,
-      email,
-      password,
-      inviteToken,
-    });
-    return data;
-  }
-
   async changePassword(password) {
     const data = await this.client.patch("/api/accounts/change-password", {
       password,
@@ -38,21 +28,13 @@ class AccountService {
   async editUserAccount(formData) {
     const data = await this.client.patch(
       "/api/accounts/edit-profile",
-      formData
+      formData,
     );
     return data;
   }
 
-  async getTokenPair(refreshToken) {
-    // AccountService가 Client의 post() 메서드를 호출
-    const data = await this.client.post("/api/accounts/refresh-tokens", {
-      refreshToken,
-    });
-    return data;
-  }
-
-  async getUserInfo() {
-    const data = await this.client.get(`/api/accounts/user`);
+  async getUserInfo(id) {
+    const data = await this.client.get(`/api/accounts/user/${id}`);
     return data;
   }
 
@@ -60,6 +42,13 @@ class AccountService {
     const data = await this.client.post("/api/accounts/login", {
       email,
       password,
+    });
+    return data;
+  }
+
+  async regenerateTokenPair(refreshToken) {
+    const data = await this.client.post("/api/accounts/refresh-tokens", {
+      refreshToken,
     });
     return data;
   }

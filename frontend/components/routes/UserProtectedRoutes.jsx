@@ -1,10 +1,11 @@
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import AuthContext from "../../contexts/AuthContext";
 import Spinner from "../user_feedback/Spinner";
 
 export default function UserProtectedRoutes({ children }) {
   const { accessToken, isAuthLoading } = useContext(AuthContext);
+  const location = useLocation();
 
   // 아직 토큰 확인 중이면 로딩 표시
   if (isAuthLoading) return <Spinner />;

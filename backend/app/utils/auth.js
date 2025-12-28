@@ -5,6 +5,7 @@ import { promisify } from "util";
 export async function hashPassword(password) {
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
+
   return hashedPassword;
 }
 
@@ -18,7 +19,7 @@ export function generateTokens(account) {
   }
 
   const data = {
-    accountId: account.id,
+    id: account.id,
     role: account.role,
   };
 
@@ -26,12 +27,12 @@ export function generateTokens(account) {
     accessToken: jwt.sign(
       { ...data, tokenType: "access" },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" },
     ),
     refreshToken: jwt.sign(
       { ...data, tokenType: "refresh" },
       process.env.JWT_SECRET,
-      { expiresIn: "30d" }
+      { expiresIn: "14d" },
     ),
   };
 }
@@ -42,7 +43,7 @@ export function verifyAccessToken(token) {
 
 const verifyToken = promisify(jwt.verify);
 
-export async function getUserFromToken(token) {
+export async function verifyRefreshToken(token) {
   try {
     const user = await verifyToken(token, process.env.JWT_SECRET);
 
@@ -56,3 +57,12 @@ export async function getUserFromToken(token) {
     throw new Error("Invalid access token");
   }
 }
+
+// user:
+//   {
+//   id: 10,
+//   role: "admin",
+//   tokenType: "refresh",
+//   iat: 1766176085,
+//   exp: 1766626485
+// }

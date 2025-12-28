@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import MenuItem from "../Home/MenuItem";
-import ErrorAlert from "../../user_feedback/ErrorAlert";
 import MenuService from "../../../services/menu.service";
 import AuthContext from "../../../contexts/AuthContext";
 import MenuLoadError from "../../user_feedback/MenuLoadError";

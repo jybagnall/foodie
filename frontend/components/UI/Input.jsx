@@ -20,6 +20,7 @@ export default function Input({ label, id, type, register, error, ...props }) {
           name={id}
           {...register}
           {...props}
+          type={isPassword ? (showPassword ? "text" : "password") : type}
           className={`w-full border rounded-md px-3 py-2 text-gray-800 focus:outline-none transition 
           ${
             error

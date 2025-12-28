@@ -1,14 +1,13 @@
+import { useContext, useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "../UI/Button.jsx";
 import CartContext from "../../contexts/CartContext.jsx";
-import AuthContext from "../../contexts/AuthContext.jsx";
-import { useContext, useState } from "react";
 import CartModal from "./CartModal.jsx";
 import CurrentCart from "./CurrentCart.jsx";
 import UserStatus from "./UserStatus.jsx";
 
 export default function Header() {
   const { numOfItems } = useContext(CartContext);
-  const { accessToken, decodedUser } = useContext(AuthContext);
   const [displayCart, setDisplayCart] = useState(false);
 
   return (
@@ -18,18 +17,20 @@ export default function Header() {
       )}
 
       {/* <header className="flex justify-between items-center py-6 px-[10%] bg-[#1f2937]"> */}
-      <header className="flex justify-between items-center py-12 px-[10%]">
-        <div className="flex items-center gap-4">
+      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-[#1f2937] flex-nowrap overflow-hidden">
+        <Link className="flex items-center gap-2 sm:gap-4 flex-shrink-0" to="/">
           <img
             src="/logo.jpg"
             alt="Logo"
-            className="w-16 h-16 object-contain rounded-full border-2 border-yellow-300"
+            className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-full border-2 border-yellow-300"
           />
-          <h1 className="text-2xl font-bold text-yellow-300">Foodie</h1>
-        </div>
+          <h1 className="text-2xl font-bold text-yellow-300 whitespace-nowrap">
+            Foodie
+          </h1>
+        </Link>
 
-        <nav className="flex items-center gap-8">
-          <UserStatus accessToken={accessToken} decodedUser={decodedUser} />
+        <nav className="flex items-center gap-4 sm:gap-8 flex-shrink-0">
+          <UserStatus />
           <Button
             textOnly
             onClick={() => setDisplayCart(true)}

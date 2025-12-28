@@ -7,11 +7,11 @@ class Account {
     this.passwordHash = passwordHash;
   }
 
-  static createAccount(payload) {
+  static async createAccount(payload) {
     return new Account(
       payload.name?.trim(),
       payload.email?.trim(),
-      payload.password ? hashPassword(payload.password) : null
+      payload.password ? await hashPassword(payload.password) : null,
     );
   }
 }

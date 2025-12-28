@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import AuthContext from "../../contexts/AuthContext";
 import { useContext, useEffect, useState } from "react";
 import AccountService from "../../services/account.service";
@@ -8,13 +8,8 @@ import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 
-// 로그인 실패시 띄울 화면이 정의되지 않음
-// 비밀번호가 보였으면 좋겠음
+// 없는 회원이 로그인을 시도했는데 서버 에러 혹은 유효하지 않은 토큰이라고 나옴.
 export default function Login() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const previousLocation = location.state?.from || "/";
-
   const {
     register,
     handleSubmit,
@@ -39,13 +34,14 @@ export default function Login() {
     );
 
     try {
-      const { tokenPair } = await accountService.loginUser(email, password);
-      authContext.applyAuthTokens(tokenPair);
-      navigate(previousLocation, { replace: true }); // 이전 페이지로 이동
+      const { user, tokenPair } = await accountService.loginUser(
+        email,
+        password,
+      );
+      authContext.applyAuthTokens(user, tokenPair);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       setErrorMsg(returnedErrorMsg);
-      // toast.error(errorMsg || "Unexpected error");
     } finally {
       setIsLoginProcessing(false);
     }
@@ -75,7 +71,7 @@ export default function Login() {
             </h2>
             <Link
               to="/forgot-password"
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200"
+              className="text-blue-700 hover:text-blue-600 text-sm font-medium transition-colors duration-200"
             >
               Forgot password?
             </Link>
@@ -115,27 +111,28 @@ export default function Login() {
               })}
               error={errors.password}
             />
-
-            <div className="mt-8">
+            <div className="mt-4">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
+                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Sign In
               </Button>
 
-              <p className="mt-6 pt-4 flex items-center text-gray-600 text-sm">
-                <span className="grow h-px bg-gray-300"></span>
-                <span className="px-3 whitespace-nowrap">New to Foodie?</span>
-                <span className="grow h-px bg-gray-300"></span>
-              </p>
+              <div className="flex flex-col items-center text-center mt-6 text-gray-600 text-sm">
+                <p className="flex items-center w-full justify-center gap-2">
+                  <span className="h-px w-40 bg-gray-300" />
+                  <span className="whitespace-nowrap">New to Foodie?</span>
+                  <span className="h-px w-40 bg-gray-300" />
+                </p>
 
-              <Link
-                to="/signup"
-                className="py-1 px-3 bg-gray-300 text-gray-800 border-gray-300 hover:bg-gray-400 cursor-pointer border rounded-md font-semibold shadow-md  hover:shadow-lg transition-all duration-200"
-              >
-                Create a new Foodie account
-              </Link>
+                <Link
+                  to="/signup"
+                  className="mt-4 text-blue-700 hover:text-blue-600 cursor-pointer font-semibold transition-all duration-200"
+                >
+                  Create a new Foodie account
+                </Link>
+              </div>
             </div>
           </form>
         </section>

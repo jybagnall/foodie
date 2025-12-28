@@ -1,12 +1,14 @@
 import { useForm } from "react-hook-form";
 import { useEffect, useRef, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import MenuService from "../../services/menu.service";
 import Spinner from "../user_feedback/Spinner";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 
+// 🚩백엔드에 관리자만 업로드가 가능하도록 미들웨어를 넣어야 함
 export default function UploadNewMenu() {
   const [isUploadProcessing, setIsUploadProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -49,10 +51,10 @@ export default function UploadNewMenu() {
     formData.append("price", price);
     formData.append("description", description);
 
-    setIsUploadProcessing(true);
     try {
+      setIsUploadProcessing(true);
       await menuService.createMenu(formData);
-      navigate("/admin/dashboard", { replace: true }); // ?
+      navigate("/admin/menu-preview", { replace: true });
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
@@ -76,6 +78,17 @@ export default function UploadNewMenu() {
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
       <div className="w-full max-w-lg">
+        <div className="mb-4">
+          <Link
+            to="/admin"
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            <span>
+              <ChevronLeftIcon className="size-5" />
+            </span>{" "}
+            Back to Admin Dashboard
+          </Link>
+        </div>
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert
@@ -87,7 +100,7 @@ export default function UploadNewMenu() {
 
         <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
-            Create account
+            Upload a new menu
           </h2>
 
           <form
@@ -120,6 +133,7 @@ export default function UploadNewMenu() {
               label="Price"
               type="number"
               id="price"
+              step="0.01"
               register={register("price", {
                 required: "Price is required.",
                 min: {
@@ -129,6 +143,10 @@ export default function UploadNewMenu() {
                 validate: {
                   isNumber: (value) =>
                     !isNaN(value) || "Price must be a number.",
+                },
+                pattern: {
+                  value: /^\d+(\.\d{1,2})?$/,
+                  message: "Price can have up to 2 decimal places.",
                 },
               })}
               error={errors.price}
@@ -192,9 +210,9 @@ export default function UploadNewMenu() {
             <div className="mt-8">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
+                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Create new Menu
+                Create a new menu
               </Button>
             </div>
           </form>

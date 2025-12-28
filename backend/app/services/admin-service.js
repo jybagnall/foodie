@@ -5,29 +5,29 @@ import pool from "../config/db.js";
 export async function verifyAdminInvitation(token, email) {
   const q = `
     SELECT * FROM admin_invites
-    WHERE token = $1 AND email = $2
-      AND used = FALSE
-      AND expires_at > NOW();
+    WHERE email = $1
+    AND used = FALSE
+    AND expires_at > NOW();
   `;
 
-  const result = await pool.query(q, [token, email]);
-  const invited = result.rows[0];
+  const result = await pool.query(q, [email]);
+  const inviteRecord = result.rows[0];
 
-  if (!invited) {
+  if (!inviteRecord) {
     console.error("Invalid or expired invite token");
     return null;
   }
 
-  const isMatching = await bcrypt.compare(token, invited.token);
+  const isMatching = await bcrypt.compare(token, inviteRecord.token);
   if (!isMatching) return null;
 
-  return invited;
+  return inviteRecord;
 }
 
 //🤔
 export async function createAdminInvitation(email) {
-  const rawToken = crypto.randomBytes(32).toString("hex"); // 사용자에게 보내는 원본 ?
-  const hashedToken = await bcrypt.hash(rawToken, 10); // DB에 저장할 버전 ?
+  const rawToken = crypto.randomBytes(32).toString("hex"); // 사용자에게 보내는 원본
+  const hashedToken = await bcrypt.hash(rawToken, 10); // DB에 저장할 버전
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1일
 
   const q = `
@@ -41,11 +41,11 @@ export async function createAdminInvitation(email) {
   return rawToken;
 }
 
-export async function invalidateAdminInvitation(email) {
+export async function invalidateAdminInvitation(inviteToken) {
   const q = `
     UPDATE admin_invites
     SET used = TRUE
     WHERE token = $1;
   `;
-  await pool.query(q, [email]);
+  await pool.query(q, [inviteToken]);
 }

@@ -1,9 +1,9 @@
+import dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import Stripe from "stripe";
 import { fileURLToPath } from "url";
 
@@ -11,9 +11,9 @@ import accountRoutes from "./app/routes/account.js";
 import adminRoutes from "./app/routes/admin.js";
 import menuRoutes from "./app/routes/menu.js";
 
-dotenv.config();
-
 const app = express();
+dotenv.config({ path: "./.env" });
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

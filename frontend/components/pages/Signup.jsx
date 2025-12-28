@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import AuthContext from "../../contexts/AuthContext";
@@ -11,6 +12,7 @@ export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
 
   const {
@@ -28,13 +30,12 @@ export default function Signup() {
 
     setIsSignupProcessing(true);
     try {
-      const { tokenPair } = await accountService.createUserAccount(
+      const { user, tokenPair } = await accountService.createUserAccount(
         name,
         email,
         password,
       );
-      authContext.applyAuthTokens(tokenPair);
-      //navigate("/", { replace: true });
+      authContext.applyAuthTokens(user, tokenPair);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
@@ -80,7 +81,7 @@ export default function Signup() {
               id="name"
               register={register("name", {
                 required: true,
-                minLength: 5,
+                minLength: 2,
                 maxLength: 20,
               })}
               error={errors.name}
@@ -131,7 +132,7 @@ export default function Signup() {
             <div className="mt-8">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
+                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Create your Foodie account
               </Button>

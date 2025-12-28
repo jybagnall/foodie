@@ -1,20 +1,19 @@
 import { useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import AccountService from "../../services/account.service";
+import AdminService from "../../services/admin.service";
 import AuthContext from "../../contexts/AuthContext";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
-import Spinner from "../UI/Spinner";
-import ErrorAlert from "../UI/ErrorAlert";
+import Spinner from "../user_feedback/Spinner";
+import ErrorAlert from "../user_feedback/ErrorAlert";
 
 export default function AdminSignup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [inviteToken, setInviteToken] = useState("");
+  const [isTokenValid, setIsTokenValid] = useState(true);
 
   const authContext = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const {
     register,
@@ -24,32 +23,33 @@ export default function AdminSignup() {
   } = useForm();
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search); // ?
-    const tokenFromUrl = urlParams.get("token"); // 더 나은 이름?
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get("token");
 
     if (!tokenFromUrl) {
-      setErrorMsg("Invalid invitation link."); // 해석
+      setErrorMsg(
+        "This invitation link is invalid or expired. Please contact your admin for a new one.",
+      );
+      setIsTokenValid(false);
       return;
     }
+
     setInviteToken(tokenFromUrl);
+    setIsTokenValid(true);
   }, []);
 
-  const onSignupSubmit = async (name, email, password, inviteToken) => {
-    const accountService = new AccountService(
-      new AbortController(),
-      authContext
-    );
+  const onSignupSubmit = async ({ name, email, password }) => {
+    const adminService = new AdminService(new AbortController(), authContext);
 
     setIsSignupProcessing(true);
     try {
-      const { tokenPair } = await accountService.createAdminAccount(
+      const { user, tokenPair } = await adminService.createAdminAccount(
         name,
         email,
         password,
-        inviteToken
+        inviteToken,
       );
-      authContext.applyAuthTokens(tokenPair);
-      navigate("/admin/dashboard", { replace: true });
+      authContext.applyAuthTokens(user, tokenPair);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
@@ -66,6 +66,14 @@ export default function AdminSignup() {
 
   if (isSignupProcessing) {
     return <Spinner />;
+  }
+
+  if (!isTokenValid) {
+    return (
+      <main className="flex justify-center items-center h-screen">
+        <ErrorAlert title="Invalid Invitation" message={errorMsg} />
+      </main>
+    );
   }
 
   return (
@@ -87,9 +95,7 @@ export default function AdminSignup() {
 
           <form
             className="flex flex-col gap-5"
-            onSubmit={handleSubmit((name, email, password) =>
-              onSignupSubmit(name, email, password, nviteToken)
-            )}
+            onSubmit={handleSubmit(onSignupSubmit)}
           >
             <Input
               label="Your Name"

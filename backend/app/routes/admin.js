@@ -16,8 +16,9 @@ router.post("/admin-signup", async (req, res) => {
   try {
     const { name, email, password, inviteToken } = req.body;
 
-    const isInvited = await verifyAdminInvitation(inviteToken, email);
-    if (!isInvited) {
+    const invitedRecord = await verifyAdminInvitation(inviteToken, email);
+
+    if (!invitedRecord) {
       return res.status(403).json({
         error: "This invitation link is invalid, expired, or already used.",
       });
@@ -28,14 +29,19 @@ router.post("/admin-signup", async (req, res) => {
       return res.status(400).json({ error: "Email already in use." });
     }
 
-    const createdAdmin = await createAccount(name, email, password, "admin");
-    const tokens = generateTokens({ id: createdAdmin.id, role: "admin" });
+    const newAdmin = await createAccount(name, email, password, "admin");
+    const tokens = generateTokens({ id: newAdmin.id, role: newAdmin.role });
     // tokens = { accessToken, refreshToken}
-    await invalidateAdminInvitation(email); //📍토큰 대신에 이메일로
+    await invalidateAdminInvitation(inviteToken); // 토큰 무효화
 
     res.status(201).json({
       message: "Admin account created successfully",
-      id: createdAdmin.id,
+      user: {
+        id: newAdmin.id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: newAdmin.role,
+      },
       tokenPair: tokens,
     });
   } catch (err) {
@@ -61,15 +67,17 @@ router.post("/invite", verifyAdminAuth, async (req, res) => {
 
     // 초대 토큰 생성
     const rawToken = await createAdminInvitation(email);
-
-    const inviteLink = `${process.env.FRONTEND_URL}/create-admin-account?token=${rawToken}`;
-
+    // const inviteLink = `${process.env.FRONTEND_URL}/create-admin-account?token=${rawToken}`;
+    const FRONTEND_URL = "http://127.0.0.1:5173";
+    const inviteLink = `${FRONTEND_URL}/create-admin-account?token=${rawToken}`;
     await sendAdminInvitationEmail(email, inviteLink);
 
-    res.status(200).json({ message: "Invitation sent successfully." });
+    res
+      .status(200)
+      .json({ message: "Admin invitation email sent successfully." });
   } catch (err) {
     res.status(500).json({ error: "Failed to send admin invite." });
   }
 });
- 
+
 export default router;

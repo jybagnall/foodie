@@ -4,5 +4,9 @@ export default function ForgotPassword() {
   useEffect(() => {
     document.title = "Password reset | Foodie";
   }, []);
-  return <div></div>;
+  return (
+    <div>
+      <h2>Fotgot password</h2>
+    </div>
+  );
 }

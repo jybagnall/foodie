@@ -1,9 +1,8 @@
 import dotenv from "dotenv";
 import pkg from "pg";
-const { Pool } = pkg;
-
 dotenv.config();
 
+const { Pool } = pkg;
 const useSSL = process.env.DB_SSL === "true";
 
 const pool = new Pool({
@@ -28,7 +27,7 @@ async function connectWithRetry(retries = 10, delay = 3000) {
     } catch (err) {
       console.error(
         `⛔Attempt ${attempt} failed to connect:`,
-        err.code || err.message
+        err.code || err.message,
       );
       if (attempt === retries) {
         console.error("Exceeded max retries. Exiting.");

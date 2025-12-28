@@ -12,22 +12,18 @@ export async function getMenu() {
   }
 }
 
-// export async function createMenu(formData) {
-//   const account = MenuService.createMenu(formData);
+export async function createMenu(data) {
+  const q = `
+    INSERT INTO menus (name, price, description, image)
+    VALUES ($1, $2, $3, $4)
+    `;
 
-//   const q = `
-//     INSERT INTO users (name, email, password, role)
-//     VALUES ($1, $2, $3, $4)
-//     RETURNING id, name, email, role"
-//     `;
+  const values = [data.name, data.price, data.description, data.imgSrc];
 
-//   const values = [account.name, account.email, account.passwordHash, role];
-
-//   try {
-//     const result = await pool.query(q, values);
-//     return result.rows[0];
-//   } catch (err) {
-//     console.error("DB insert error", err.message);
-//     throw err;
-//   }
-// }
+  try {
+    await pool.query(q, values);
+  } catch (err) {
+    console.error("DB insert error", err.message);
+    throw err;
+  }
+}
