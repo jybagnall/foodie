@@ -10,6 +10,8 @@ import { fileURLToPath } from "url";
 import accountRoutes from "./app/routes/account.js";
 import adminRoutes from "./app/routes/admin.js";
 import menuRoutes from "./app/routes/menu.js";
+import orderRoutes from "./app/routes/order.js";
+import paymentRoutes from "./app/routes/payment.js";
 
 const app = express();
 dotenv.config({ path: "./.env" });
@@ -40,6 +42,8 @@ app.use(
 app.use("/api/accounts", accountRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.use((req, res, next) => {
   console.log(

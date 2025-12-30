@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../../contexts/AuthContext";
@@ -6,9 +6,19 @@ import Spinner from "../user_feedback/Spinner";
 import SidebarContext from "../../contexts/SidebarContext";
 
 export default function UserStatus() {
+  const navigate = useNavigate();
   const { accessToken, decodedUser, isAuthLoading } = useContext(AuthContext);
   const { toggleSidebar } = useContext(SidebarContext);
   const isLoggedIn = !!accessToken;
+
+  const handleNameClick = () => {
+    if (accessToken) {
+      navigate("/my-account");
+      toggleSidebar();
+    } else {
+      navigate("/login");
+    }
+  };
 
   if (isAuthLoading) {
     return <Spinner />;
@@ -27,7 +37,7 @@ export default function UserStatus() {
         <>
           <span
             className="cursor-pointer inline-flex items-center gap-1 whitespace-nowrap text-gray-200 hover:text-yellow-400"
-            onClick={toggleSidebar}
+            onClick={handleNameClick}
           >
             Hello, {decodedUser.name}
             <ChevronDownIcon className="w-4 h-4 mt-2" />

@@ -6,7 +6,7 @@ CREATE TABLE admin_invites (
   used BOOLEAN DEFAULT FALSE
 );
 
-CREATE TYPE role_enum AS ENUM ('user', 'admin')
+CREATE TYPE role_enum AS ENUM ('user', 'admin');
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
@@ -26,6 +26,8 @@ CREATE TABLE addresses (
   street TEXT NOT NULL,
   postal_code INTEGER NOT NULL,
   city TEXT NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  full_name VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE menus (
@@ -35,4 +37,21 @@ CREATE TABLE menus (
   price NUMERIC(5,2) NOT NULL,
   description TEXT NOT NULL,
   image TEXT NOT NULL
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  address_id INT REFERENCES addresses(id),
+  total_amount NUMERIC(8,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 주문에 포함된 개별 메뉴들
+CREATE TABLE order_items (
+  id SERIAL PRIMARY KEY,
+  order_id INT REFERENCES orders(id) ON DELETE CASCADE,
+  menu_id INT REFERENCES menus(id),
+  qty INT NOT NULL,
+  price NUMERIC(8,2) NOT NULL
 );

@@ -1,8 +1,13 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
+import CartContext from "../../contexts/CartContext";
+import OrderService from "../../services/order.service";
+import AuthContext from "../../contexts/AuthContext";
+import ErrorAlert from "../user_feedback/ErrorAlert";
+import Spinner from "../user_feedback/Spinner";
 
 export default function ShippingForm() {
   const {
@@ -11,10 +16,44 @@ export default function ShippingForm() {
     formState: { errors },
   } = useForm();
 
+  const { items, totalAmount } = useContext(CartContext);
+  const authContext = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const onAddressSubmit = (data) => {
-    console.log(data);
+  const [isOrderProcessing, setIsOrderProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const onAddressSubmit = async (shippingInfo) => {
+    const orderDetails = {
+      address: {
+        full_name: shippingInfo.name.trim(),
+        street: shippingInfo.street.trim(),
+        city: shippingInfo.city.trim(),
+        postal_code: shippingInfo.postal_code.trim(),
+        phone: shippingInfo.phone.trim(),
+      },
+      order: {
+        items: items.map((i) => ({
+          menu_id: i.id,
+          qty: i.amount,
+          price: i.price,
+        })),
+        total_amount: totalAmount,
+      },
+    };
+
+    const orderService = new OrderService(new AbortController(), authContext);
+
+    try {
+      setIsOrderProcessing(true);
+      const { orderId } = await orderService.initializeOrder(orderDetails);
+      navigate(`/my-account/pay-order/${orderId}`);
+    } catch (err) {
+      const returnedErrorMsg = err?.response?.data?.error || err.message;
+      setErrorMsg(returnedErrorMsg);
+    } finally {
+      setIsOrderProcessing(false);
+    }
   };
 
   const onCancelSubmit = () => {
@@ -25,8 +64,17 @@ export default function ShippingForm() {
     document.title = "Shipping form | Foodie";
   }, []);
 
+  if (isOrderProcessing) {
+    return <Spinner />;
+  }
+
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
+      {errorMsg && (
+        <div className="mb-4">
+          <ErrorAlert title="There was a problem" message={errorMsg} />
+        </div>
+      )}
       <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
           Shipping Address
@@ -37,7 +85,7 @@ export default function ShippingForm() {
           onSubmit={handleSubmit(onAddressSubmit)}
         >
           <Input
-            label="Full Name"
+            label="Receiver's Name"
             type="text"
             id="name"
             register={register("name", {
@@ -47,7 +95,28 @@ export default function ShippingForm() {
             })}
             error={errors.name}
           />
-
+          <Input
+            label="Phone number"
+            type="tel"
+            id="phone"
+            register={register("phone", {
+              required: "Phone number is required",
+              minLength: {
+                value: 10,
+                message: "Phone number must be at least 10 digits.",
+              },
+              maxLength: {
+                value: 20,
+                message: "Phone number cannot exceed 20 digits.",
+              },
+              validate: {
+                validFormat: (value) =>
+                  /^\+?\d{9,20}$/.test(value.replace(/[-\s]/g, "")) ||
+                  "Invalid phone number format.",
+              },
+            })}
+            error={errors.phone}
+          />
           <Input
             label="Street"
             type="text"

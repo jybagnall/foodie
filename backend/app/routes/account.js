@@ -7,13 +7,11 @@ import {
 } from "../services/account-service.js";
 import {
   generateTokens,
-  hashPassword,
   verifyPassword,
   verifyRefreshToken,
 } from "../utils/auth.js";
 
 // 🤔 미들웨어
-import { veryfyUserAuth } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 

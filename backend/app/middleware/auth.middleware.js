@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export function veryfyUserAuth(req, res, next) {
+export function verifyUserAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
@@ -11,7 +11,7 @@ export function veryfyUserAuth(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
-      id: decoded.accountId || decoded.id,
+      id: decoded.id,
       role: decoded.role,
     };
 

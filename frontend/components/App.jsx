@@ -1,7 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartContextProvider } from "../contexts/CartContext";
 import { AuthContextProvider } from "../contexts/AuthContext";
 import { SidebarContextProvider } from "../contexts/SidebarContext";
@@ -23,12 +20,12 @@ import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import MenuLiveView from "./admin/MenuLiveView";
 import MyAccount from "./sidebar_layout/MyAccount";
+import StripeWrapper from "./pages/Payment/StripeWrapper";
+import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 export default function App() {
-  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
   return (
     <BrowserRouter>
       <AuthContextProvider>
@@ -53,8 +50,12 @@ export default function App() {
               >
                 <Route index element={<MyAccount />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
-                <Route path="checkout" element={<ShippingForm />} />
+                <Route path="shipping" element={<ShippingForm />} />
+                <Route path="pay-order/:orderId" element={<StripeWrapper />} />
+                <Route path="order-completed" element={<OrderSuccess />} />
               </Route>
+              {/* 📍📍/my-account 에서 벗어난다면:
+              ShippingForm 컴포넌트에서 StripeWrapper로 이동하고 있으므로 여기에서 navigate 로직을 바꿔야 함. */}
 
               <Route
                 path="/admin"
