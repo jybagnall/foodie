@@ -13,6 +13,8 @@ export function verifyUserAuth(req, res, next) {
     req.user = {
       id: decoded.id,
       role: decoded.role,
+      email: decoded.email,
+      stripe_customer_id: decoded.stripe_customer_id,
     };
 
     next();

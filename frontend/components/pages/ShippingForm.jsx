@@ -19,7 +19,6 @@ export default function ShippingForm() {
   const { items, totalAmount } = useContext(CartContext);
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
-
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 

@@ -1,17 +1,5 @@
 import pool from "../config/db.js";
 
-// export async function getMenu() {
-//   const q = `SELECT * FROM menus`;
-
-//   try {
-//     const result = await pool.query(q);
-//     return Array.isArray(result?.rows) ? result.rows : [];
-//   } catch (err) {
-//     console.error("DB fetch error:", err.message);
-//     return [];
-//   }
-// }
-
 export async function createOrderId(userId, addressId, totalAmount) {
   const q = `
    INSERT INTO orders (user_id, address_id, total_amount)
@@ -76,6 +64,23 @@ export async function saveShippingInfo(userId, address) {
     return result.rows[0].id;
   } catch (err) {
     console.error("DB insert error", err.message);
+    throw err;
+  }
+}
+
+export async function updateOrderStatus(status, orderId) {
+  const q = `
+    UPDATE orders
+    SET status = $1
+    WHERE id = $2
+    `;
+
+  const values = [status, orderId];
+  try {
+    await pool.query(q, values);
+    return { success: true };
+  } catch (err) {
+    console.error("DB update error", err.message);
     throw err;
   }
 }

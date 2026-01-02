@@ -5,11 +5,16 @@ class PaymentService {
     this.client = new Client(abortController, authContext);
   }
 
-  async PayForOrder(paymentDetails) {
+  async createPaymentIntent(paymentIntent) {
     const data = await this.client.post(
-      "/api/payments/pay-order",
-      paymentDetails,
+      "/api/payments/create-payment-intent",
+      paymentIntent,
     );
+    return data;
+  }
+
+  async PayForOrder(payDetails) {
+    const data = await this.client.post("/api/payments/pay-order", payDetails);
     return data;
   }
 }

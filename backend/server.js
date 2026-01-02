@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
+
 import express from "express";
 import http from "http";
 import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import Stripe from "stripe";
 import { fileURLToPath } from "url";
 
 import accountRoutes from "./app/routes/account.js";
@@ -14,14 +15,11 @@ import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
 
 const app = express();
-dotenv.config({ path: "./.env" });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const server = http.createServer(app); // create HTTP server
-
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PORT = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";

@@ -33,6 +33,7 @@ router.get("/user/:id", async (req, res) => {
         name: existingUser.name,
         email: existingUser.email,
         role: existingUser.role,
+        stripe_customer_id: existingUser.stripe_customer_id,
       },
     });
   } catch (err) {
@@ -76,6 +77,7 @@ router.post("/login", async (req, res) => {
         name: loggedInUser.name,
         email: loggedInUser.email,
         role: loggedInUser.role,
+        stripe_customer_id: loggedInUser.stripe_customer_id,
       },
       tokenPair: tokens,
     });
@@ -143,6 +145,7 @@ router.post("/signup", async (req, res) => {
         name: createdUser.name,
         email: createdUser.email,
         role: createdUser.role,
+        stripe_customer_id: null,
       },
       tokenPair: tokens,
     });

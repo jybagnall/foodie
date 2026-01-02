@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import pkg from "pg";
 dotenv.config();
+import pkg from "pg";
 
 const { Pool } = pkg;
 const useSSL = process.env.DB_SSL === "true";

@@ -15,6 +15,7 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password TEXT NOT NULL, 
   role role_enum NOT NULL,
+  stripe_customer_id VARCHAR(100),
   password_reset_token TEXT,
   password_reset_requested_at TIMESTAMP
 );
@@ -44,10 +45,11 @@ CREATE TABLE orders (
   user_id INT REFERENCES users(id),
   address_id INT REFERENCES addresses(id),
   total_amount NUMERIC(8,2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW()
 );
+--status: pending, paid, cancelled
 
--- 주문에 포함된 개별 메뉴들
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) ON DELETE CASCADE,
@@ -55,3 +57,23 @@ CREATE TABLE order_items (
   qty INT NOT NULL,
   price NUMERIC(8,2) NOT NULL
 );
+
+--payment_status: succeeded, failed, refunded
+CREATE TABLE payments (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  order_id INT REFERENCES orders(id),
+  stripe_payment_intent_id VARCHAR(100) NOT NULL,
+  stripe_customer_id VARCHAR(100),
+  amount NUMERIC(10,2) NOT NULL,
+  currency VARCHAR(10) DEFAULT 'usd',
+  payment_status VARCHAR(20) DEFAULT 'requires_payment',
+  payment_method VARCHAR(50),
+  receipt_url TEXT,
+  card_brand VARCHAR(20),
+  card_last4 VARCHAR(10),
+  card_exp_month SMALLINT,
+  card_exp_year SMALLINT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+)
