@@ -32,7 +32,7 @@ export default function CartModal({ open, onClose }) {
 
   const goToCheckout = () => {
     onClose(); // 모달 닫기
-    navigate("/my-account/shipping"); // 페이지 이동
+    navigate("/order/shipping"); // 페이지 이동
   };
 
   useEffect(() => {

@@ -23,6 +23,10 @@ export default function ShippingForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const onAddressSubmit = async (shippingInfo) => {
+    if (items.length === 0) {
+      return;
+    }
+
     const orderDetails = {
       address: {
         full_name: shippingInfo.name.trim(),
@@ -46,7 +50,7 @@ export default function ShippingForm() {
     try {
       setIsOrderProcessing(true);
       const { orderId } = await orderService.initializeOrder(orderDetails);
-      navigate(`/my-account/pay-order/${orderId}`);
+      navigate(`/order/pay-order/${orderId}`);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       setErrorMsg(returnedErrorMsg);

@@ -30,6 +30,11 @@ export async function insertOrderItems(orderId, order) {
     values.push(item.menu_id, item.qty, item.price);
   });
 
+  if (placeholders.length === 0) {
+    console.warn("insertOrderItems called with no items, skipping insert.");
+    return;
+  }
+
   const q = `
    INSERT INTO order_items (order_id, menu_id, qty, price)
    VALUES ${placeholders.join(", ")}

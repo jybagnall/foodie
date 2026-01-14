@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js/checkout";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
+import { useParams } from "react-router-dom";
 
 import Button from "../../UI/Button";
 import CartContext from "../../../contexts/CartContext";
@@ -12,6 +13,7 @@ import Spinner from "../../user_feedback/Spinner";
 
 export default function PaymentForm({ orderId }) {
   const { items, totalAmount } = useContext(CartContext);
+  //const { orderId } = useParams();
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
   const stripe = useStripe();
@@ -61,7 +63,7 @@ export default function PaymentForm({ orderId }) {
               name: cardholderName,
             },
           },
-          return_url: `${window.location.origin}/my-account/pay-order/:orderId`,
+          return_url: `${window.location.origin}/order/pay-order/:orderId`,
         }, // 카드 인증 후 다시 돌아오는 이 페이지
         setup_future_usage: saveCard ? "off_session" : undefined,
       });
@@ -134,47 +136,51 @@ export default function PaymentForm({ orderId }) {
           Payment
         </h2>
 
-        <form onSubmit={handlePaymentSubmit}>
-          <input
-            type="text"
-            value={cardholderName}
-            onChange={(e) => setCardholderName(e.target.value)}
-            placeholder="Name on card"
-            className={`border rounded-md px-3 py-2 mt-1 w-full outline-none transition
+        {!stripe || !elements ? (
+          <Spinner />
+        ) : (
+          <form onSubmit={handlePaymentSubmit}>
+            <input
+              type="text"
+              value={cardholderName}
+              onChange={(e) => setCardholderName(e.target.value)}
+              placeholder="Name on card"
+              className={`border rounded-md px-3 py-2 mt-1 w-full outline-none transition
           ${inputError ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-blue-400"}
         `}
-          />
-          {inputError && (
-            <p className="text-red-500 text-sm mt-1">{errorMsg}</p>
-          )}
-          <PaymentElement />
-
-          <label className="flex items-center gap-2 mt-4">
-            <input
-              type="checkbox"
-              checked={saveCard}
-              onChange={() => setSaveCard(!saveCard)}
             />
-            Save this card for future payments
-          </label>
+            {inputError && (
+              <p className="text-red-500 text-sm mt-1">{errorMsg}</p>
+            )}
+            <PaymentElement />
 
-          <div className="flex justify-between items-center mt-8">
-            <Button
-              type="button"
-              textOnly
-              propStyle="text-gray-500 hover:text-gray-700"
-              onClick={onCancelSubmit}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
-            >
-              Place an order
-            </Button>
-          </div>
-        </form>
+            <label className="flex items-center gap-2 mt-4">
+              <input
+                type="checkbox"
+                checked={saveCard}
+                onChange={() => setSaveCard(!saveCard)}
+              />
+              Save this card for future payments
+            </label>
+
+            <div className="flex justify-between items-center mt-8">
+              <Button
+                type="button"
+                textOnly
+                propStyle="text-gray-500 hover:text-gray-700"
+                onClick={onCancelSubmit}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
+              >
+                Place an order
+              </Button>
+            </div>
+          </form>
+        )}
       </section>
     </main>
   );

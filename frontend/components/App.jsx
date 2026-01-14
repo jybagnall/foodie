@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { CartContextProvider } from "../contexts/CartContext";
 import { AuthContextProvider } from "../contexts/AuthContext";
 import { SidebarContextProvider } from "../contexts/SidebarContext";
@@ -23,6 +25,10 @@ import MyAccount from "./sidebar_layout/MyAccount";
 import StripeWrapper from "./pages/Payment/StripeWrapper";
 import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
+import PaymentForm from "./pages/Payment/PaymentForm";
+import OrderLayout from "./routes/OrderLayout";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 export default function App() {
@@ -40,22 +46,28 @@ export default function App() {
               <Route path="/create-admin-account" element={<AdminSignup />} />
               <Route path="/cart" element={<CartModal open={true} />} />
 
+              <Route path="/my-account" element={<UserProtectedRoutes />}>
+                <Route element={<UserLayout />}>
+                  <Route index element={<MyAccount />} />
+                  <Route path="forgot-password" element={<ForgotPassword />} />
+                </Route>
+              </Route>
+
+              {/* ✅✅✅ */}
               <Route
-                path="/my-account"
+                path="/order"
                 element={
                   <UserProtectedRoutes>
-                    <UserLayout />
+                    <OrderLayout />
                   </UserProtectedRoutes>
                 }
               >
-                <Route index element={<MyAccount />} />
-                <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="shipping" element={<ShippingForm />} />
                 <Route path="pay-order/:orderId" element={<StripeWrapper />} />
                 <Route path="order-completed" element={<OrderSuccess />} />
               </Route>
-              {/* 📍📍/my-account 에서 벗어난다면:
-              ShippingForm 컴포넌트에서 StripeWrapper로 이동하고 있으므로 여기에서 navigate 로직을 바꿔야 함. */}
+
+              {/* ✅✅✅ */}
 
               <Route
                 path="/admin"

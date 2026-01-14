@@ -3,7 +3,7 @@ import {
   ArrowRightStartOnRectangleIcon,
   BookOpenIcon,
   CreditCardIcon,
-  TicketIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { useContext } from "react";
 import Cookies from "js-cookie";
@@ -13,7 +13,7 @@ import AuthContext from "../../contexts/AuthContext";
 
 const navigation = [
   { name: "My Account", to: "#", icon: UserIcon, current: true },
-  { name: "Orders", to: "#", icon: TicketIcon, current: false },
+  { name: "Orders", to: "#", icon: ClipboardDocumentListIcon, current: false },
   { name: "Address Book", to: "#", icon: BookOpenIcon, current: false },
   { name: "Payment Methods", to: "#", icon: CreditCardIcon, current: false },
 ];
