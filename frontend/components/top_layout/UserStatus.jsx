@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
+import Cookies from "js-cookie";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../../contexts/AuthContext";
 import Spinner from "../user_feedback/Spinner";
@@ -7,7 +8,8 @@ import SidebarContext from "../../contexts/SidebarContext";
 
 export default function UserStatus() {
   const navigate = useNavigate();
-  const { accessToken, decodedUser, isAuthLoading } = useContext(AuthContext);
+  const { accessToken, setAccessToken, decodedUser, isAuthLoading } =
+    useContext(AuthContext);
   const { toggleSidebar } = useContext(SidebarContext);
   const isLoggedIn = !!accessToken;
 
@@ -18,6 +20,12 @@ export default function UserStatus() {
     } else {
       navigate("/login");
     }
+  };
+
+  const handleLogout = () => {
+    Cookies.remove("refreshToken");
+    setAccessToken(null);
+    navigate("/login");
   };
 
   if (isAuthLoading) {
@@ -42,6 +50,10 @@ export default function UserStatus() {
             Hello, {decodedUser.name}
             <ChevronDownIcon className="w-4 h-4 mt-2" />
           </span>
+
+          <button className="text-yellow-200" onClick={handleLogout}>
+            Logout
+          </button>
         </>
       )}
     </div>

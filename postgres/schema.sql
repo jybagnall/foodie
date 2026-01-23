@@ -58,7 +58,6 @@ CREATE TABLE order_items (
   price NUMERIC(8,2) NOT NULL
 );
 
---payment_status: succeeded, failed, refunded
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -77,3 +76,4 @@ CREATE TABLE payments (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 )
+--payment_status: succeeded, failed, refunded

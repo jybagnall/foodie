@@ -2,6 +2,7 @@ import express from "express";
 import Stripe from "stripe";
 import { updateOrderStatus } from "../services/order-service.js";
 import { saveStripeCustomerId } from "../services/account-service.js";
+import { updateUserStripeId } from "../services/account-service.js";
 import {
   findUniqueOrder,
   savePaymentInfo,
@@ -41,35 +42,59 @@ router.post("/cancel-order/:orderId", verifyUserAuth, async (req, res) => {
   }
 });
 
+//Stripe Customer는 한 번 생성되면 지속적인 재사용이 권장됨, 따라서
+// 삭제보다 “비활성화”하는 게 원칙
 router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
-  const { amount, currency, saveCard, cardholderName, customerId } = req.body;
   try {
-    let customer;
+    const { amount, currency, orderId } = req.body;
+    let customerId = req.user.stripe_customer_id;
+    let customerExists = true;
 
-    if (customerId) {
-      customer = { id: customerId };
+    try {
+      await stripe.customers.retrieve(customerId);
+    } catch (err) {
+      if (err.code === "resource_missing") {
+        customerExists = false;
+      } else {
+        console.error("Unexpected Stripe error:", err);
+        throw err;
+      }
     }
-    if (saveCard) {
-      customer = await stripe.customer.create({
-        name: cardholderName,
-        email: req.user?.email,
+
+    if (!customerId || !customerExists) {
+      const newCustomer = await stripe.customers.create({
+        name: req.user.name,
+        email: req.user.email,
+        metadata: { userId: req.user.id },
       });
+
+      await updateUserStripeId(req.user.id, newCustomer.id);
+      customerId = newCustomer.id;
     }
 
-    await saveStripeCustomerId(customer.id, req.user.id);
-
+    // "off_session": 자동 결제
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
-      customer: customer ? customer.id : undefined,
+      customer: customerId,
+      automatic_payment_methods: { enabled: true },
+      setup_future_usage: req.body.saveCard ? "off_session" : undefined,
       metadata: {
         userId: req.user?.id, // 결제 추적을 위해 유용
+        orderId,
       },
     });
+
+    if (!paymentIntent || !paymentIntent.client_secret) {
+      console.error("Stripe PaymentIntent failed:", paymentIntent);
+      return res
+        .status(400)
+        .json({ error: "Stripe payment initialization failed." });
+    }
+
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error("Stripe payment session error,", err.message);
-
     return res.status(500).json({
       error: "Failed to initialize payment session. Please try again later.",
     });
@@ -81,7 +106,6 @@ router.post("/pay-order", verifyUserAuth, async (req, res) => {
     const {
       order_id,
       stripe_payment_intent_id,
-      stripe_customer_id,
       amount,
       currency,
       payment_status,
@@ -97,7 +121,7 @@ router.post("/pay-order", verifyUserAuth, async (req, res) => {
       user_id: req.user.id,
       order_id,
       stripe_payment_intent_id,
-      stripe_customer_id,
+      stripe_customer_id: req.user.stripe_customer_id,
       amount,
       currency,
       payment_status,

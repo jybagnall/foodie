@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js/checkout";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
-import { useParams } from "react-router-dom";
 
 import Button from "../../UI/Button";
 import CartContext from "../../../contexts/CartContext";
@@ -11,9 +10,11 @@ import AuthContext from "../../../contexts/AuthContext";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import Spinner from "../../user_feedback/Spinner";
 
+// **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
+// 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
+
 export default function PaymentForm({ orderId }) {
   const { items, totalAmount } = useContext(CartContext);
-  //const { orderId } = useParams();
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
   const stripe = useStripe();
@@ -32,7 +33,6 @@ export default function PaymentForm({ orderId }) {
 
     if (!stripe || !elements) return;
 
-    // validation
     if (cardholderName.trim() === "") {
       setErrorMsg("Please enter the name on the card.");
       setInputError(true);
@@ -45,26 +45,17 @@ export default function PaymentForm({ orderId }) {
     );
 
     try {
-      const { clientSecret } = await paymentService.createPaymentIntent({
-        amount: totalAmount * 100,
-        currency: "usd",
-        saveCard,
-        cardholderName: cardholderName.trim(),
-        customerId: authContext.decodedUser?.stripe_customer_id || null,
-      });
-
       // 결제 승인 시도
       const result = await stripe.confirmPayment({
         elements, // <PaymentElement />가 생성한 카드 정보
-        clientSecret,
         confirmParams: {
           payment_method_data: {
             billing_details: {
               name: cardholderName,
             },
           },
-          return_url: `${window.location.origin}/order/pay-order/:orderId`,
-        }, // 카드 인증 후 다시 돌아오는 이 페이지
+          return_url: `${window.location.origin}/order/order-completed`,
+        }, // 3D Secure 인증 카드로 결제 후 리디렉팅되는 페이지
         setup_future_usage: saveCard ? "off_session" : undefined,
       });
 
@@ -86,7 +77,6 @@ export default function PaymentForm({ orderId }) {
       const payDetails = {
         order_id: orderId,
         stripe_payment_intent_id: paymentIntent.id,
-        stripe_customer_id: paymentIntent.customer || null, //
         amount: paymentIntent.amount / 100,
         currency: paymentIntent.currency,
         payment_status: paymentIntent.status,
@@ -100,7 +90,7 @@ export default function PaymentForm({ orderId }) {
 
       if (paymentIntent.status === "succeeded") {
         await paymentService.PayForOrder(payDetails);
-        navigate("/my-account/order-completed");
+        navigate("/order/order-completed"); // 주문 번호 필요하지 않음??
       }
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
@@ -112,7 +102,7 @@ export default function PaymentForm({ orderId }) {
   };
 
   const onCancelSubmit = () => {
-    navigate("/");
+    navigate("/cart");
   };
 
   useEffect(() => {

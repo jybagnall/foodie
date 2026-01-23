@@ -10,11 +10,13 @@ export function verifyUserAuth(req, res, next) {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // id, role, email → JWT 발급 시 항상 존재
+    // stripe_customer_id → JWT 갱신 전에는 없을 수 있음
     req.user = {
       id: decoded.id,
       role: decoded.role,
       email: decoded.email,
-      stripe_customer_id: decoded.stripe_customer_id,
+      stripe_customer_id: decoded.stripe_customer_id || null,
     };
 
     next();

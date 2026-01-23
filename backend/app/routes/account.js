@@ -1,9 +1,11 @@
 import express from "express";
+import Stripe from "stripe";
 import {
   getHashedPassword,
   createAccount,
   findUserByEmail,
   findUserById,
+  updateUserStripeId,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -14,6 +16,7 @@ import {
 // 🤔 미들웨어
 
 const router = express.Router();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.get("/user/:id", async (req, res) => {
   try {
@@ -68,6 +71,8 @@ router.post("/login", async (req, res) => {
     const tokens = generateTokens({
       id: loggedInUser.id,
       role: loggedInUser.role,
+      email: loggedInUser.email,
+      stripe_customer_id: loggedInUser.stripeCustomer.id,
     });
 
     res.status(200).json({
@@ -102,7 +107,12 @@ router.post("/refresh-tokens", async (req, res) => {
     const dbUser = await findUserById(decodedToken.id);
 
     if (dbUser) {
-      const newTokens = generateTokens({ id: dbUser.id, role: dbUser.role });
+      const newTokens = generateTokens({
+        id: dbUser.id,
+        role: dbUser.role,
+        email: dbUser.email,
+        stripe_customer_id: dbUser.stripeCustomer.id,
+      });
 
       res.status(200).json({
         message: "Access token refreshed successfully.",
@@ -133,9 +143,20 @@ router.post("/signup", async (req, res) => {
     }
 
     const createdUser = await createAccount(name, email, password);
+
+    const stripeCustomer = await stripe.customers.create({
+      name,
+      email,
+      metadata: { userId: createdUser.id },
+    });
+
+    await updateUserStripeId(createdUser.id, stripeCustomer.id);
+
     const tokens = generateTokens({
       id: createdUser.id,
       role: createdUser.role,
+      email: createdUser.email,
+      stripe_customer_id: stripeCustomer.id,
     }); // { accessToken, refreshToken}
 
     res.status(201).json({
@@ -145,7 +166,7 @@ router.post("/signup", async (req, res) => {
         name: createdUser.name,
         email: createdUser.email,
         role: createdUser.role,
-        stripe_customer_id: null,
+        stripe_customer_id: stripeCustomer.id,
       },
       tokenPair: tokens,
     });

@@ -27,6 +27,7 @@ import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
 import PaymentForm from "./pages/Payment/PaymentForm";
 import OrderLayout from "./routes/OrderLayout";
+import OrderPayment from "./pages/Payment/OrderPayment";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -63,7 +64,7 @@ export default function App() {
                 }
               >
                 <Route path="shipping" element={<ShippingForm />} />
-                <Route path="pay-order/:orderId" element={<StripeWrapper />} />
+                <Route path="pay-order/:orderId" element={<OrderPayment />} />
                 <Route path="order-completed" element={<OrderSuccess />} />
               </Route>
 

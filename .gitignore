@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment (root level)
-.env
-.env.*
+# Environment files (all levels)
+**/.env
+**/.env.*
 !.env.example

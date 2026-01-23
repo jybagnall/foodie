@@ -68,3 +68,20 @@ export async function saveStripeCustomerId(customerId, userId) {
     throw err;
   }
 }
+
+export async function updateUserStripeId(userId, newStripeCustomerId) {
+  const q = `
+    UPDATE users
+    SET stripe_customer_id = $1
+    WHERE id = $2
+    `;
+  const values = [newStripeCustomerId, userId];
+
+  try {
+    await pool.query(q, values);
+    return { success: true };
+  } catch (err) {
+    console.error("DB update error", err.message);
+    throw err;
+  }
+}
