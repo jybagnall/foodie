@@ -10,6 +10,10 @@ export function verifyUserAuth(req, res, next) {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (decoded.tokenType !== "access") {
+      return res.status(401).json({ error: "Invalid token type" });
+    }
+
     // id, role, email → JWT 발급 시 항상 존재
     // stripe_customer_id → JWT 갱신 전에는 없을 수 있음
     req.user = {
@@ -21,7 +25,10 @@ export function verifyUserAuth(req, res, next) {
 
     next();
   } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Token expired" });
+    }
+    return res.status(401).json({ error: "Invalid token" });
   }
 }
 

@@ -43,13 +43,13 @@ export default function AdminSignup() {
 
     setIsSignupProcessing(true);
     try {
-      const { user, tokenPair } = await adminService.createAdminAccount(
+      const { accessToken } = await adminService.createAdminAccount(
         name,
         email,
         password,
         inviteToken,
       );
-      authContext.applyAuthTokens(user, tokenPair);
+      authContext.applyAccessToken(accessToken);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =

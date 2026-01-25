@@ -26,19 +26,16 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async (email, password) => {
-    setIsLoginProcessing(true);
-
     const accountService = new AccountService(
       new AbortController(),
       authContext,
     );
 
+    setIsLoginProcessing(true);
+    setErrorMsg("");
     try {
-      const { user, tokenPair } = await accountService.loginUser(
-        email,
-        password,
-      );
-      authContext.applyAuthTokens(user, tokenPair);
+      const { accessToken } = await accountService.loginUser(email, password);
+      authContext.applyAccessToken(accessToken);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       setErrorMsg(returnedErrorMsg);

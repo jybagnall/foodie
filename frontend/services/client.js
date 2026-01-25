@@ -1,10 +1,16 @@
 import axios from "axios";
-import Cookies from "js-cookie";
 
 // Axios는 “HTTP 요청 도구”
-//Client는 “Axios를 관리하는 관리자”
-// 모든 요청에 Authorization 헤더를 자동으로 넣어주고,
-// 401(Unauthorized) 에러가 나면 refresh token으로 자동 갱신하고 재시도
+// Client는 “Axios를 관리하는 관리자”
+// Axios가 매 요청마다 최신 accessToken을 자동으로 헤더에 삽입
+//🤔 백엔드는 클라이언트가 누구인지 알아야 함 (인증 정보를 담은 헤더를 보냄)
+//🤔 "로그인한 유저 A가 보냈구만"
+export class RefreshTokenExpiredError extends Error {
+  constructor() {
+    super("Refresh token expired");
+    this.name = "RefreshTokenExpiredError";
+  }
+}
 
 class Client {
   constructor(abortController, authContext) {
@@ -12,45 +18,36 @@ class Client {
     this.authContext = authContext;
     this.axios = axios.create({
       signal: this.abortController.signal,
-      headers: {},
     }); // 나만의 설정이 들어간 Axios 객체를 생성함
 
-    //🤔 백엔드는 클라이언트가 누구인지 알아야 함 (인증 정보를 담은 헤더를 보냄)
-    //🤔 "로그인한 유저 A가 보냈구만"
-
-    // Axios 인스턴스의 “기본 설정”들이 들어있는 객체가 (this.axios.defaults) 있음.
-    // 모든 요청에 공통적으로 적용되는 헤더들의 모음 (.headers.common = 객체) 안에
-    // HTTP 요청의 Authorization 헤더를 지정 (["Authorization"])
-    if (authContext.accessToken) {
-      this.axios.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${authContext.accessToken}`;
-    }
+    this.axios.interceptors.request.use((config) => {
+      const token = this.authContext.accessToken;
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+      return config;
+    }); // accessToken 동적 주입 🤔🤔🤔
   }
 
   async refreshAccessToken() {
-    const refreshToken = Cookies.get("refreshToken");
-    if (!refreshToken) throw new Error("No refresh token found");
+    try {
+      const res = await axios.post(
+        "/api/accounts/refresh-access-token",
+        {},
+        { withCredentials: true },
+      ); // 🤔
 
-    const res = await axios.post("/api/accounts/refresh-tokens", {
-      refreshToken,
-    });
-
-    const { accessToken, refreshToken: newRefresh } = res.data;
-
-    Cookies.set("refreshToken", newRefresh, {
-      expires: 14,
-    });
-
-    this.authContext.setAccessToken(accessToken);
-    this.axios.defaults.headers.Authorization = `Bearer ${accessToken}`;
-
-    return accessToken;
+      const { accessToken } = res.data;
+      return accessToken;
+    } catch (err) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        throw new RefreshTokenExpiredError();
+      } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
+      throw err; // 네트워크/서버 오류
+    }
   }
 
   async get(endpoint) {
     const response = await this.makeRequest(
-      async () => await this.axios.get(endpoint)
+      async () => await this.axios.get(endpoint),
     );
     return response.data;
   }
@@ -63,7 +60,7 @@ class Client {
     }
 
     const response = await this.makeRequest(
-      async () => await this.axios.post(endpoint, payload, { headers })
+      async () => await this.axios.post(endpoint, payload, { headers }),
     );
     return response.data;
   }
@@ -76,7 +73,7 @@ class Client {
     }
 
     const response = await this.makeRequest(
-      async () => await this.axios.patch(endpoint, payload, { headers })
+      async () => await this.axios.patch(endpoint, payload, { headers }),
     );
     return response.data;
   }
@@ -84,21 +81,24 @@ class Client {
   async delete(endpoint, payload) {
     const config = payload ? { data: payload } : undefined;
     const response = await this.makeRequest(
-      async () => await this.axios.delete(endpoint, config)
+      async () => await this.axios.delete(endpoint, config),
     );
     return response.data;
   }
 
+  // makeRequest → 401 → refresh → retry
   async makeRequest(requestFn, isRetry = false) {
     try {
       const res = await requestFn();
       return res;
     } catch (err) {
-      const isUnauthorized = err.response?.status === 401;
+      const status = err.response?.status;
+      const shouldRefresh = status === 401 || status === 403;
 
-      if (!isRetry && isUnauthorized) {
+      if (!isRetry && shouldRefresh) {
         try {
           await this.refreshAccessToken();
+          // refreshAccessToken updates accessToken in AuthContext
           return await this.makeRequest(requestFn, true);
         } catch (refreshErr) {
           console.error("Refresh failed", refreshErr.message);

@@ -29,13 +29,13 @@ export function generateTokens(account) {
     accessToken: jwt.sign(
       { ...data, tokenType: "access" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: "15m" },
     ),
     refreshToken: jwt.sign(
       { ...data, tokenType: "refresh" },
       process.env.JWT_SECRET,
       { expiresIn: "14d" },
-    ),
+    ), // 서버가 토큰 검증을 할 때 사용함. 신뢰할 날짜인가
   };
 }
 

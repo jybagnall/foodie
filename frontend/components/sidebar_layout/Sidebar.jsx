@@ -6,8 +6,7 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { useContext } from "react";
-import Cookies from "js-cookie";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import SidebarContext from "../../contexts/SidebarContext";
 import AuthContext from "../../contexts/AuthContext";
 
@@ -22,14 +21,8 @@ export default function Sidebar() {
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
   const authContext = useContext(AuthContext);
 
-  const navigate = useNavigate();
-
   const handleLogout = () => {
-    Cookies.remove("refreshToken");
-    Cookies.remove("accessToken");
-    authContext.setDecodedUser(null);
-    authContext.setAccessToken(null);
-    navigate("/login");
+    authContext.logout();
   };
 
   return (

@@ -8,7 +8,7 @@ import SidebarContext from "../../contexts/SidebarContext";
 
 export default function UserStatus() {
   const navigate = useNavigate();
-  const { accessToken, setAccessToken, decodedUser, isAuthLoading } =
+  const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
   const { toggleSidebar } = useContext(SidebarContext);
   const isLoggedIn = !!accessToken;
@@ -23,9 +23,7 @@ export default function UserStatus() {
   };
 
   const handleLogout = () => {
-    Cookies.remove("refreshToken");
-    setAccessToken(null);
-    navigate("/login");
+    logout();
   };
 
   if (isAuthLoading) {

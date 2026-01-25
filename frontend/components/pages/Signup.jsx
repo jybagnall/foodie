@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import AuthContext from "../../contexts/AuthContext";
@@ -11,8 +10,6 @@ import ErrorAlert from "../user_feedback/ErrorAlert";
 export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
-  const navigate = useNavigate();
   const authContext = useContext(AuthContext);
 
   const {
@@ -29,13 +26,14 @@ export default function Signup() {
     );
 
     setIsSignupProcessing(true);
+    setErrorMsg("");
     try {
-      const { user, tokenPair } = await accountService.createUserAccount(
+      const { accessToken } = await accountService.createUserAccount(
         name,
         email,
         password,
       );
-      authContext.applyAuthTokens(user, tokenPair);
+      authContext.applyAccessToken(accessToken);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =

@@ -11,13 +11,14 @@ CREATE TYPE role_enum AS ENUM ('user', 'admin');
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   created_at TIMESTAMP DEFAULT NOW(),
-  name VARCHAR(32) UNIQUE NOT NULL,
+  name VARCHAR(32) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password TEXT NOT NULL, 
   role role_enum NOT NULL,
   stripe_customer_id VARCHAR(100),
   password_reset_token TEXT,
-  password_reset_requested_at TIMESTAMP
+  password_reset_requested_at TIMESTAMP,
+  current_refresh_token TEXT
 );
 
 CREATE TABLE addresses (

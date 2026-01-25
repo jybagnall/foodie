@@ -30,19 +30,15 @@ router.post("/admin-signup", async (req, res) => {
     }
 
     const newAdmin = await createAccount(name, email, password, "admin");
-    const tokens = generateTokens({ id: newAdmin.id, role: newAdmin.role });
-    // tokens = { accessToken, refreshToken}
+    const { accessToken, refreshToken } = generateTokens({
+      id: newAdmin.id,
+      role: newAdmin.role,
+    });
     await invalidateAdminInvitation(inviteToken); // 토큰 무효화
 
     res.status(201).json({
       message: "Admin account created successfully",
-      user: {
-        id: newAdmin.id,
-        name: newAdmin.name,
-        email: newAdmin.email,
-        role: newAdmin.role,
-      },
-      tokenPair: tokens,
+      accessToken,
     });
   } catch (err) {
     if (err.code === "23505") {

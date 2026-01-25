@@ -1,3 +1,4 @@
+import { data } from "react-router-dom";
 import Client from "./client";
 
 class AccountService {
@@ -33,8 +34,8 @@ class AccountService {
     return data;
   }
 
-  async getUserInfo(id) {
-    const data = await this.client.get(`/api/accounts/user/${id}`);
+  async getUserInfo() {
+    const data = await this.client.get(`/api/accounts/user`);
     return data;
   }
 
@@ -46,10 +47,17 @@ class AccountService {
     return data;
   }
 
-  async regenerateTokenPair(refreshToken) {
-    const data = await this.client.post("/api/accounts/refresh-tokens", {
-      refreshToken,
-    });
+  // 서버는 쿠키에 담긴 refreshToken으로 누가 로그아웃하는지 이미 앎
+  // body에 userId를 보내면 오히려 보안적으로 나쁨
+  async logoutUser() {
+    await this.client.post(
+      `/api/accounts/logout, {}, { withCredentials: true }`,
+    );
+    return data;
+  }
+
+  async regenerateAccessToken() {
+    const data = await this.client.post("/api/accounts/refresh-access-token");
     return data;
   }
 

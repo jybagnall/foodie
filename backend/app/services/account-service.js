@@ -69,6 +69,23 @@ export async function saveStripeCustomerId(customerId, userId) {
   }
 }
 
+export async function updateUserRefreshToken(userId, hashedNewRefresh) {
+  const q = `
+    UPDATE users
+    SET current_refresh_token = $1
+    WHERE id = $2
+    `;
+  const values = [hashedNewRefresh, userId];
+
+  try {
+    await pool.query(q, values);
+    return { success: true };
+  } catch (err) {
+    console.error("DB update error", err.message);
+    throw err;
+  }
+}
+
 export async function updateUserStripeId(userId, newStripeCustomerId) {
   const q = `
     UPDATE users
