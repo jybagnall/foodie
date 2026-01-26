@@ -69,10 +69,7 @@ export function AuthContextProvider({ children }) {
   // ❗앱 시작시 액세스 토큰이 없다면 자동 실행
   const restoreUserSession = useCallback(async () => {
     const abortController = new AbortController();
-    const client = new Client(abortController, {
-      accessToken,
-      setAccessToken,
-    });
+    const client = new Client(abortController, { accessToken });
 
     try {
       const newAccessToken = await client.refreshAccessToken();
