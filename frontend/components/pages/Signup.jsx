@@ -37,7 +37,7 @@ export default function Signup() {
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
-        err.response?.data?.error || "Unexpected login error";
+        err.response?.data?.error || "Unexpected signup error";
       setErrorMsg(returnedErrorMsg);
     } finally {
       setIsSignupProcessing(false);
