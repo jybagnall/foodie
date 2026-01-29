@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { currencyFormatter } from "../../../utils/format";
 import Button from "../../UI/Button";
 import CartContext from "../../../contexts/CartContext";
-import CartFeedback from "../../user_feedback/CartFeedback";
+import AddingItemFeedback from "../../user_feedback/AddingItemFeedback";
 
 export default function MealItem({ meal }) {
   const { name, price, description, image } = meal;
@@ -12,7 +12,9 @@ export default function MealItem({ meal }) {
 
   const handleAddToCart = (meal) => {
     addItem(meal);
-    toast.custom((t) => <CartFeedback t={t} meal={meal} />, { duration: 2000 });
+    toast.custom((t) => <AddingItemFeedback t={t} meal={meal} />, {
+      duration: 2000,
+    });
   };
 
   return (

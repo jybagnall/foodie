@@ -1,6 +1,10 @@
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
+import { useContext } from "react";
+import CartContext from "../../contexts/CartContext";
 
-export default function CurrentCart({ numOfItems }) {
+export default function CurrentCart() {
+  const { numOfItems } = useContext(CartContext);
+
   return (
     <div className="relative flex items-center space-x-1 text-white">
       {/* 카트 아이콘 */}

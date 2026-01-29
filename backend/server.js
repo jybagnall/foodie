@@ -13,6 +13,7 @@ import adminRoutes from "./app/routes/admin.js";
 import menuRoutes from "./app/routes/menu.js";
 import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
+import cartRoutes from "./app/routes/cart.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/admins", adminRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/carts", cartRoutes);
 
 app.use((req, res, next) => {
   console.log(

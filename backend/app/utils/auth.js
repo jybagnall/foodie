@@ -21,6 +21,7 @@ export function generateTokens(account) {
   const data = {
     id: account.id,
     role: account.role,
+    name: account.name,
     email: account.email,
     stripe_customer_id: account.stripe_customer_id || null,
   };

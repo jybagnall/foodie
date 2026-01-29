@@ -22,12 +22,12 @@ export function CartContextProvider({ children }) {
 
   const numOfCheckedItems = useMemo(
     () => items.filter((i) => i.checked).length,
-    [items]
+    [items],
   );
 
   const totalAmount = useMemo(
     () => items.reduce((sum, i) => (sum += i.price * i.amount), 0),
-    [items]
+    [items],
   );
 
   const addItem = useCallback((item) => {
@@ -36,7 +36,7 @@ export function CartContextProvider({ children }) {
 
       if (existingItem) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, amount: i.amount + 1 } : i
+          i.id === item.id ? { ...i, amount: i.amount + 1 } : i,
         );
       }
       return [...prev, { ...item, amount: 1, checked: true }];
@@ -51,7 +51,7 @@ export function CartContextProvider({ children }) {
 
       if (existingItem.amount > 1) {
         return prev.map((i) =>
-          i.id === id ? { ...i, amount: i.amount - 1 } : i
+          i.id === id ? { ...i, amount: i.amount - 1 } : i,
         );
       }
 
@@ -65,7 +65,7 @@ export function CartContextProvider({ children }) {
 
   const toggleCheckedItem = useCallback((id) => {
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i))
+      prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)),
     );
   }, []);
 

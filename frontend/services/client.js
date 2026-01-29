@@ -46,8 +46,8 @@ class Client {
       const res = await axios.post(
         "/api/accounts/refresh-access-token",
         {}, // body (보낼 데이터, refresh token은 쿠키에 있음)
-        { withCredentials: true }, // 브라우저에게 '이 요청에 쿠키도 같이 보내!' 말함
-      );
+        { withCredentials: true }, // 브라우저에게 '이 요청에 쿠키도 같이 보내!' 말함 →
+      ); // 서버는 req.cookies.refreshToken으로 읽음
       // accessToken이 이미 만료된 상태라서 axios.create 인스턴스 안 씀
 
       const { accessToken } = res.data;
@@ -68,15 +68,16 @@ class Client {
   }
 
   // ❗axios.post(url, body, config)
-  async post(endpoint, payload) {
-    const headers = {};
+  async post(endpoint, payload, options = {}) {
+    const headers = options.headers ?? {};
 
     if (payload instanceof FormData) {
       headers["Content-Type"] = "multipart/form-data";
     }
 
     const response = await this.makeRequest(
-      async () => await this.axios.post(endpoint, payload, { headers }),
+      async () =>
+        await this.axios.post(endpoint, payload, { ...options, headers }),
     );
     return response.data;
   }

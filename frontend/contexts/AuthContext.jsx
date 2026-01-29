@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate, useLocation } from "react-router-dom";
 import Client, { RefreshTokenExpiredError } from "../services/client";
@@ -15,16 +15,13 @@ const AuthContext = React.createContext({
   setDecodedUser: () => {},
 });
 
-// router.post("/refresh-access-token" ...) 이해해야 됨
 export function AuthContextProvider({ children }) {
-  const publicRoutes = new Set(["/", "/login", "/signup"]);
-
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
   const [decodedUser, setDecodedUser] = useState(null);
-
+  const hasTriedRestoreRef = useRef(false);
+  const refreshTimerRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation(); // 현재 URL 확인
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
   // 로그인 & 회원가입 성공 시, 토큰 갱신 시 적용됨.
@@ -51,16 +48,12 @@ export function AuthContextProvider({ children }) {
     const abortController = new AbortController();
     const accountService = new AccountService(abortController, {});
 
-    try {
-      await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
-    } finally {
-      setAccessToken(null);
-      setDecodedUser(null);
-      navigate("/login");
-    }
-  }, [navigate]);
+    await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
+    setAccessToken(null);
+    setDecodedUser(null);
+    navigate("/login");
+  }, []);
 
-  // restoreAccessToken
   // 액세스 토큰이 있다 = 로그인 상태,
   // 액세스 토큰이 없는데 + refresh 성공 = 로그인 유지
   // refresh token 쿠키를 이용해서 새 accessToken 하나만 재발급
@@ -76,21 +69,48 @@ export function AuthContextProvider({ children }) {
       applyAccessToken(newAccessToken);
     } catch (err) {
       if (err instanceof RefreshTokenExpiredError) {
-        logout();
+        setAccessToken(null);
+        setDecodedUser(null);
       }
     } finally {
       setIsAuthLoading(false);
     }
-  }, [accessToken, applyAccessToken, logout]); //
+  }, [accessToken, applyAccessToken, logout]);
 
   useEffect(() => {
-    // 로그인 상태여야 볼 수 있는 페이지인데 토큰이 없다면
-    if (isAuthLoading && !accessToken && !publicRoutes.has(location.pathname)) {
-      restoreUserSession(); // 자동 로그인 로직 수행
-    } else {
-      setIsAuthLoading(false);
-    } // 공개 페이지이거나 액세스 토큰이 있는 상태이므로, 로딩 상태 종료
-  }, [location.pathname]); // 페이지 이동 시 토큰 검증이 필요할 수 있음
+    if (hasTriedRestoreRef.current) return;
+
+    // app mounts or page is refreshed
+    hasTriedRestoreRef.current = true;
+
+    if (!accessToken) {
+      restoreUserSession();
+    }
+  }, []);
+
+  // ❗As long as an accessToken exists, a timer is set so that
+  // restoreUserSession() is automatically executed right before the token expires.
+  useEffect(() => {
+    // After logout or before login, accessToken doesn't exist.
+    // Don't set the timer.
+    if (!accessToken) return;
+
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+
+    const decoded = jwtDecode(accessToken);
+    const timeout = decoded.exp * 1000 - Date.now() - 30_000;
+    // 30 secs before token expires
+
+    if (timeout > 0) {
+      refreshTimerRef.current = setTimeout(() => {
+        restoreUserSession();
+      }, timeout);
+
+      return () => clearTimeout(refreshTimerRef.current);
+    }
+  }, [accessToken]);
 
   return (
     <AuthContext.Provider

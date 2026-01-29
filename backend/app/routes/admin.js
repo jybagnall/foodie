@@ -30,8 +30,10 @@ router.post("/admin-signup", async (req, res) => {
     }
 
     const newAdmin = await createAccount(name, email, password, "admin");
-    const { accessToken, refreshToken } = generateTokens({
+    const { accessToken } = generateTokens({
       id: newAdmin.id,
+      name: newAdmin.name,
+      email: newAdmin.email,
       role: newAdmin.role,
     });
     await invalidateAdminInvitation(inviteToken); // 토큰 무효화

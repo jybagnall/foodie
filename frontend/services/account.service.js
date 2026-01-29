@@ -47,14 +47,13 @@ class AccountService {
     return data;
   }
 
-  // 서버는 쿠키에 담긴 refreshToken으로 누가 로그아웃하는지 이미 앎
   // 브라우저에게 refresh token이 있는 쿠키를 보내라고 요청함
+  // 서버는 쿠키에 담긴 refreshToken으로 누가 로그아웃하는지 이미 앎
   // body에 userId를 보내면 오히려 보안적으로 나쁨
   async logoutUser() {
     await this.client.post(
       `/api/accounts/logout, {}, { withCredentials: true }`,
     );
-    return data;
   }
 
   async regenerateAccessToken() {

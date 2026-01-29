@@ -1,13 +1,11 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../UI/Button.jsx";
-import CartContext from "../../contexts/CartContext.jsx";
 import CartModal from "./CartModal.jsx";
 import CurrentCart from "./CurrentCart.jsx";
 import UserStatus from "./UserStatus.jsx";
 
 export default function Header() {
-  const { numOfItems } = useContext(CartContext);
   const [displayCart, setDisplayCart] = useState(false);
 
   return (
@@ -36,7 +34,7 @@ export default function Header() {
             onClick={() => setDisplayCart(true)}
             propStyle="text-yellow-300 hover:text-yellow-400"
           >
-            <CurrentCart numOfItems={numOfItems} />
+            <CurrentCart />
           </Button>
         </nav>
       </header>

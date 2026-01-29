@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-export default function CartFeedback({ t, meal }) {
+export default function AddingItemFeedback({ t, meal }) {
   const navigate = useNavigate();
 
   return (

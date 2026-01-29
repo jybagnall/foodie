@@ -9,6 +9,7 @@ import { useContext } from "react";
 import { Link } from "react-router-dom";
 import SidebarContext from "../../contexts/SidebarContext";
 import AuthContext from "../../contexts/AuthContext";
+import CartContext from "../../contexts/CartContext";
 
 const navigation = [
   { name: "My Account", to: "#", icon: UserIcon, current: true },
@@ -19,10 +20,12 @@ const navigation = [
 
 export default function Sidebar() {
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
-  const authContext = useContext(AuthContext);
+  const { logout } = useContext(AuthContext);
+  const { clearCart } = useContext(CartContext);
 
   const handleLogout = () => {
-    authContext.logout();
+    logout();
+    clearCart();
   };
 
   return (

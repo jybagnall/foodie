@@ -41,6 +41,20 @@ CREATE TABLE menus (
   image TEXT NOT NULL
 );
 
+-- one cart per user, 
+CREATE TABLE saved_carts (
+  id SERIAL PRIMARY KEY,
+  user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE saved_cart_items (
+  id SERIAL PRIMARY KEY,
+  cart_id INT REFERENCES saved_carts(id) ON DELETE CASCADE,
+  menu_id INT REFERENCES menus(id),
+  qty INT NOT NULL
+);
+
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   user_id INT REFERENCES users(id),

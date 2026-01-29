@@ -1,6 +1,5 @@
+import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { CartContextProvider } from "../contexts/CartContext";
 import { AuthContextProvider } from "../contexts/AuthContext";
 import { SidebarContextProvider } from "../contexts/SidebarContext";
@@ -22,14 +21,10 @@ import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import MenuLiveView from "./admin/MenuLiveView";
 import MyAccount from "./sidebar_layout/MyAccount";
-import StripeWrapper from "./pages/Payment/StripeWrapper";
 import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
-import PaymentForm from "./pages/Payment/PaymentForm";
 import OrderLayout from "./routes/OrderLayout";
 import OrderPayment from "./pages/Payment/OrderPayment";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 export default function App() {
@@ -38,6 +33,7 @@ export default function App() {
       <AuthContextProvider>
         <CartContextProvider>
           <SidebarContextProvider>
+            <Toaster position="top-center" reverseOrder={false} />
             <Header />
 
             <Routes>

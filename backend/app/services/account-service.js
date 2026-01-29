@@ -33,7 +33,7 @@ export async function findUserByEmail(email) {
 
 export async function findUserById(id) {
   const q = `
-  SELECT id, name, email, role, stripe_customer_id FROM users
+  SELECT id, name, email, role, stripe_customer_id, current_refresh_token FROM users
   WHERE id = $1 
   `;
 
