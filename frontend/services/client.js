@@ -43,7 +43,7 @@ class Client {
     try {
       // refresh token으로 access token을 재발급하는 API
       // 📌“쿠키를 포함해서 refresh token 요청을 보내자”
-      const res = await axios.post(
+      const res = await this.axios.post(
         "/api/accounts/refresh-access-token",
         {}, // body (보낼 데이터, refresh token은 쿠키에 있음)
         { withCredentials: true }, // 브라우저에게 '이 요청에 쿠키도 같이 보내!' 말함 →
@@ -58,6 +58,18 @@ class Client {
       } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
       throw err; // 네트워크/서버 오류
     }
+  }
+
+  // public API
+  async rawGet(endpoint, options = {}) {
+    const res = await this.axios.get(endpoint, options);
+    return res.data;
+  }
+
+  // 인증 상태와 상관없는 요청(로그아웃, accessToken not needed)
+  async rawPost(endpoint, payload = {}, options = {}) {
+    const res = await this.axios.post(endpoint, payload, options);
+    return res.data;
   }
 
   async get(endpoint) {

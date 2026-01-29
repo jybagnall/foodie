@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import Client from "./client";
 
 class AccountService {
@@ -51,8 +50,10 @@ class AccountService {
   // 서버는 쿠키에 담긴 refreshToken으로 누가 로그아웃하는지 이미 앎
   // body에 userId를 보내면 오히려 보안적으로 나쁨
   async logoutUser() {
-    await this.client.post(
-      `/api/accounts/logout, {}, { withCredentials: true }`,
+    await this.client.rawPost(
+      "/api/accounts/logout",
+      {},
+      { withCredentials: true },
     );
   }
 

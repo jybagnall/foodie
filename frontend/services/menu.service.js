@@ -11,7 +11,7 @@ class MenuService {
   }
 
   async getMenu() {
-    const data = await this.client.get("/api/menu/get-menu");
+    const data = await this.client.rawGet("/api/menu/get-menu");
     return data;
   }
 }
