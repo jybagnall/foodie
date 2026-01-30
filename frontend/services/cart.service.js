@@ -5,8 +5,8 @@ class CartService {
     this.client = new Client(abortController, authContext);
   }
 
-  async saveCurrentCart(orderDetails) {
-    const data = await this.client.post("/api/carts/save-cart", orderDetails);
+  async saveCurrentCart(payload) {
+    const data = await this.client.post("/api/carts/save-cart", payload);
     return data;
   }
 }

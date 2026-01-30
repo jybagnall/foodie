@@ -1,25 +1,37 @@
 import express from "express";
-import { saveCurrentCart } from "../services/cart-service.js";
+import {
+  saveCurrentCart,
+  saveCurrentCartItems,
+} from "../services/cart-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
+import pool from "../config/db.js";
 
 const router = express.Router();
 
+// [
+//   { "menuId": 1, "qty": 2 },
+//   { "menuId": 5, "qty": 1 }
+// ]
+
+// 서로 다른 커넥션은 서로의 성공/실패를 ‘전혀 모른다’.
 router.post("/save-cart", verifyUserAuth, async (req, res) => {
+  const { items = [] } = req.body;
+  const client = await pool.connect(); // pool (DB 연결 관리자)에서 커넥션을 한개 픽.
+
   try {
-    const { address, order } = req.body;
-    const addressId = await saveShippingInfo(req.user.id, address);
-    const orderId = await createOrderId(
-      req.user.id,
-      addressId,
-      order.total_amount,
-    );
-    await insertOrderItems(orderId, order);
-    res.status(201).json({ message: "Order info is saved.", orderId });
+    await client.query("BEGIN"); // 지금부터 여러 DB 작업을 한 묶음으로 취급, 시작한다
+    const cartId = await saveCurrentCart(client, req.user.id);
+    await saveCurrentCartItems(client, cartId, items);
+    await client.query("COMMIT"); // DB 저장 확정, 전부 성공!
+    res.status(201).json({ message: "We saved your cart for next time." });
   } catch (err) {
-    console.error("Order error,", err.message);
+    await client.query("ROLLBACK"); // BEGIN 이후 작업 전부 취소, 전부 실패!
+    console.error("Save cart error:", err.message);
     res
       .status(500)
-      .json({ error: "Something went wrong while placing an order." });
+      .json({ error: "Some changes may not be available next time." });
+  } finally {
+    client.release();
   }
 });
 

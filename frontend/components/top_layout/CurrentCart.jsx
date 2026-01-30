@@ -3,7 +3,7 @@ import { useContext } from "react";
 import CartContext from "../../contexts/CartContext";
 
 export default function CurrentCart() {
-  const { numOfItems } = useContext(CartContext);
+  const { uniqueMenuCount } = useContext(CartContext);
 
   return (
     <div className="relative flex items-center space-x-1 text-white">
@@ -19,7 +19,7 @@ export default function CurrentCart() {
             rounded-full w-5 h-5 flex items-center justify-center
           "
         >
-          {numOfItems}
+          {uniqueMenuCount}
         </span>
       </div>
 

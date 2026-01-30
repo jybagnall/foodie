@@ -3,11 +3,11 @@ import { createContext, useState, useMemo, useCallback } from "react";
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
   items: [],
-  numOfItems: 0,
+  uniqueMenuCount: 0,
   numOfCheckedItems: 0,
   totalAmount: 0,
   addItem: (item) => {},
-  removeItem: (id) => {},
+  decreaseItem: (id) => {},
   clearCart: () => {},
   toggleCheckedItem: (id) => {},
 });
@@ -18,7 +18,7 @@ const CartContext = createContext({
 export function CartContextProvider({ children }) {
   const [items, setItems] = useState([]);
 
-  const numOfItems = useMemo(() => items.length, [items]);
+  const uniqueMenuCount = useMemo(() => items.length, [items]);
 
   const numOfCheckedItems = useMemo(
     () => items.filter((i) => i.checked).length,
@@ -26,7 +26,10 @@ export function CartContextProvider({ children }) {
   );
 
   const totalAmount = useMemo(
-    () => items.reduce((sum, i) => (sum += i.price * i.amount), 0),
+    () =>
+      items
+        .filter((i) => i.checked)
+        .reduce((sum, i) => (sum += i.price * i.amount), 0),
     [items],
   );
 
@@ -36,14 +39,14 @@ export function CartContextProvider({ children }) {
 
       if (existingItem) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, amount: i.amount + 1 } : i,
+          i.id === item.id ? { ...i, amount: i.amount + 1, checked: true } : i,
         );
       }
       return [...prev, { ...item, amount: 1, checked: true }];
     });
   }, []);
 
-  const removeItem = useCallback((id) => {
+  const decreaseItem = useCallback((id) => {
     setItems((prev) => {
       const existingItem = prev.find((i) => i.id === id);
 
@@ -77,11 +80,11 @@ export function CartContextProvider({ children }) {
     <CartContext.Provider
       value={{
         items,
-        numOfItems,
+        uniqueMenuCount,
         numOfCheckedItems,
         totalAmount,
         addItem,
-        removeItem,
+        decreaseItem,
         clearCart,
         toggleCheckedItem,
         setAllChecked,

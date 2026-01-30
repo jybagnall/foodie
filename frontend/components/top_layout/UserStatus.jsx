@@ -44,7 +44,7 @@ export default function UserStatus() {
 
     setIsSavingCart(true);
     try {
-      await cartService.saveCart(payload);
+      await cartService.saveCurrentCart(payload);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       console.error(returnedErrorMsg);
@@ -54,9 +54,9 @@ export default function UserStatus() {
   };
 
   const handleLogout = async () => {
-    // await persistCart();
-    logout();
+    await persistCart();
     clearCart();
+    logout();
   };
 
   if (isAuthLoading || isSavingCart) {

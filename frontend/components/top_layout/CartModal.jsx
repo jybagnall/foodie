@@ -12,11 +12,11 @@ import EmptyCart from "./EmptyCart";
 export default function CartModal({ open, onClose }) {
   const {
     items,
-    numOfItems,
+    uniqueMenuCount,
     numOfCheckedItems,
     totalAmount,
     addItem,
-    removeItem,
+    decreaseItem,
     clearCart,
     toggleCheckedItem,
     setAllChecked,
@@ -26,7 +26,7 @@ export default function CartModal({ open, onClose }) {
 
   const navigate = useNavigate();
 
-  if (numOfItems === 0) {
+  if (uniqueMenuCount === 0) {
     return <EmptyCart open={open} onClose={onClose} />;
   }
 
@@ -71,7 +71,7 @@ export default function CartModal({ open, onClose }) {
                   <span className="ml-2 font-semibold">
                     {numOfCheckedItems}
                   </span>
-                  /<span className="font-semibold">{numOfItems}</span>
+                  /<span className="font-semibold">{uniqueMenuCount}</span>
                 </h3>
               </div>
               <Button propStyle="py-0.5 px-2 bg-white border-gray-300 hover:bg-gray-50">
@@ -104,7 +104,7 @@ export default function CartModal({ open, onClose }) {
                         <button
                           type="button"
                           className="group relative mr-1 ml-0.5 size-3.5 rounded-xs"
-                          onClick={() => removeItem(i.id)}
+                          onClick={() => decreaseItem(i.id)}
                         >
                           <MinusIcon className="size-3.5 stroke-gray-700 hover:gray-700" />
                         </button>

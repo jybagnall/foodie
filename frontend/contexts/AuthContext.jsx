@@ -51,7 +51,7 @@ export function AuthContextProvider({ children }) {
     await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
     setAccessToken(null);
     setDecodedUser(null);
-    navigate("/login");
+    navigate("/");
   }, []);
 
   // 액세스 토큰이 있다 = 로그인 상태,
