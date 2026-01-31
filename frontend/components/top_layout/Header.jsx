@@ -1,20 +1,10 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import Button from "../UI/Button.jsx";
-import CartModal from "./CartModal.jsx";
 import CurrentCart from "./CurrentCart.jsx";
 import UserStatus from "./UserStatus.jsx";
 
 export default function Header() {
-  const [displayCart, setDisplayCart] = useState(false);
-
   return (
     <>
-      {displayCart && (
-        <CartModal open={displayCart} onClose={() => setDisplayCart(false)} />
-      )}
-
-      {/* <header className="flex justify-between items-center py-6 px-[10%] bg-[#1f2937]"> */}
       <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-[#1f2937] flex-nowrap overflow-hidden">
         <Link className="flex items-center gap-2 sm:gap-4 flex-shrink-0" to="/">
           <img
@@ -29,13 +19,9 @@ export default function Header() {
 
         <nav className="flex items-center gap-4 sm:gap-8 flex-shrink-0">
           <UserStatus />
-          <Button
-            textOnly
-            onClick={() => setDisplayCart(true)}
-            propStyle="text-yellow-300 hover:text-yellow-400"
-          >
+          <Link to="/cart" className="text-yellow-300 hover:text-yellow-400">
             <CurrentCart />
-          </Button>
+          </Link>
         </nav>
       </header>
     </>

@@ -1,8 +1,15 @@
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
-export default function AddingItemFeedback({ t, meal }) {
+export default function AddingItemFeedback({ t, meal, isNew, nextQty }) {
   const navigate = useNavigate();
+  const msg = isNew ? (
+    <>added to cart.</>
+  ) : (
+    <>
+      quantity increased <b>({nextQty})</b>.
+    </>
+  );
 
   return (
     <div
@@ -17,14 +24,14 @@ export default function AddingItemFeedback({ t, meal }) {
       />
       <div className="flex-1">
         <p className="font-semibold">{meal.name}</p>
-        <p className="text-sm text-gray-500">Added to cart.</p>
+        <p className="text-sm text-gray-500">{msg}</p>
       </div>
       <button
         onClick={() => {
           navigate("/cart");
           toast.dismiss(t.id);
         }}
-        className="ml-3 text-sm font-medium text-purple-600"
+        className="ml-3 text-sm font-medium text-orange-600 cursor-pointer"
       >
         View the cart
       </button>

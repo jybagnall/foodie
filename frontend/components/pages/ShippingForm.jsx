@@ -38,7 +38,7 @@ export default function ShippingForm() {
       order: {
         items: items.map((i) => ({
           menu_id: i.id,
-          qty: i.amount,
+          qty: i.qty,
           price: i.price,
         })),
         total_amount: totalAmount,

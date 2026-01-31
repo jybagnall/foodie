@@ -31,7 +31,7 @@ export default function UserStatus() {
 
   const currentItems = items.map((i) => ({
     menuId: i.id,
-    qty: i.amount,
+    qty: i.qty,
   }));
 
   const payload = {

@@ -6,15 +6,25 @@ import Button from "../../UI/Button";
 import CartContext from "../../../contexts/CartContext";
 import AddingItemFeedback from "../../user_feedback/AddingItemFeedback";
 
-export default function MealItem({ meal }) {
+export default function MenuItem({ meal }) {
   const { name, price, description, image } = meal;
   const { addItem } = useContext(CartContext);
 
   const handleAddToCart = (meal) => {
-    addItem(meal);
-    toast.custom((t) => <AddingItemFeedback t={t} meal={meal} />, {
-      duration: 2000,
-    });
+    const result = addItem(meal);
+    toast.custom(
+      (t) => (
+        <AddingItemFeedback
+          t={t}
+          meal={meal}
+          isNew={result.isNew}
+          nextQty={result.nextQty}
+        />
+      ),
+      {
+        duration: 2000,
+      },
+    );
   };
 
   return (

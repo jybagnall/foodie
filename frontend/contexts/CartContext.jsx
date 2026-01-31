@@ -29,21 +29,30 @@ export function CartContextProvider({ children }) {
     () =>
       items
         .filter((i) => i.checked)
-        .reduce((sum, i) => (sum += i.price * i.amount), 0),
+        .reduce((sum, i) => (sum += i.price * i.qty), 0),
     [items],
   );
 
+  // setItems 안에서 값이 바뀌어야 하므로 let을 씀
   const addItem = useCallback((item) => {
+    let isNew = true;
+    let nextQty = 1;
+
     setItems((prev) => {
       const existingItem = prev.find((i) => i.id === item.id);
 
       if (existingItem) {
+        isNew = false;
+        nextQty = existingItem.qty + 1;
+
         return prev.map((i) =>
-          i.id === item.id ? { ...i, amount: i.amount + 1, checked: true } : i,
+          i.id === item.id ? { ...i, qty: i.qty + 1, checked: true } : i,
         );
       }
-      return [...prev, { ...item, amount: 1, checked: true }];
+      return [...prev, { ...item, qty: 1, checked: true }];
     });
+
+    return { isNew, nextQty };
   }, []);
 
   const decreaseItem = useCallback((id) => {
@@ -52,10 +61,8 @@ export function CartContextProvider({ children }) {
 
       if (!existingItem) return prev;
 
-      if (existingItem.amount > 1) {
-        return prev.map((i) =>
-          i.id === id ? { ...i, amount: i.amount - 1 } : i,
-        );
+      if (existingItem.qty > 1) {
+        return prev.map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i));
       }
 
       return prev.filter((item) => item.id !== id);

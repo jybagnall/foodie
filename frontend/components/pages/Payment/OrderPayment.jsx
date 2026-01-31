@@ -1,5 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { useParams } from "react-router-dom";
 import CartContext from "../../../contexts/CartContext";
 import PaymentForm from "./PaymentForm";

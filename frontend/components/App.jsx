@@ -7,7 +7,6 @@ import Header from "./top_layout/Header";
 import ShippingForm from "./pages/ShippingForm";
 import AdminRoute from "./routes/AdminRoute";
 import UploadNewMenu from "./admin/UploadNewMenu";
-import CartModal from "./top_layout/CartModal";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -25,8 +24,10 @@ import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
 import OrderLayout from "./routes/OrderLayout";
 import OrderPayment from "./pages/Payment/OrderPayment";
+import ViewCart from "./pages/ViewCart";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
+// 모달을 Route로 렌더링하려 하면 안됨
 export default function App() {
   return (
     <BrowserRouter>
@@ -41,7 +42,7 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/create-admin-account" element={<AdminSignup />} />
-              <Route path="/cart" element={<CartModal open={true} />} />
+              <Route path="/cart" element={<ViewCart />} />
 
               <Route path="/my-account" element={<UserProtectedRoutes />}>
                 <Route element={<UserLayout />}>
