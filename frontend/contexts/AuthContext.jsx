@@ -10,9 +10,8 @@ const AuthContext = React.createContext({
   decodedUser: null,
   isAuthLoading: true,
   applyAccessToken: () => {},
+  handleLoginSuccess: () => {},
   logout: () => {},
-  setAccessToken: () => {},
-  setDecodedUser: () => {},
 });
 
 export function AuthContextProvider({ children }) {
@@ -24,23 +23,29 @@ export function AuthContextProvider({ children }) {
   const navigate = useNavigate();
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
-  // 로그인 & 회원가입 성공 시, 토큰 갱신 시 적용됨.
-  const applyAccessToken = useCallback(async (accessToken) => {
+  // 토큰 갱신 시 적용됨.
+  const applyAccessToken = useCallback((accessToken) => {
     try {
-      setAccessToken(accessToken);
       const decoded = jwtDecode(accessToken);
+      setAccessToken(accessToken);
       setDecodedUser(decoded);
-
-      if (decoded.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      return decoded;
     } catch (err) {
       console.error("applyAccessToken error:", err.message);
       setDecodedUser(null);
+      return null;
     }
   }, []);
+
+  const handleLoginSuccess = useCallback(
+    (accessToken) => {
+      const decoded = applyAccessToken(accessToken);
+      if (!decoded) return;
+
+      navigate(decoded.role === "admin" ? "/admin" : "/");
+    },
+    [applyAccessToken],
+  );
 
   // 쿠키 삭제는 서버에서 함
   // 로그아웃 정책을 정의
@@ -119,6 +124,7 @@ export function AuthContextProvider({ children }) {
         decodedUser,
         isAuthLoading,
         applyAccessToken,
+        handleLoginSuccess,
         logout,
       }}
     >

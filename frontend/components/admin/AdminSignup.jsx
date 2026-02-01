@@ -49,7 +49,7 @@ export default function AdminSignup() {
         password,
         inviteToken,
       );
-      authContext.applyAccessToken(accessToken);
+      authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =

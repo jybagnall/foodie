@@ -31,8 +31,8 @@ import ViewCart from "./pages/ViewCart";
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthContextProvider>
-        <CartContextProvider>
+      <CartContextProvider>
+        <AuthContextProvider>
           <SidebarContextProvider>
             <Toaster position="top-center" reverseOrder={false} />
             <Header />
@@ -85,8 +85,8 @@ export default function App() {
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </SidebarContextProvider>
-        </CartContextProvider>
-      </AuthContextProvider>
+        </AuthContextProvider>
+      </CartContextProvider>
     </BrowserRouter>
   );
 }

@@ -31,7 +31,7 @@ export default function AddingItemFeedback({ t, meal, isNew, nextQty }) {
           navigate("/cart");
           toast.dismiss(t.id);
         }}
-        className="ml-3 text-sm font-medium text-orange-600 cursor-pointer"
+        className="ml-3 text-sm font-medium text-gray-600 cursor-pointer"
       >
         View the cart
       </button>

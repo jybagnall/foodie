@@ -7,8 +7,9 @@ const CartContext = createContext({
   numOfCheckedItems: 0,
   totalAmount: 0,
   addItem: (item) => {},
-  decreaseItem: (id) => {},
   clearCart: () => {},
+  decreaseItem: (id) => {},
+  deleteItem: (id) => {},
   toggleCheckedItem: (id) => {},
 });
 
@@ -55,22 +56,24 @@ export function CartContextProvider({ children }) {
     return { isNew, nextQty };
   }, []);
 
+  const clearCart = useCallback(() => {
+    setItems([]);
+  }, []);
+
   const decreaseItem = useCallback((id) => {
     setItems((prev) => {
       const existingItem = prev.find((i) => i.id === id);
-
       if (!existingItem) return prev;
-
       if (existingItem.qty > 1) {
         return prev.map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i));
       }
 
-      return prev.filter((item) => item.id !== id);
+      return prev;
     });
   }, []);
 
-  const clearCart = useCallback(() => {
-    setItems([]);
+  const deleteItem = useCallback((id) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const toggleCheckedItem = useCallback((id) => {
@@ -91,8 +94,9 @@ export function CartContextProvider({ children }) {
         numOfCheckedItems,
         totalAmount,
         addItem,
-        decreaseItem,
         clearCart,
+        decreaseItem,
+        deleteItem,
         toggleCheckedItem,
         setAllChecked,
       }}

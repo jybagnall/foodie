@@ -35,7 +35,7 @@ export default function Login() {
     setErrorMsg("");
     try {
       const { accessToken } = await accountService.loginUser(email, password);
-      authContext.applyAccessToken(accessToken);
+      authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       setErrorMsg(returnedErrorMsg);

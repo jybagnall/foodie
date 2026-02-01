@@ -33,7 +33,7 @@ export default function Signup() {
         email,
         password,
       );
-      authContext.applyAccessToken(accessToken);
+      authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
       const returnedErrorMsg =
