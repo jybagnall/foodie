@@ -1,8 +1,8 @@
 import Client from "./client";
 
 class OrderService {
-  constructor(abortController, authContext) {
-    this.client = new Client(abortController, authContext);
+  constructor(abortController, getAccessToken) {
+    this.client = new Client(abortController, getAccessToken);
   }
 
   async initializeOrder(orderDetails) {

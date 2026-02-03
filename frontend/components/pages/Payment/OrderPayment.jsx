@@ -16,7 +16,10 @@ export default function OrderPayment() {
   const { totalAmount } = useContext(CartContext);
   const authContext = useContext(AuthContext);
 
-  const paymentService = new PaymentService(new AbortController(), authContext);
+  const paymentService = new PaymentService(
+    new AbortController(),
+    () => accessToken,
+  );
 
   // 해당 결제에 대한 준비를 해둠
   useEffect(() => {

@@ -45,7 +45,10 @@ export default function ShippingForm() {
       },
     };
 
-    const orderService = new OrderService(new AbortController(), authContext);
+    const orderService = new OrderService(
+      new AbortController(),
+      () => accessToken,
+    );
 
     try {
       setIsOrderProcessing(true);

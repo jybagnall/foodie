@@ -39,8 +39,10 @@ export default function UserStatus() {
   };
 
   const persistCart = async () => {
-    // const cartService = new CartService(new AbortController(), accessToken);
-    const cartService = new CartService(new AbortController(), authContext);
+    const cartService = new CartService(
+      new AbortController(),
+      () => accessToken,
+    );
 
     setIsSavingCart(true);
     try {

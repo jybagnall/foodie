@@ -41,7 +41,7 @@ export default function PaymentForm({ orderId }) {
 
     const paymentService = new PaymentService(
       new AbortController(),
-      authContext,
+      () => accessToken,
     );
 
     try {

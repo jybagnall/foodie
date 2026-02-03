@@ -18,7 +18,7 @@ export default function UserLanding() {
     document.title = "Menu | Foodie";
 
     const abortController = new AbortController();
-    const menuService = new MenuService(abortController, authContext);
+    const menuService = new MenuService(abortController);
 
     const fetchMenu = async () => {
       try {

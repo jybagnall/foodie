@@ -11,6 +11,9 @@ import axios from "axios";
 // 2. 요청 함수에서 넘긴 config (url, method, headers, data)
 // 3. interceptor에서 최종 수정
 
+// ❌ 개선점: 항상 같은 설정을 항상 새로 정의하고 있음,
+// 즉 변하지 않는 규칙을 매 요청마다 재선언 중❌
+
 // 무조건 로그아웃 필요 상황이라는 refresh token 전용 에러
 export class RefreshTokenExpiredError extends Error {
   constructor() {
@@ -20,9 +23,9 @@ export class RefreshTokenExpiredError extends Error {
 }
 
 class Client {
-  constructor(abortController, authContext) {
+  constructor(abortController, getAccessToken) {
     this.abortController = abortController;
-    this.authContext = authContext;
+    this.getAccessToken = getAccessToken;
     this.axios = axios.create({
       signal: this.abortController.signal,
     }); // 요청마다 독립된 Axios 객체를 생성함
@@ -31,8 +34,10 @@ class Client {
     // Axios: 택배 기사,  interceptor: 택배 송장(Authorization 헤더) 검사원
     // config: Axios 요청 1건에 대한 정보 객체(url, method, headers, data 있음)
     this.axios.interceptors.request.use((config) => {
-      const token = this.authContext.accessToken;
-      if (token) config.headers.Authorization = `Bearer ${token}`;
+      if (this.getAccessToken) {
+        const token = this.getAccessToken();
+        if (token) config.headers.Authorization = `Bearer ${token}`;
+      }
       return config;
     }); // 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
   } // 요청받은 백엔드: "로그인한 유저 A가 보냈구만"

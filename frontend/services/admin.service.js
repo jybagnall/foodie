@@ -1,8 +1,8 @@
 import Client from "./client";
 
 class AdminService {
-  constructor(abortController, authContext) {
-    this.client = new Client(abortController, authContext);
+  constructor(abortController, getAccessToken) {
+    this.client = new Client(abortController, getAccessToken);
   }
 
   async createAdminAccount(name, email, password, inviteToken) {

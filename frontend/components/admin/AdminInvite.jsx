@@ -30,11 +30,14 @@ export default function AdminInvite() {
   const handleInvitation = async (email) => {
     setIsInviteProcessing(true);
 
-    const adminService = new AdminService(new AbortController(), authContext);
+    const adminService = new AdminService(
+      new AbortController(),
+      () => accessToken,
+    );
 
     try {
       const res = await adminService.inviteNewAdmin(email);
-      setInviteSuccessMsg(res?.message);   
+      setInviteSuccessMsg(res?.message);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       setErrorMsg(returnedErrorMsg);

@@ -40,7 +40,10 @@ export default function UploadNewMenu() {
   }, [watchFile]);
 
   const onUploadSubmit = async ({ name, price, description }) => {
-    const menuService = new MenuService(new AbortController(), authContext);
+    const menuService = new MenuService(
+      new AbortController(),
+      () => accessToken,
+    );
 
     const formData = new FormData();
 

@@ -39,7 +39,7 @@ export default function AdminSignup() {
   }, []);
 
   const onSignupSubmit = async ({ name, email, password }) => {
-    const adminService = new AdminService(new AbortController(), authContext);
+    const adminService = new AdminService(new AbortController());
 
     setIsSignupProcessing(true);
     try {

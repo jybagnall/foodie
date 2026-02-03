@@ -26,11 +26,7 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async (email, password) => {
-    const accountService = new AccountService(
-      new AbortController(),
-      authContext,
-    );
-
+    const accountService = new AccountService(new AbortController());
     setIsLoginProcessing(true);
     setErrorMsg("");
     try {
