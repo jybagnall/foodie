@@ -3,6 +3,7 @@ import { createContext, useState, useMemo, useCallback } from "react";
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
   items: [],
+  setItems: () => {},
   uniqueMenuCount: 0,
   numOfCheckedItems: 0,
   totalAmount: 0,
@@ -90,6 +91,7 @@ export function CartContextProvider({ children }) {
     <CartContext.Provider
       value={{
         items,
+        setItems,
         uniqueMenuCount,
         numOfCheckedItems,
         totalAmount,

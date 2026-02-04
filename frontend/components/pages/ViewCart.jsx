@@ -39,7 +39,7 @@ export default function ViewCart() {
           <EmptyCart />
         ) : (
           <>
-            <div className="flex justify-between items-center mt-2 mb-4 bg-red-200">
+            <div className="flex justify-between items-center mt-2 mb-4">
               <div className="flex items-center gap-2">
                 <input
                   checked={allChecked}
@@ -78,8 +78,7 @@ export default function ViewCart() {
                         checked={i.checked}
                         onChange={() => toggleCheckedItem(i.id)}
                         aria-describedby="checkbox to select all"
-                        className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white
-                  checked:bg-gray-300 checked:border-gray-300 transition-colors"
+                        className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white checked:bg-gray-300 checked:border-gray-300 transition-colors"
                       />
                       <span className="font-medium text-md">{i.name}</span>
                     </div>

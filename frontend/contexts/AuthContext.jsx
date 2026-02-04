@@ -1,8 +1,16 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useContext,
+} from "react";
 import { jwtDecode } from "jwt-decode";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
+import CartService from "../services/cart.service";
+import CartContext from "./CartContext";
 
 // refresh 실패 시 → logout, 성공 시 → state 갱신, Client 에러 타입 해석
 const AuthContext = React.createContext({
@@ -19,7 +27,9 @@ export function AuthContextProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [decodedUser, setDecodedUser] = useState(null);
   const hasTriedRestoreRef = useRef(false);
+  const hasFetchedCartRef = useRef(false);
   const refreshTimerRef = useRef(null);
+  const cartContext = useContext(CartContext);
   const navigate = useNavigate();
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
@@ -37,8 +47,22 @@ export function AuthContextProvider({ children }) {
     }
   }, []);
 
+  const fetchCartAndSync = useCallback(async () => {
+    const abortController = new AbortController();
+    const cartService = new CartService(abortController, () => accessToken);
+
+    try {
+      const cartItems = await cartService.getMyCart();
+      cartContext.setItems(
+        cartItems.map((item) => ({ ...item, checked: true })),
+      );
+    } catch (err) {
+      console.error("Failed to fetch cart", err);
+    }
+  }, [accessToken]);
+
   const handleLoginSuccess = useCallback(
-    (accessToken) => {
+    async (accessToken) => {
       const decoded = applyAccessToken(accessToken);
       if (!decoded) return;
 
@@ -56,6 +80,7 @@ export function AuthContextProvider({ children }) {
     await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
     setAccessToken(null);
     setDecodedUser(null);
+    hasFetchedCartRef.current = false; // 오류의 원인
     navigate("/");
   }, []);
 
@@ -115,6 +140,17 @@ export function AuthContextProvider({ children }) {
 
       return () => clearTimeout(refreshTimerRef.current);
     }
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      hasFetchedCartRef.current = false; // 로그아웃 대응
+      return;
+    }
+    if (hasFetchedCartRef.current) return;
+
+    hasFetchedCartRef.current = true;
+    fetchCartAndSync();
   }, [accessToken]);
 
   return (

@@ -1,5 +1,35 @@
 import pool from "../config/db.js";
 
+export async function getCartId(client, userId) {
+  const q = `
+    SELECT id FROM saved_carts
+    WHERE user_id = $1
+    `;
+  try {
+    const result = await client.query(q, [userId]);
+    return result.rows[0].id;
+  } catch (err) {
+    console.error("DB cart id fetch error", err.message);
+    throw err;
+  }
+}
+
+export async function getItemsInCart(client, cartId) {
+  const q = `
+    SELECT m.id, m.name, m.price, m.image, m.description, sci.qty
+    FROM saved_cart_items sci
+    JOIN menus m ON m.id = sci.menu_id
+    WHERE sci.cart_id = $1
+    `;
+  try {
+    const result = await client.query(q, [cartId]);
+    return Array.isArray(result?.rows) ? result.rows : [];
+  } catch (err) {
+    console.error("DB cart items fetch error", err.message);
+    throw err;
+  }
+}
+
 // user_id가 겹치면(ON CONFLICT) 업데이트 시간만 바꿩(DO UPDATE)
 // UPDATE를 안 쓰는 이유: 카트가 존재하지 않으면 아무 일도 안 일어남.
 export async function saveCurrentCart(client, userId) {
@@ -22,15 +52,15 @@ export async function saveCurrentCart(client, userId) {
 
 export async function saveCurrentCartItems(client, cartId, items = []) {
   // NOTE: this is called inside a transaction
+  if (!items.length) {
+    return;
+  }
+
   const delete_q = `
     DELETE FROM saved_cart_items 
     WHERE cart_id = $1
     `;
   await client.query(delete_q, [cartId]);
-
-  if (!items.length) {
-    return;
-  }
 
   const values = [];
   const placeholders = items.map((item, index) => {
