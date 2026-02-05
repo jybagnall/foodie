@@ -11,6 +11,8 @@ import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
 import CartService from "../services/cart.service";
 import CartContext from "./CartContext";
+import { clearCartStorage, loadCart } from "../storage/cartStorage";
+import { mergeCarts } from "../utils/merge";
 
 // refresh 실패 시 → logout, 성공 시 → state 갱신, Client 에러 타입 해석
 const AuthContext = React.createContext({
@@ -52,12 +54,19 @@ export function AuthContextProvider({ children }) {
     const cartService = new CartService(abortController, () => accessToken);
 
     try {
-      const cartItems = await cartService.getMyCart();
-      cartContext.setItems(
-        cartItems.map((item) => ({ ...item, checked: true })),
-      );
+      const serverCartItems = await cartService.getMyCart();
+      const guestCartItems = cartContext.items;
+
+      let finalCart = serverCartItems;
+
+      if (guestCartItems.length > 0) {
+        finalCart = mergeCarts(guestCartItems, serverCartItems);
+      }
+
+      cartContext.setItems(finalCart);
+      clearCartStorage(); //
     } catch (err) {
-      console.error("Failed to fetch cart", err);
+      console.error("Failed to fetch & sync cart", err);
     }
   }, [accessToken]);
 
@@ -92,7 +101,7 @@ export function AuthContextProvider({ children }) {
   // ❗앱 시작시 액세스 토큰이 없다면 자동 실행
   const restoreUserSession = useCallback(async () => {
     const abortController = new AbortController();
-    const client = new Client(abortController, { accessToken });
+    const client = new Client(abortController, () => accessToken);
 
     try {
       const newAccessToken = await client.refreshAccessToken();
@@ -150,6 +159,7 @@ export function AuthContextProvider({ children }) {
     if (hasFetchedCartRef.current) return;
 
     hasFetchedCartRef.current = true;
+    cartContext.switchToServerMode();
     fetchCartAndSync();
   }, [accessToken]);
 

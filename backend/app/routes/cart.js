@@ -1,7 +1,6 @@
 import express from "express";
 import {
-  getCartId,
-  getItemsInCart,
+  getCartItemsByUserId,
   saveCurrentCart,
   saveCurrentCartItems,
 } from "../services/cart-service.js";
@@ -11,21 +10,14 @@ import pool from "../config/db.js";
 const router = express.Router();
 
 router.get("/get-cart", verifyUserAuth, async (req, res) => {
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    const cartId = await getCartId(client, req.user.id);
-    const items = await getItemsInCart(client, cartId);
-    await client.query("COMMIT");
+    const items = await getCartItemsByUserId(req.user.id);
     res.status(200).json(items);
   } catch (err) {
-    await client.query("ROLLBACK");
     console.error("fetching error,", err.message);
     res
       .status(500)
       .json({ error: "Something went wrong while loading the cart." });
-  } finally {
-    client.release();
   }
 });
 

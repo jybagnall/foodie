@@ -1,28 +1,21 @@
 import pool from "../config/db.js";
 
-export async function getCartId(client, userId) {
+export async function getCartItemsByUserId(userId) {
   const q = `
-    SELECT id FROM saved_carts
-    WHERE user_id = $1
-    `;
-  try {
-    const result = await client.query(q, [userId]);
-    return result.rows[0].id;
-  } catch (err) {
-    console.error("DB cart id fetch error", err.message);
-    throw err;
-  }
-}
-
-export async function getItemsInCart(client, cartId) {
-  const q = `
-    SELECT m.id, m.name, m.price, m.image, m.description, sci.qty
+    SELECT 
+      m.id, m.name, m.price, m.image, m.description, sci.qty
     FROM saved_cart_items sci
     JOIN menus m ON m.id = sci.menu_id
-    WHERE sci.cart_id = $1
+    JOIN (
+      SELECT id
+      FROM saved_carts 
+      WHERE user_id = $1
+      LIMIT 1
+      ) cart
+    ON cart.id = sci.cart_id
     `;
   try {
-    const result = await client.query(q, [cartId]);
+    const result = await pool.query(q, [userId]);
     return Array.isArray(result?.rows) ? result.rows : [];
   } catch (err) {
     console.error("DB cart items fetch error", err.message);

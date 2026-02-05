@@ -1,9 +1,17 @@
-import { createContext, useState, useMemo, useCallback } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
+import { loadCart, saveCart, clearCartStorage } from "../storage/cartStorage";
 
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
   items: [],
   setItems: () => {},
+  switchToServerMode: () => {},
   uniqueMenuCount: 0,
   numOfCheckedItems: 0,
   totalAmount: 0,
@@ -18,7 +26,20 @@ const CartContext = createContext({
 // 컴포넌트가 다시 렌더링됨 → 그 안의 함수들도 다시 만들어짐.
 // Context를 사용하는 모든 컴포넌트가 리렌더링됨 ⚠️
 export function CartContextProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(() => loadCart()); // once
+  const [mode, setMode] = useState("guest");
+
+  // guest일 때만 localStorage 저장
+  useEffect(() => {
+    if (mode === "guest") {
+      saveCart(items);
+    }
+  }, [items, mode]);
+
+  const switchToServerMode = useCallback(() => {
+    setMode("server");
+    clearCartStorage();
+  }, []);
 
   const uniqueMenuCount = useMemo(() => items.length, [items]);
 
@@ -59,6 +80,7 @@ export function CartContextProvider({ children }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    clearCartStorage();
   }, []);
 
   const decreaseItem = useCallback((id) => {
@@ -92,6 +114,7 @@ export function CartContextProvider({ children }) {
       value={{
         items,
         setItems,
+        switchToServerMode,
         uniqueMenuCount,
         numOfCheckedItems,
         totalAmount,
