@@ -6,6 +6,7 @@ import Button from "../UI/Button";
 import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 export default function AdminSignup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
@@ -52,9 +53,10 @@ export default function AdminSignup() {
       authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
-      const returnedErrorMsg =
-        err.response?.data?.error || "Unexpected signup error";
-      setErrorMsg(returnedErrorMsg);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsSignupProcessing(false);
     }
@@ -81,10 +83,7 @@ export default function AdminSignup() {
       <div className="w-full max-w-lg">
         {errorMsg && (
           <div className="mb-4">
-            <ErrorAlert
-              title="There was a problem with your request"
-              message={errorMsg}
-            />
+            <ErrorAlert title="We couldn’t sign you in" message={errorMsg} />
           </div>
         )}
 

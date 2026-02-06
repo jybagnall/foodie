@@ -6,6 +6,7 @@ import Button from "../UI/Button";
 import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
@@ -33,9 +34,10 @@ export default function Signup() {
       authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
-      const returnedErrorMsg =
-        err.response?.data?.error || "Unexpected signup error";
-      setErrorMsg(returnedErrorMsg);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsSignupProcessing(false);
     }
@@ -55,7 +57,7 @@ export default function Signup() {
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert
-              title="There was a problem with your request"
+              title="We couldn’t create your account"
               message={errorMsg}
             />
           </div>

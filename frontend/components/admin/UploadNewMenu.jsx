@@ -7,6 +7,7 @@ import Spinner from "../user_feedback/Spinner";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 // 🚩백엔드에 관리자만 업로드가 가능하도록 미들웨어를 넣어야 함
 export default function UploadNewMenu() {
@@ -14,7 +15,7 @@ export default function UploadNewMenu() {
   const [errorMsg, setErrorMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const authContext = useContext(AuthContext);
+  const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const {
     register,
@@ -60,9 +61,10 @@ export default function UploadNewMenu() {
       navigate("/admin/menu-preview", { replace: true });
     } catch (err) {
       console.error(err);
-      const returnedErrorMsg =
-        err.response?.data?.error || "Unexpected upload error";
-      setErrorMsg(returnedErrorMsg);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsUploadProcessing(false);
       reset(); // 모든 input 필드 값을 초기 상태로

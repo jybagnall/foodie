@@ -77,7 +77,8 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
       amount,
       currency,
       customer: customerId,
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ["card"],
+      //automatic_payment_methods: { enabled: true },
       setup_future_usage: req.body.saveCard ? "off_session" : undefined,
       metadata: {
         userId: req.user?.id, // 결제 추적을 위해 유용

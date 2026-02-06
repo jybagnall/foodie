@@ -10,6 +10,7 @@ import AdminService from "../../services/admin.service";
 import Spinner from "../user_feedback/Spinner";
 import AdminFeedback from "./AdminFeedback";
 import BackToAdminDash from "../UI/BackToAdminDash";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 export default function AdminInvite() {
   const {
@@ -22,7 +23,7 @@ export default function AdminInvite() {
     document.title = "Invite a new admin | Foodie";
   }, []);
 
-  const authContext = useContext(AuthContext);
+  const { accessToken } = useContext(AuthContext);
   const [isInviteProcessing, setIsInviteProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");
@@ -39,8 +40,11 @@ export default function AdminInvite() {
       const res = await adminService.inviteNewAdmin(email);
       setInviteSuccessMsg(res?.message);
     } catch (err) {
-      const returnedErrorMsg = err?.response?.data?.error || err.message;
-      setErrorMsg(returnedErrorMsg);
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsInviteProcessing(false);
     }

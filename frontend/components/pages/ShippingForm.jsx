@@ -8,6 +8,7 @@ import OrderService from "../../services/order.service";
 import AuthContext from "../../contexts/AuthContext";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Spinner from "../user_feedback/Spinner";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 export default function ShippingForm() {
   const {
@@ -17,7 +18,7 @@ export default function ShippingForm() {
   } = useForm();
 
   const { items, totalAmount } = useContext(CartContext);
-  const authContext = useContext(AuthContext);
+  const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -55,8 +56,11 @@ export default function ShippingForm() {
       const { orderId } = await orderService.initializeOrder(orderDetails);
       navigate(`/order/pay-order/${orderId}`);
     } catch (err) {
-      const returnedErrorMsg = err?.response?.data?.error || err.message;
-      setErrorMsg(returnedErrorMsg);
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsOrderProcessing(false);
     }

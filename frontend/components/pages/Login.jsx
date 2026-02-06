@@ -7,6 +7,7 @@ import Button from "../UI/Button";
 import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
+import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 // 없는 회원이 로그인을 시도했는데 서버 에러 혹은 유효하지 않은 토큰이라고 나옴.
 export default function Login() {
@@ -33,8 +34,11 @@ export default function Login() {
       const { accessToken } = await accountService.loginUser(email, password);
       authContext.handleLoginSuccess(accessToken);
     } catch (err) {
-      const returnedErrorMsg = err?.response?.data?.error || err.message;
-      setErrorMsg(returnedErrorMsg);
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsLoginProcessing(false);
     }
@@ -53,7 +57,7 @@ export default function Login() {
       <div className="w-full max-w-lg">
         {errorMsg && (
           <div className="mb-4">
-            <ErrorAlert title="There was a problem" message={errorMsg} />
+            <ErrorAlert title="We couldn’t sign you in" message={errorMsg} />
           </div>
         )}
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../../contexts/AuthContext";
 import Spinner from "../user_feedback/Spinner";
@@ -12,7 +12,6 @@ export default function UserStatus() {
   const navigate = useNavigate();
   const [isSavingCart, setIsSavingCart] = useState(false);
 
-  const authContext = useContext(AuthContext);
   const { toggleSidebar } = useContext(SidebarContext);
   const { clearCart, items } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =

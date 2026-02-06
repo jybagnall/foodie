@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PaymentElement } from "@stripe/react-stripe-js/checkout";
-import { useStripe, useElements } from "@stripe/react-stripe-js";
+import { PaymentElement } from "@stripe/react-stripe-js";
 
 import Button from "../../UI/Button";
 import CartContext from "../../../contexts/CartContext";
@@ -9,16 +8,15 @@ import PaymentService from "../../../services/payment.service";
 import AuthContext from "../../../contexts/AuthContext";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import Spinner from "../../user_feedback/Spinner";
+import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
 
-export default function PaymentForm({ orderId }) {
+export default function PaymentForm({ orderId, stripe, elements }) {
   const { items, totalAmount } = useContext(CartContext);
-  const authContext = useContext(AuthContext);
+  const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
-  const stripe = useStripe();
-  const elements = useElements();
 
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -30,8 +28,6 @@ export default function PaymentForm({ orderId }) {
     e.preventDefault();
     setIsPayProcessing(true);
     setErrorMsg("");
-
-    if (!stripe || !elements) return;
 
     if (cardholderName.trim() === "") {
       setErrorMsg("Please enter the name on the card.");
@@ -70,6 +66,7 @@ export default function PaymentForm({ orderId }) {
         return;
       }
 
+      // ❗charges.data는 비동기 확정, confirmPayment 직후에는 charges.data가 빈 배열일 수 있음. retrievePaymentIntent로 분리 추천
       const paymentIntent = result.paymentIntent;
       const cardDetails =
         paymentIntent.charges?.data?.[0]?.payment_method_details?.card;
@@ -93,9 +90,11 @@ export default function PaymentForm({ orderId }) {
         navigate("/order/order-completed"); // 주문 번호 필요하지 않음??
       }
     } catch (err) {
-      const returnedErrorMsg = err?.response?.data?.error || err.message;
-      console.error("DB save failed:", returnedErrorMsg);
-      setErrorMsg(returnedErrorMsg);
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
     } finally {
       setIsPayProcessing(false);
     }
@@ -126,51 +125,47 @@ export default function PaymentForm({ orderId }) {
           Payment
         </h2>
 
-        {!stripe || !elements ? (
-          <Spinner />
-        ) : (
-          <form onSubmit={handlePaymentSubmit}>
-            <input
-              type="text"
-              value={cardholderName}
-              onChange={(e) => setCardholderName(e.target.value)}
-              placeholder="Name on card"
-              className={`border rounded-md px-3 py-2 mt-1 w-full outline-none transition
+        <form onSubmit={handlePaymentSubmit}>
+          <input
+            type="text"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            placeholder="Name on card"
+            className={`border rounded-md px-3 py-2 mt-1 w-full outline-none transition
           ${inputError ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-blue-400"}
         `}
+          />
+          {inputError && (
+            <p className="text-red-500 text-sm mt-1">{errorMsg}</p>
+          )}
+          <PaymentElement />
+
+          <label className="flex items-center gap-2 mt-4">
+            <input
+              type="checkbox"
+              checked={saveCard}
+              onChange={() => setSaveCard(!saveCard)}
             />
-            {inputError && (
-              <p className="text-red-500 text-sm mt-1">{errorMsg}</p>
-            )}
-            <PaymentElement />
+            Save this card for future payments
+          </label>
 
-            <label className="flex items-center gap-2 mt-4">
-              <input
-                type="checkbox"
-                checked={saveCard}
-                onChange={() => setSaveCard(!saveCard)}
-              />
-              Save this card for future payments
-            </label>
-
-            <div className="flex justify-between items-center mt-8">
-              <Button
-                type="button"
-                textOnly
-                propStyle="text-gray-500 hover:text-gray-700"
-                onClick={onCancelSubmit}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
-              >
-                Place an order
-              </Button>
-            </div>
-          </form>
-        )}
+          <div className="flex justify-between items-center mt-8">
+            <Button
+              type="button"
+              textOnly
+              propStyle="text-gray-500 hover:text-gray-700"
+              onClick={onCancelSubmit}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
+            >
+              Place an order
+            </Button>
+          </div>
+        </form>
       </section>
     </main>
   );

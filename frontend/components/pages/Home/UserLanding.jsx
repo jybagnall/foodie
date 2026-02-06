@@ -2,14 +2,11 @@ import { useState, useEffect, useContext } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import MenuItem from "../Home/MenuItem";
 import MenuService from "../../../services/menu.service";
-import AuthContext from "../../../contexts/AuthContext";
 import MenuLoadError from "../../user_feedback/MenuLoadError";
 
 // 에러 메시지 렌더링을 넣어야 함
 // 빈 배열이면 로고가 떠야 하는데?
 export default function UserLanding() {
-  const authContext = useContext(AuthContext);
-
   const [menu, setMenu] = useState([]);
   const [isFetchProcessing, setIsFetchProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
