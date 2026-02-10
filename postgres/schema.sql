@@ -73,22 +73,40 @@ CREATE TABLE order_items (
   price NUMERIC(8,2) NOT NULL
 );
 
+-- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
+-- payment_status: succeeded, failed, refunded
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  order_id INT REFERENCES orders(id),
-  stripe_payment_intent_id VARCHAR(100) NOT NULL,
+  order_id INT REFERENCES orders(id) UNIQUE,
+  stripe_payment_intent_id VARCHAR(100) UNIQUE NOT NULL, 
   stripe_customer_id VARCHAR(100),
   amount NUMERIC(10,2) NOT NULL,
   currency VARCHAR(10) DEFAULT 'usd',
   payment_status VARCHAR(20) DEFAULT 'requires_payment',
-  payment_method VARCHAR(50),
   receipt_url TEXT,
-  card_brand VARCHAR(20),
-  card_last4 VARCHAR(10),
-  card_exp_month SMALLINT,
-  card_exp_year SMALLINT,
-  created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 )
---payment_status: succeeded, failed, refunded
+
+CREATE TABLE processed_stripe_events (
+  event_id VARCHAR(255) PRIMARY KEY,
+  processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 생성 전
+CREATE TABLE payment_methods (
+  id SERIAL PRIMARY KEY,
+  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL,
+  brand VARCHAR(20) NOT NULL,          -- visa, mastercard, amex 등
+  last4 VARCHAR(4) NOT NULL,
+  exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
+  exp_year SMALLINT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 생성 전
+CREATE TABLE order_payments (
+  order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  payment_method_id INT NOT NULL REFERENCES payment_methods(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (order_id)
+);

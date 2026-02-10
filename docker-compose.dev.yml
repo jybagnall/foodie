@@ -60,6 +60,20 @@ services:
     networks:
       - foodie-net
 
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-cli
+    env_file:
+      - ./stripe/.env
+    command: >
+      listen
+      --device-name local-docker
+      --forward-to backend:5000/api/stripe/webhook
+    depends_on:
+      - backend
+    networks:
+      - foodie-net
+
 volumes:
   pgdata:
 

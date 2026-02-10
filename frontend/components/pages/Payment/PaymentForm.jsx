@@ -1,103 +1,80 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js";
 
 import Button from "../../UI/Button";
-import CartContext from "../../../contexts/CartContext";
-import PaymentService from "../../../services/payment.service";
-import AuthContext from "../../../contexts/AuthContext";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import Spinner from "../../user_feedback/Spinner";
-import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
 
+// 🤔결제 실패/재시도 로직
+// 🤔새로고침/뒤로가기 대응
+// 🤔중복 결제 방지
+// 🤔Save this card for future payments
+// (linkOrderPaymentMethod, upsertPaymentMethod)
+
 export default function PaymentForm({ orderId, stripe, elements }) {
-  const { items, totalAmount } = useContext(CartContext);
-  const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [inputError, setInputError] = useState(false);
   const [saveCard, setSaveCard] = useState(false);
-  const [cardholderName, setCardholderName] = useState("");
 
+  const confirmStripePayment = async () => {
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/order/pay-order/${orderId}`,
+      }, // 3D Secure (은행 인증 페이지) 완료 후 리디렉팅되는 페이지
+      redirect: "if_required",
+    });
+
+    if (error) {
+      handlePaymentError(error);
+      return { status: "error" };
+    }
+
+    return { status: paymentIntent?.status, paymentIntent };
+  };
+
+  // 오류의 종류: 카드 번호 오류, 카드 한도 초과, CVC 오류, 3DS 인증 실패 처리
+  // Webhook 아직 안 옴, DB 저장 없음
+  const handlePaymentError = (err) => {
+    if (!err) return;
+    if (err.type === "card_error" || err.type === "validation_error") {
+      setErrorMsg(err.message);
+      return;
+    }
+    if (
+      err.code === "ECONNREFUSED" ||
+      err.code === "ENETUNREACH" ||
+      err.code === "ETIMEDOUT" ||
+      err.message?.includes("NetworkError")
+    ) {
+      setErrorMsg(
+        "A network issue occurred while processing your payment. Please try again in a few moments.",
+      );
+      return;
+    }
+    setErrorMsg("Something went wrong during payment. Please try again.");
+  };
+
+  // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     setIsPayProcessing(true);
     setErrorMsg("");
 
-    if (cardholderName.trim() === "") {
-      setErrorMsg("Please enter the name on the card.");
-      setInputError(true);
+    const result = await confirmStripePayment();
+
+    if (result?.status === "succeeded") {
+      navigate(`/order/order-completed`);
       return;
     }
 
-    const paymentService = new PaymentService(
-      new AbortController(),
-      () => accessToken,
-    );
-
-    try {
-      // 결제 승인 시도
-      const result = await stripe.confirmPayment({
-        elements, // <PaymentElement />가 생성한 카드 정보
-        confirmParams: {
-          payment_method_data: {
-            billing_details: {
-              name: cardholderName,
-            },
-          },
-          return_url: `${window.location.origin}/order/order-completed`,
-        }, // 3D Secure 인증 카드로 결제 후 리디렉팅되는 페이지
-        setup_future_usage: saveCard ? "off_session" : undefined,
-      });
-
-      if (result.error) {
-        console.error(result.error.message);
-        const userFriendlyMsg =
-          result.error.type === "card_error"
-            ? result.error.message
-            : "Something went wrong during payment. Please try again.";
-        setErrorMsg(userFriendlyMsg);
-        setIsPayProcessing(false);
-        return;
-      }
-
-      // ❗charges.data는 비동기 확정, confirmPayment 직후에는 charges.data가 빈 배열일 수 있음. retrievePaymentIntent로 분리 추천
-      const paymentIntent = result.paymentIntent;
-      const cardDetails =
-        paymentIntent.charges?.data?.[0]?.payment_method_details?.card;
-
-      const payDetails = {
-        order_id: orderId,
-        stripe_payment_intent_id: paymentIntent.id,
-        amount: paymentIntent.amount / 100,
-        currency: paymentIntent.currency,
-        payment_status: paymentIntent.status,
-        payment_method: paymentIntent.payment_method_types[0],
-        receipt_url: paymentIntent.charges?.data[0]?.receipt_url || null, // 결제 내역 보기
-        card_brand: cardDetails.brand,
-        card_last4: cardDetails.last4,
-        card_exp_month: cardDetails.exp_month,
-        card_exp_year: cardDetails.exp_year,
-      };
-
-      if (paymentIntent.status === "succeeded") {
-        await paymentService.PayForOrder(payDetails);
-        navigate("/order/order-completed"); // 주문 번호 필요하지 않음??
-      }
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsPayProcessing(false);
-    }
+    setIsPayProcessing(false);
   };
 
   const onCancelSubmit = () => {
@@ -126,28 +103,16 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         </h2>
 
         <form onSubmit={handlePaymentSubmit}>
-          <input
-            type="text"
-            value={cardholderName}
-            onChange={(e) => setCardholderName(e.target.value)}
-            placeholder="Name on card"
-            className={`border rounded-md px-3 py-2 mt-1 w-full outline-none transition
-          ${inputError ? "border-red-500 ring-1 ring-red-500" : "border-gray-300 focus:ring-2 focus:ring-blue-400"}
-        `}
-          />
-          {inputError && (
-            <p className="text-red-500 text-sm mt-1">{errorMsg}</p>
-          )}
           <PaymentElement />
 
-          <label className="flex items-center gap-2 mt-4">
+          {/* <label className="flex items-center gap-2 mt-4">
             <input
               type="checkbox"
               checked={saveCard}
               onChange={() => setSaveCard(!saveCard)}
             />
             Save this card for future payments
-          </label>
+          </label> */}
 
           <div className="flex justify-between items-center mt-8">
             <Button

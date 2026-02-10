@@ -10,43 +10,24 @@ export async function findUniqueOrder(orderId) {
   return result.rows[0];
 }
 
-export async function savePaymentInfo(paymentDetails) {
+export async function hasProcessedEvent(eventId) {
   const q = `
-    INSERT INTO payments (
-      user_id,
-      order_id,
-      stripe_payment_intent_id,
-      stripe_customer_id,
-      amount,
-      currency,
-      payment_status,
-      payment_method,
-      receipt_url,
-      card_brand,
-      card_last4,
-      card_exp_month,
-      card_exp_year)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    `;
+    SELECT 1 
+    FROM processed_stripe_events 
+    WHERE event_id = $1
+  `;
+  const result = await pool.query(q, [eventId]);
+  return result.rowCount > 0;
+}
 
-  const values = [
-    paymentDetails.user_id,
-    paymentDetails.order_id,
-    paymentDetails.stripe_payment_intent_id,
-    paymentDetails.stripe_customer_id,
-    paymentDetails.amount,
-    paymentDetails.currency,
-    paymentDetails.payment_status,
-    paymentDetails.payment_method,
-    paymentDetails.receipt_url,
-    paymentDetails.card_brand,
-    paymentDetails.card_last4,
-    paymentDetails.card_exp_month,
-    paymentDetails.card_exp_year,
-  ];
-
+export async function linkOrderPaymentMethod() {
+  const q = `
+    INSERT INTO order_payments (order_id, payment_method_id)
+    VALUES ($1, $2)
+    ON CONFLICT (order_id) DO NOTHING;
+  `;
   try {
-    await pool.query(q, values);
+    await pool.query(q, [orderId, paymentMethodId]);
     return { success: true };
   } catch (err) {
     console.error("DB insert error", err.message);
@@ -54,19 +35,101 @@ export async function savePaymentInfo(paymentDetails) {
   }
 }
 
-export async function updatePaymentStatus(paymentId, status = "refunded") {
+// 이 Stripe 이벤트는 이미 처리했다는 사실을 DB에 기록
+export async function markEventAsProcessed(eventId) {
   const q = `
-    UPDATE payments
-    SET payment_status = $1, updated_at = NOW()
-    WHERE id = $2
+    INSERT INTO processed_stripe_events (event_id) 
+    VALUES ($1)
+    ON CONFLICT DO NOTHING
+  `;
+  const result = await pool.query(q, [eventId]);
+  return result.rowCount === 1; // true면 이번에 처음 처리
+}
+
+export async function savePaymentInfo(client, paymentDetails) {
+  const q = `
+    INSERT INTO payments (
+      order_id,
+      stripe_payment_intent_id,
+      stripe_customer_id,
+      amount,
+      currency,
+      payment_status,
+      receipt_url,
+      )
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
-  const values = [status, paymentId];
+
+  const values = [
+    paymentDetails.order_id,
+    paymentDetails.stripe_payment_intent_id,
+    paymentDetails.stripe_customer_id,
+    paymentDetails.amount,
+    paymentDetails.currency,
+    paymentDetails.payment_status,
+    paymentDetails.receipt_url,
+  ];
 
   try {
-    await pool.query(q, values);
+    await client.query(q, values);
+    return { success: true };
+  } catch (err) {
+    console.error("DB insert error", err.message);
+    throw err;
+  }
+}
+
+// "refunded"가 왜 기본값일까
+export async function updatePaymentStatus(
+  client,
+  orderId,
+  status = "refunded",
+) {
+  const q = `
+    UPDATE payments
+    SET payment_status = $1, 
+        updated_at = NOW()
+    WHERE order_id = $2
+      AND payment_status != 'paid'
+    `;
+  const values = [status, orderId];
+
+  try {
+    await client.query(q, values);
     return { success: true };
   } catch (err) {
     console.error("DB update error", err.message);
     throw err;
   }
+}
+
+export async function upsertPaymentMethod(card) {
+  const q = `
+    INSERT INTO payment_methods (
+      stripe_payment_method_id,
+      brand,
+      last4,
+      exp_month,
+      exp_year
+    )
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (stripe_payment_method_id)
+    DO UPDATE SET
+      brand = EXCLUDED.brand,
+      last4 = EXCLUDED.last4,
+      exp_month = EXCLUDED.exp_month,
+      exp_year = EXCLUDED.exp_year
+    RETURNING id;
+  `;
+
+  const values = [
+    card.payment_method_id, // pm_xxx
+    card.brand,
+    card.last4,
+    card.exp_month,
+    card.exp_year,
+  ];
+
+  const { rows } = await pool.query(q, values);
+  return rows[0].id;
 }

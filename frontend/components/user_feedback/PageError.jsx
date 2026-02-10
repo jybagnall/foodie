@@ -1,7 +1,10 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 // what color is bg-[#111827]?
-export default function MenuLoadError() {
+export default function PageError({
+  title = "An unexpected error occured",
+  message = " Please try refreshing the page or come back later.",
+}) {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center 
@@ -11,7 +14,7 @@ export default function MenuLoadError() {
         <ExclamationTriangleIcon className="h-6 w-6 text-orange-400 mt-0.5 shrink-0" />
 
         <p className="text-yellow-400 font-semibold text-lg leading-tight">
-          An unexpected error occured.
+          {title}
         </p>
       </div>
 
@@ -30,7 +33,7 @@ export default function MenuLoadError() {
       </div>
 
       <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-md leading-relaxed">
-        Please try refreshing the page or come back later.
+        {message}
       </p>
     </div>
   );

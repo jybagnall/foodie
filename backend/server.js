@@ -14,6 +14,7 @@ import menuRoutes from "./app/routes/menu.js";
 import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
 import cartRoutes from "./app/routes/cart.js";
+import stripeWebhookRoute from "./app/routes/stripeWebhook.js";
 
 const app = express();
 
@@ -25,10 +26,19 @@ const server = http.createServer(app); // create HTTP server
 const PORT = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";
 
+app.use("/api/stripe", stripeWebhookRoute);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use("/api/accounts", accountRoutes);
+app.use("/api/admins", adminRoutes);
+app.use("/api/menu", menuRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/carts", cartRoutes);
 
 app.use(
   cors({
@@ -37,13 +47,6 @@ app.use(
     methods: ["GET", "POST", "PATCH", "DELETE"],
   }),
 );
-
-app.use("/api/accounts", accountRoutes);
-app.use("/api/admins", adminRoutes);
-app.use("/api/menu", menuRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/carts", cartRoutes);
 
 app.use((req, res, next) => {
   console.log(
