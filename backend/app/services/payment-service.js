@@ -55,7 +55,7 @@ export async function savePaymentInfo(client, paymentDetails) {
       amount,
       currency,
       payment_status,
-      receipt_url,
+      receipt_url
       )
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;

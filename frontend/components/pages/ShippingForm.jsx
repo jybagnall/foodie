@@ -209,7 +209,11 @@ export default function ShippingForm() {
             >
               Cancel
             </Button>
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition">
+            <Button
+              type="submit"
+              disabled={isOrderProcessing}
+              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
+            >
               Next
             </Button>
           </div>

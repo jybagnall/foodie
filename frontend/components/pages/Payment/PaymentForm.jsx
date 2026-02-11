@@ -37,7 +37,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
     }
 
     return { status: paymentIntent?.status, paymentIntent };
-  };
+  }; // 🤔paymentIntent가 더 이상 쓰이지 않음
 
   // 오류의 종류: 카드 번호 오류, 카드 한도 초과, CVC 오류, 3DS 인증 실패 처리
   // Webhook 아직 안 옴, DB 저장 없음
@@ -48,13 +48,16 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       return;
     }
     if (
+      err.type === "api_error" ||
+      err.type === "api_connection_error" ||
+      err.type === "rate_limit_error" ||
       err.code === "ECONNREFUSED" ||
       err.code === "ENETUNREACH" ||
       err.code === "ETIMEDOUT" ||
       err.message?.includes("NetworkError")
     ) {
       setErrorMsg(
-        "A network issue occurred while processing your payment. Please try again in a few moments.",
+        "We're having trouble connecting to the payment service. Please try again in a few moments.",
       );
       return;
     }
@@ -64,17 +67,22 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
+
+    if (isPayProcessing) return; // 중복 요청의 차단 ??
     setIsPayProcessing(true);
     setErrorMsg("");
 
     const result = await confirmStripePayment();
 
+    // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
     if (result?.status === "succeeded") {
-      navigate(`/order/order-completed`);
+      navigate(`/order/order-completed/${orderId}`, { replace: true });
       return;
     }
 
-    setIsPayProcessing(false);
+    if (result?.status === "error") {
+      setIsPayProcessing(false);
+    }
   };
 
   const onCancelSubmit = () => {
@@ -85,7 +93,8 @@ export default function PaymentForm({ orderId, stripe, elements }) {
     document.title = "Payment | Foodie";
   }, []);
 
-  if (isPayProcessing) return <Spinner />;
+  // ❌오류가 뜬 이유
+  // if (isPayProcessing) return <Spinner />;
 
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
@@ -125,6 +134,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
             </Button>
             <Button
               type="submit"
+              disabled={isPayProcessing}
               className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
             >
               Place an order

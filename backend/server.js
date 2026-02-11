@@ -26,6 +26,7 @@ const server = http.createServer(app); // create HTTP server
 const PORT = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";
 
+// Stripe webhook은 express.json()보다 먼저, 단독 등록
 app.use("/api/stripe", stripeWebhookRoute);
 
 app.use(express.json());

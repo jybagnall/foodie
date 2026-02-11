@@ -37,8 +37,10 @@ async function handleStripeEvent(event) {
 }
 
 // POST /api/stripe/webhook
+// Webhook 라우트는 성공 / 실패만 Stripe에게 알린다 ?
 // constructEvent: Webhook 요청이 진짜 Stripe에서 왔는지 검증하는 용도
 // Webhook은 반드시 raw body를 써야 함
+// 여기서 보내는 에러는 Stripe 서버가 받음
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),

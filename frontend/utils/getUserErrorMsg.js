@@ -5,12 +5,12 @@ export function getUserErrorMessage(err) {
   }
 
   // Network error
-  if (err?.code === "ERR_NETWORK") {
+  if (err?.code === "ERR_NETWORK" || err?.code === "ECONNABORTED") {
     return "Please check your network connection and try again.";
   }
 
   // Request canceled (e.g., page navigation)
-  if (err?.name === "CanceledError") {
+  if (err?.name === "CanceledError" || err?.code === "ERR_CANCELED") {
     return null; // Do not show anything to the user
   }
 

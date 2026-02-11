@@ -30,7 +30,7 @@ router.post("/cancel-order/:orderId", verifyUserAuth, async (req, res) => {
         payment_intent: payment.stripe_payment_intent_id,
       });
       await updatePaymentStatus(payment.id, "refunded");
-      await updateOrderStatus("cancelled", orderId);
+      // await updateOrderStatus("cancelled", orderId);
     }
 
     res.status(200).json({ message: "Order cancelled and refunded." });
@@ -56,8 +56,17 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
       if (err.code === "resource_missing") {
         customerExists = false;
       } else {
-        console.error("Unexpected Stripe error:", err);
-        throw err;
+        console.error("Stripe customer retrieve failed", {
+          userId: req.user.id,
+          customerId,
+          code: err.code,
+        });
+
+        return res.status(502).json({
+          errorCode: "PAYMENT_SERVICE_UNAVAILABLE",
+          error:
+            "Payment service is temporarily unavailable. Please try again later.",
+        });
       }
     }
 
@@ -100,62 +109,5 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
     });
   }
 });
-
-// router.post("/pay-order", verifyUserAuth, async (req, res) => {
-//   try {
-//     const {
-//       order_id,
-//       stripe_payment_intent_id,
-//       amount,
-//       currency,
-//       payment_status,
-//       payment_method,
-//       receipt_url,
-//       card_brand,
-//       card_last4,
-//       card_exp_month,
-//       card_exp_year,
-//     } = req.body;
-
-//     const paymentDetails = {
-//       user_id: req.user.id,
-//       order_id,
-//       stripe_payment_intent_id,
-//       stripe_customer_id: req.user.stripe_customer_id,
-//       amount,
-//       currency,
-//       payment_status,
-//       payment_method,
-//       receipt_url,
-//       card_brand,
-//       card_last4,
-//       card_exp_month,
-//       card_exp_year,
-
-//     };
-//     // transaction으로 바꿔야 함
-//     await savePaymentInfo(paymentDetails);
-//     await updateOrderStatus("paid", order_id);
-//     res.status(201).json({ message: "Payment stored successfully." });
-//   } catch (err) {
-//     console.error("Order error,", err.message);
-// if (err.type === "StripeCardError") {
-//   return res.status(402).json({
-//     error:
-//       "Your card was declined. Please check your payment details and try again.",
-//   });
-// } else if (err.code === "ECONNREFUSED" || err.code === "ENETUNREACH") {
-//   return res.status(500).json({
-//     error:
-//       "A network issue occurred while processing your payment. Please try again later.",
-//   });
-// } else {
-//   return res.status(500).json({
-//     error:
-//       "We're having trouble connecting to the payment service. Please try again in a few moments.",
-//   });
-// }
-//   }
-// });
 
 export default router;

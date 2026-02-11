@@ -20,11 +20,11 @@ import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import MenuLiveView from "./admin/MenuLiveView";
 import MyAccount from "./sidebar_layout/MyAccount";
-import OrderSuccess from "./user_feedback/OrderSuccess";
 import UserLayout from "./routes/UserLayout";
 import OrderLayout from "./routes/OrderLayout";
 import OrderPayment from "./pages/Payment/OrderPayment";
 import ViewCart from "./pages/ViewCart";
+import OrderConfirmation from "./user_feedback/OrderConfirmation";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 // 모달을 Route로 렌더링하려 하면 안됨
@@ -62,7 +62,10 @@ export default function App() {
               >
                 <Route path="shipping" element={<ShippingForm />} />
                 <Route path="pay-order/:orderId" element={<OrderPayment />} />
-                <Route path="order-completed" element={<OrderSuccess />} />
+                <Route
+                  path="order-completed/:orderId"
+                  element={<OrderConfirmation />}
+                />
               </Route>
 
               {/* ✅✅✅ */}

@@ -73,7 +73,7 @@ export async function saveShippingInfo(userId, address) {
   }
 }
 
-export async function updateOrderStatus(status, orderId) {
+export async function updateOrderStatus(client, orderId, status) {
   const q = `
     UPDATE orders
     SET status = $1
@@ -82,7 +82,7 @@ export async function updateOrderStatus(status, orderId) {
 
   const values = [status, orderId];
   try {
-    await pool.query(q, values);
+    await client.query(q, values);
     return { success: true };
   } catch (err) {
     console.error("DB update error", err.message);
