@@ -29,8 +29,9 @@ export default function OrderPayment() {
     () => accessToken,
   );
 
-  // 해당 결제에 대한 준비, race condition을 막는 장치
-  // PaymentIntent(금액, 통화, customerId)는 서버에서 고정됨. 결제주문서
+  // 해당 결제에 대한 준비, race condition을 막는 장치 넣음.
+  // PaymentIntent(금액, 통화, customerId)는 서버에서 고정됨,
+  // 즉 결제 주문서
   // clientSecret = 그 주문서를 열 수 있는 1회용 코드
   // ❗렌더링마다 Elements 안의 clientSecret 객체가 새로 만들어짐
   useEffect(() => {
@@ -60,20 +61,21 @@ export default function OrderPayment() {
     };
   }, [totalAmount, orderId]);
 
+  // 3D Secure 인증 후 URL에 ?redirect_status=succeeded 붙어서 돌아옴
   const redirectStatus = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("redirect_status");
   }, []);
 
+  // Stripe 쪽 인증 + 결제 흐름은 끝났으나 결제 완료 확정은 아님
+  // ❗ DB 저장은 Webhook 또는 이전 단계에서 처리됐다고 가정?
+  // ❗ 3DS 필요해서 브라우저 리디렉션 발생했을 때 처리법, 잘되는지 체크해볼 것
   useEffect(() => {
-    // ❗ Stripe 쪽 인증 + 결제 흐름은 끝났으나 결제 완료 확정은 아님
-    // ❗ DB 저장은 Webhook 또는 이전 단계에서 처리됐다고 가정?
-    // 3DS 필요해서 브라우저 리디렉션 발생했을 때 처리법, 잘되는지 체크해볼 것
     if (redirectStatus === "succeeded") {
       navigate(`/order/order-completed/${orderId}`, { replace: true });
       return;
     }
-  }, [redirectStatus, navigate]);
+  }, [redirectStatus, navigate, orderId]);
 
   // 결제 안정성 보장을 위한 useMemo, 왜?
   // <Elements>는 한 번 초기화되면 options가 바뀌는 걸 절대 허용하지 않는다

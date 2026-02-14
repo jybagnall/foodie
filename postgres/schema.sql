@@ -87,6 +87,18 @@ CREATE TABLE payments (
   updated_at TIMESTAMP DEFAULT NOW()
 )
 
+-- 이벤트 저장
+CREATE TABLE stripe_events (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  status TEXT DEFAULT 'pending',
+  retry_count INT DEFAULT 0,
+  last_error TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 쓰지 않을 예정, 삭제해야됨
 CREATE TABLE processed_stripe_events (
   event_id VARCHAR(255) PRIMARY KEY,
   processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

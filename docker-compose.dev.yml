@@ -74,6 +74,30 @@ services:
     networks:
       - foodie-net
 
+  stripe-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-dev
+    working_dir: /app
+    command: npm run worker
+    container_name: foodie-stripe-worker
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=foodie-db
+      - DB_PORT=5432
+      - DB_SSL=false
+      - DOCKERIZED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./postgres/.env
+    networks:
+      - foodie-net
+
 volumes:
   pgdata:
 

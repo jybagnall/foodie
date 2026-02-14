@@ -1,11 +1,8 @@
 import express from "express";
 import Stripe from "stripe";
-import { updateOrderStatus } from "../services/order-service.js";
-import { saveStripeCustomerId } from "../services/account-service.js";
 import { updateUserStripeId } from "../services/account-service.js";
 import {
   findUniqueOrder,
-  savePaymentInfo,
   updatePaymentStatus,
 } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";

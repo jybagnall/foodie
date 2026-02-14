@@ -17,11 +17,11 @@ import Spinner from "../../user_feedback/Spinner";
 
 export default function PaymentForm({ orderId, stripe, elements }) {
   const navigate = useNavigate();
-
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [saveCard, setSaveCard] = useState(false);
 
+  // 결제 트리거 함수.
+  // paymentIntent: 결제가 지금 어디까지 왔는지 알려주는 상태
   const confirmStripePayment = async () => {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -36,8 +36,8 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       return { status: "error" };
     }
 
-    return { status: paymentIntent?.status, paymentIntent };
-  }; // 🤔paymentIntent가 더 이상 쓰이지 않음
+    return { status: paymentIntent?.status };
+  };
 
   // 오류의 종류: 카드 번호 오류, 카드 한도 초과, CVC 오류, 3DS 인증 실패 처리
   // Webhook 아직 안 옴, DB 저장 없음
@@ -93,7 +93,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
     document.title = "Payment | Foodie";
   }, []);
 
-  // ❌오류가 뜬 이유
+  // ❌오류가 뜬 이유: Stripe Elements가 결제 중 DOM에서 제거됨.
   // if (isPayProcessing) return <Spinner />;
 
   return (
@@ -113,15 +113,6 @@ export default function PaymentForm({ orderId, stripe, elements }) {
 
         <form onSubmit={handlePaymentSubmit}>
           <PaymentElement />
-
-          {/* <label className="flex items-center gap-2 mt-4">
-            <input
-              type="checkbox"
-              checked={saveCard}
-              onChange={() => setSaveCard(!saveCard)}
-            />
-            Save this card for future payments
-          </label> */}
 
           <div className="flex justify-between items-center mt-8">
             <Button

@@ -10,16 +10,6 @@ export async function findUniqueOrder(orderId) {
   return result.rows[0];
 }
 
-export async function hasProcessedEvent(eventId) {
-  const q = `
-    SELECT 1 
-    FROM processed_stripe_events 
-    WHERE event_id = $1
-  `;
-  const result = await pool.query(q, [eventId]);
-  return result.rowCount > 0;
-}
-
 export async function linkOrderPaymentMethod() {
   const q = `
     INSERT INTO order_payments (order_id, payment_method_id)
@@ -33,17 +23,6 @@ export async function linkOrderPaymentMethod() {
     console.error("DB insert error", err.message);
     throw err;
   }
-}
-
-// 이 Stripe 이벤트는 이미 처리했다는 사실을 DB에 기록
-export async function markEventAsProcessed(eventId) {
-  const q = `
-    INSERT INTO processed_stripe_events (event_id) 
-    VALUES ($1)
-    ON CONFLICT DO NOTHING
-  `;
-  const result = await pool.query(q, [eventId]);
-  return result.rowCount === 1; // true면 이번에 처음 처리
 }
 
 export async function savePaymentInfo(client, paymentDetails) {
