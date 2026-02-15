@@ -63,7 +63,7 @@ CREATE TABLE orders (
   status VARCHAR(20) DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW()
 );
---status: pending, paid, cancelled
+--status: pending, paid, cancelled (preparing, delievered)
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
@@ -74,7 +74,7 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: paid, failed, refunded
+-- payment_status: requires_payment, paid, failed, refunded
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,
@@ -83,7 +83,6 @@ CREATE TABLE payments (
   amount NUMERIC(10,2) NOT NULL,
   currency VARCHAR(10) DEFAULT 'usd',
   payment_status VARCHAR(20) DEFAULT 'requires_payment',
-  receipt_url TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 )
 
@@ -98,11 +97,7 @@ CREATE TABLE stripe_events (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 쓰지 않을 예정, 삭제해야됨
-CREATE TABLE processed_stripe_events (
-  event_id VARCHAR(255) PRIMARY KEY,
-  processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+
 
 -- 생성 전
 CREATE TABLE payment_methods (

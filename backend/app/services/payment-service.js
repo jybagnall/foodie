@@ -25,6 +25,7 @@ export async function linkOrderPaymentMethod() {
   }
 }
 
+// Stripe 재시도로 같은 이벤트가 들어왔다면 시간만 업데이트
 export async function savePaymentInfo(client, paymentDetails) {
   const q = `
     INSERT INTO payments (
@@ -34,9 +35,11 @@ export async function savePaymentInfo(client, paymentDetails) {
       amount,
       currency,
       payment_status,
-      receipt_url
       )
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT (stripe_payment_intent_id)
+    DO UPDATE
+    SET updated_at = NOW();
     `;
 
   const values = [
@@ -46,7 +49,6 @@ export async function savePaymentInfo(client, paymentDetails) {
     paymentDetails.amount,
     paymentDetails.currency,
     paymentDetails.payment_status,
-    paymentDetails.receipt_url,
   ];
 
   try {
@@ -58,18 +60,12 @@ export async function savePaymentInfo(client, paymentDetails) {
   }
 }
 
-// "refunded"가 왜 기본값일까
-export async function updatePaymentStatus(
-  client,
-  orderId,
-  status = "refunded",
-) {
+export async function updatePaymentStatus(client, orderId, status) {
   const q = `
     UPDATE payments
     SET payment_status = $1, 
         updated_at = NOW()
     WHERE order_id = $2
-      AND payment_status != 'paid'
     `;
   const values = [status, orderId];
 

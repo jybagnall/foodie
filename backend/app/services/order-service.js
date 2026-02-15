@@ -78,6 +78,7 @@ export async function updateOrderStatus(client, orderId, status) {
     UPDATE orders
     SET status = $1
     WHERE id = $2
+    AND status != $1
     `;
 
   const values = [status, orderId];

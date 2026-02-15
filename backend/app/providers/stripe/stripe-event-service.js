@@ -1,8 +1,8 @@
 import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
-} from "./stripe-service.js";
-import pool from "../config/db.js";
+} from "./stripe-handlers.js";
+import pool from "../../config/db.js";
 
 const handlers = {
   "payment_intent.succeeded": handlePaymentIntentSucceeded,

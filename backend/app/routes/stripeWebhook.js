@@ -2,7 +2,7 @@ import express from "express";
 import Stripe from "stripe";
 import pool from "../config/db.js";
 
-// ❗Webhook 에러 재처리 전략
+// ❗Webhook 에러 알림 받기
 // ❗Webhook이 아예 실패했을 가능성 대비해서 물어볼 수 있음:
 // stripe.paymentIntents.retrieve(paymentIntentId)
 // ❗환불 처리 (charge.refunded), 별도의 테이블이 필요함
@@ -35,8 +35,8 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행할 예정
-    //  Worker를 직접 호출하지 않고, setInterval로 5초마다 자동 실행 중.
+    // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행됨.
+    // Worker를 직접 호출하지 않고, setInterval로 3초마다 자동 실행 중.
     try {
       await pool.query(
         `
@@ -50,14 +50,14 @@ router.post(
     } catch (err) {
       console.error("Webhook handler error:", err);
 
-      // 영구적인 오류
+      // 영구적인 오류, Worker에서 dead 상태가 될 거임.
       if (err.message.includes("Missing orderId")) {
         return res.status(200).end();
       }
 
       res.status(500).send("Webhook handler failed");
-    } //❗🤔 Stripe 재시도를 트리거하기 위한 신호, Worker와는 관계 없음.
-  },
+    } // Stripe 에게 이벤트를 다시 보내라고 신호함.
+  }, // Worker와는 관계 없음.
 );
 
 export default router;
