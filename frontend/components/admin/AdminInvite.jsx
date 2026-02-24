@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom";
 import { useState, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
 import Button from "../UI/Button";

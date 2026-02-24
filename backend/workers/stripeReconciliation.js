@@ -30,4 +30,4 @@ async function reconcileStripeEvents() {
   }
 }
 
-setInterval(reconcileStripeEvents, 60 * 60 * 1000); // 1시간마다
+setInterval(reconcileStripeEvents, 60 * 60 * 1000);

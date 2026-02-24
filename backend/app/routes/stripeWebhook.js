@@ -15,12 +15,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // POST /api/stripe/webhook
 // 결제 시도 후, Stripe가 상태를 확정 후 Webhook URL 호출함.
 
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
+export const stripeWebhookHandler = async (req, res) => {
     const sig = req.headers["stripe-signature"];
-
     let event;
 
     // Webhook 요청이 Stripe에서 왔는지 검증 & 안전한 event 객체로 만듬.
@@ -31,8 +27,12 @@ router.post(
         process.env.STRIPE_WEBHOOK_SECRET,
       );
     } catch (err) {
-      console.error("Webhook signature verification failed.", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      console.error("Webhook signature verification failed.", {
+  type: err?.type,
+  message: err?.message,
+  requestId: err?.requestId
+});
+      return res.status(400).end();
     }
 
     // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행됨.
@@ -49,15 +49,9 @@ router.post(
       res.status(200).end(); // Stripe에게 이벤트 잘 받음을 알림
     } catch (err) {
       console.error("Webhook handler error:", err);
-
-      // 영구적인 오류, Worker에서 dead 상태가 될 거임.
-      if (err.message.includes("Missing orderId")) {
-        return res.status(200).end();
-      }
-
       res.status(500).send("Webhook handler failed");
     } // Stripe 에게 이벤트를 다시 보내라고 신호함.
-  }, // Worker와는 관계 없음.
-);
+  }, 
+
 
 export default router;

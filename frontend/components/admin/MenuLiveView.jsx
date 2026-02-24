@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import UserLanding from "../pages/Home/UserLanding";
 import BackToAdminDash from "../UI/BackToAdminDash";
 

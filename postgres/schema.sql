@@ -94,10 +94,27 @@ CREATE TABLE stripe_events (
   status TEXT DEFAULT 'pending',
   retry_count INT DEFAULT 0,
   last_error TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  notified_at TIMESTAMP NULL,
+  resolved_at TIMESTAMP NULL
 );
 
+-- partial index: dead 상태이고 아직 알림 안 간 이벤트만 DB가 모아둠
+CREATE INDEX idx_stripe_dead_unnotified
+ON stripe_events (id)
+WHERE status = 'dead'
+AND notified_at IS NULL;
 
+CREATE INDEX idx_stripe_failed_unresolved
+ON stripe_events (created_at DESC, id DESC)
+WHERE status = 'failed'
+AND retry_count >= 3
+AND resolved_at IS NULL;
+
+CREATE INDEX idx_stripe_dead_unresolved
+ON stripe_events (created_at DESC, id DESC)
+WHERE status = 'dead'
+AND resolved_at IS NULL;
 
 -- 생성 전
 CREATE TABLE payment_methods (

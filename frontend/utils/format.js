@@ -6,3 +6,23 @@ export const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
+
+export function getTimeRangeStart(rangeKey) {
+  if (!rangeKey) return null;
+
+  const now = new Date();
+
+  const ranges = {
+    "30m": 30 * 60 * 1000,
+    "1h": 60 * 60 * 1000,
+    "3h": 3 * 60 * 60 * 1000,
+    "6h": 6 * 60 * 60 * 1000,
+    "12h": 12 * 60 * 60 * 1000,
+    "24h": 24 * 60 * 60 * 1000,
+  };
+
+  const diff = ranges[rangeKey];
+  if (!diff) return null;
+
+  return new Date(now.getTime() - diff).toISOString();
+} // ISO 문자열로 변환: "2026-02-22T05:12:31.234Z"

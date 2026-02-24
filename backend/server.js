@@ -14,7 +14,8 @@ import menuRoutes from "./app/routes/menu.js";
 import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
 import cartRoutes from "./app/routes/cart.js";
-import stripeWebhookRoute from "./app/routes/stripeWebhook.js";
+import stripeRoutes from "./app/routes/stripe.js";
+import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js/"
 
 const app = express();
 
@@ -27,7 +28,12 @@ const PORT = process.env.PORT || 5000;
 const host = process.env.HOST || "0.0.0.0";
 
 // Stripe webhook은 express.json()보다 먼저, 단독 등록
-app.use("/api/stripe", stripeWebhookRoute);
+// Stripe 전용 raw endpoint
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhookHandler
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -40,6 +46,7 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/carts", cartRoutes);
+app.use("/api/stripe", stripeRoutes);
 
 app.use(
   cors({

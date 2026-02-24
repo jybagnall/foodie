@@ -5,6 +5,7 @@ import {
   ArrowUpRightIcon,
   EnvelopeIcon,
   HomeIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 const actions = [
@@ -33,6 +34,13 @@ const actions = [
     title: "Invite a new admin",
     to: "/admin/invite",
     icon: EnvelopeIcon,
+    iconForeground: "text-green-700",
+    iconBackground: "bg-green-50",
+  },
+  {
+    title: "Monitor Errored Stripe Events",
+    to: "/admin/events-monitor",
+    icon: ExclamationTriangleIcon,
     iconForeground: "text-pink-700",
     iconBackground: "bg-pink-50",
   },

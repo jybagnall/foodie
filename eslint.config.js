@@ -13,6 +13,7 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
+      globals: globals.browser,
     },
     extends: [js.configs.recommended],
     rules: {

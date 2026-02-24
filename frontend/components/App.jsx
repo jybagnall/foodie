@@ -25,6 +25,7 @@ import OrderLayout from "./routes/OrderLayout";
 import OrderPayment from "./pages/Payment/OrderPayment";
 import ViewCart from "./pages/ViewCart";
 import OrderConfirmation from "./user_feedback/OrderConfirmation";
+import StripeEventMonitor from "./StripeEventMonitor/StripeEventMonitor";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 // 모달을 Route로 렌더링하려 하면 안됨
@@ -83,6 +84,7 @@ export default function App() {
                 <Route path="menu-preview" element={<MenuLiveView />} />
                 <Route path="invite" element={<AdminInvite />} />
                 <Route path="account" element={<AdminAccount />} />
+                <Route path="events-monitor" element={<StripeEventMonitor />} />
               </Route>
 
               <Route path="*" element={<PageNotFound />} />
