@@ -22,6 +22,18 @@ router.get("/events/dead/count", verifyAdminAuth, async (req, res) => {
   }
 });
 
+router.get("/events/types", verifyAdminAuth, async (req, res) => {
+  try {
+    const count = await getDeadEventsCount();
+    res.status(200).json(count);
+  } catch (err) {
+    console.error("Stripe event_types fetching error:", err);
+    return res.status(500).json({
+      error: "Failed to get Stripe event_types.",
+    });
+  }
+});
+
 router.get("/events/unprocessed", verifyAdminAuth, async (req, res) => {
   try {
     const { event_type, status, created_from, page = 1 } = req.query;

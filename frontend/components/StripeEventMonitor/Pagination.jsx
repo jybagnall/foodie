@@ -1,3 +1,5 @@
+import { getPaginationRange } from "../../utils/pagination";
+
 export default function Pagination({
   pageNum,
   totalPages,
@@ -5,6 +7,8 @@ export default function Pagination({
   onPageChange,
 }) {
   if (totalPages <= 1) return null;
+
+  const pages = getPaginationRange(pageNum, totalPages);
 
   return (
     <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
@@ -31,16 +35,36 @@ export default function Pagination({
               <ChevronLeftIcon aria-hidden="true" className="size-5" />
             </button>
 
-            {/* 페이지의 번호 배열을 만듬 */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => onPageChange(page)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${page === pageNum ? "bg-indigo-500 text-white z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500" : "hover:bg-gray-50 text-gray-900 focus:outline-offset-0 inset-ring inset-ring-gray-300"}`}
-              >
-                {page}
-              </button>
-            ))}
+            {pages.map((page, index) => {
+              if (page === "...") {
+                return (
+                  <span
+                    key={`...-${index}`}
+                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 inset-ring inset-ring-gray-300 focus:outline-offset-0"
+                  >
+                    ...
+                  </span>
+                );
+              }
+
+              const isActive = page === pageNum;
+              return (
+                <button
+                  key={`${page}-${index}`}
+                  disabled={isActive}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => onPageChange(page)}
+                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold
+              ${
+                isActive
+                  ? "bg-indigo-500 text-white cursor-default"
+                  : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+              }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
 
             <button
               disabled={pageNum === totalPages}

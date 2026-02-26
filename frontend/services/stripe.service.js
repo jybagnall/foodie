@@ -23,6 +23,11 @@ class StripeService {
     return data;
   }
 
+  async getEventTypes() {
+    const data = await this.client.get("/api/stripe/events/types");
+    return data;
+  }
+
   async getStripeDeadEventsCount() {
     const data = await this.client.get("/api/stripe/events/dead/count");
     return data;

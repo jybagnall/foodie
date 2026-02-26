@@ -16,42 +16,39 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // 결제 시도 후, Stripe가 상태를 확정 후 Webhook URL 호출함.
 
 export const stripeWebhookHandler = async (req, res) => {
-    const sig = req.headers["stripe-signature"];
-    let event;
+  const sig = req.headers["stripe-signature"];
+  let event;
 
-    // Webhook 요청이 Stripe에서 왔는지 검증 & 안전한 event 객체로 만듬.
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET,
-      );
-    } catch (err) {
-      console.error("Webhook signature verification failed.", {
-  type: err?.type,
-  message: err?.message,
-  requestId: err?.requestId
-});
-      return res.status(400).end();
-    }
+  // Webhook 요청이 Stripe에서 왔는지 검증 & 안전한 event 객체로 만듬.
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET,
+    );
+  } catch (err) {
+    console.error("Webhook signature verification failed.", {
+      type: err?.type,
+      message: err?.message,
+      requestId: err?.requestId,
+    });
+    return res.status(400).end();
+  }
 
-    // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행됨.
-    // Worker를 직접 호출하지 않고, setInterval로 3초마다 자동 실행 중.
-    try {
-      await pool.query(
-        `
-        INSERT INTO stripe_events (id, event_type, payload)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (id) DO NOTHING
-        `,
-        [event.id, event.type, event],
-      );
-      res.status(200).end(); // Stripe에게 이벤트 잘 받음을 알림
-    } catch (err) {
-      console.error("Webhook handler error:", err);
-      res.status(500).send("Webhook handler failed");
-    } // Stripe 에게 이벤트를 다시 보내라고 신호함.
-  }, 
-
+  // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행됨.
+  // Worker는 setInterval로 3초마다 자동 실행 중.
+  try {
+    await pool.query(
+      `INSERT INTO stripe_events (id, event_type, payload)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO NOTHING`,
+      [event.id, event.type, event],
+    );
+    res.status(200).end(); // Stripe에게 이벤트 잘 받음을 알림
+  } catch (err) {
+    console.error("Webhook handler error:", err);
+    res.status(500).send("Webhook handler failed");
+  } // Stripe 에게 이벤트를 다시 보내라고 신호함.
+};
 
 export default router;

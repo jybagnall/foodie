@@ -9,8 +9,6 @@ const handlers = {
   "payment_intent.payment_failed": handlePaymentIntentFailed,
 };
 
-// ❗race condition 가능성 존재하므로
-// ❗handler + markEvent를 같은 트랜잭션 안에서 처리할 필요가 있음
 export async function handleStripeEvent(event) {
   // 관심 없는 이벤트는 즉시 종료
   if (!handlers[event.type]) return;

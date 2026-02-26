@@ -1,12 +1,13 @@
-import { useContext, useEffect, useState } from "react";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { Link } from "react-router-dom";
-import StripeService from "../../services/stripe.service";
+import { useContext } from "react";
 import AuthContext from "../../contexts/AuthContext";
 import Button from "../UI/Button";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
+import StatusEventSummary from "../StripeEventMonitor/StripeEventSummary";
+import StripeEventFilters from "../StripeEventMonitor/StripeEventFilters";
+import EmptyEventState from "../StripeEventMonitor/EmptyEventState";
+import BackToAdminDash from "../UI/BackToAdminDash";
 
 // 🔴 Dead: 12
 // 🟡 Failed (3+): 7
@@ -34,19 +35,32 @@ export default function StripeEventMonitor() {
   const { accessToken } = useContext(AuthContext);
   const {
     events,
+    eventTypes,
     pageNum,
     isFetchingData,
     isFetchingCount,
+    isFetchingEventTypes,
     totalMatchingEvents,
     statusSummary,
     totalPages,
     filters,
     errorMsg,
     fetchEvents,
+    setFilters,
+    resetFilters,
   } = useStripeEventMonitor(accessToken);
 
-  if (isFetchingData || isFetchingCount) {
+  if (isFetchingData || isFetchingCount || isFetchingEventTypes) {
     return <Spinner />;
+  }
+
+  if (events.length === 0) {
+    return (
+      <EmptyState
+        title="All Stripe events are healthy"
+        description="No failed or dead events at the moment."
+      />
+    );
   }
 
   return (
@@ -58,15 +72,7 @@ export default function StripeEventMonitor() {
           </div>
         )}
         <div className="mb-4">
-          <Link
-            to="/admin"
-            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            <span>
-              <ChevronLeftIcon className="size-5" />
-            </span>{" "}
-            Back to Admin Dashboard
-          </Link>
+          <BackToAdminDash />
         </div>
 
         <Pagination
@@ -77,10 +83,13 @@ export default function StripeEventMonitor() {
         />
 
         <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
-          <div className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
-            <p>Dead Events: {statusSummary.dead}</p>
-            <p>Failed Events: {statusSummary.failed}</p>
-          </div>
+          <StatusEventSummary statusSummary={statusSummary} />
+          <StripeEventFilters
+            filters={filters}
+            eventTypes={eventTypes}
+            onFilterChange={(newFilters) => setFilters(newFilters)}
+            onReset={resetFilters}
+          />
 
           <table className="relative min-w-full divide-y divide-gray-300">
             <thead>

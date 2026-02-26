@@ -11,6 +11,22 @@ export async function getDeadEventsCount() {
   return result.rows[0]?.count ?? 0;
 }
 
+export async function getEventTypes() {
+  const q = `
+  SELECT event_type
+  FROM stripe_events
+  WHERE
+    resolved_at IS NULL
+    AND (
+      status = 'dead'
+      OR (status = 'failed' AND retry_count >= 3)
+    )
+  ORDER BY event_type
+  `;
+  const result = await pool.query(q);
+  return result?.rows?.map((row) => row.event_type) ?? [];
+}
+
 const LIMIT = 20;
 export async function getUnprocessedEvents(
   event_type,

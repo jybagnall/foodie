@@ -7,9 +7,11 @@ import { getTimeRangeStart } from "../utils/format";
 const LIMIT = 20;
 export default function useStripeEventMonitor(accessToken) {
   const [events, setEvents] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
   const [pageNum, setPageNum] = useState(1);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [isFetchingCount, setIsFetchingCount] = useState(false);
+  const [isFetchingEventTypes, setIsFetchingEventTypes] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [totalMatchingEvents, setTotalMatchingEvents] = useState(0);
   const [statusSummary, setStatusSummary] = useState({
@@ -83,9 +85,38 @@ export default function useStripeEventMonitor(accessToken) {
     [filters, accessToken],
   ); // 의존성 배열에 무엇을?
 
+  const fetchEventTypes = useCallback(async () => {
+    const stripeService = createService();
+
+    try {
+      setIsFetchingEventTypes(true);
+      setErrorMsg("");
+
+      const data = await stripeService.getEventTypes();
+      setEventTypes(data);
+    } catch (err) {
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
+    } finally {
+      setIsFetchingEventTypes(false);
+    }
+  }, [accessToken]);
+
+  const resetFilters = () => {
+    setFilters({
+      event_type: null,
+      status: null,
+      timeRange: null,
+    });
+  }; // useCallback 으로 감싸야 하나?
+
   // ✅ 페이지 진입 시 1회
   useEffect(() => {
     fetchCounts();
+    fetchEventTypes();
   }, [accessToken]);
 
   // ✅ 필터 변경 시 테이블만 갱신
@@ -95,14 +126,18 @@ export default function useStripeEventMonitor(accessToken) {
 
   return {
     events,
+    eventTypes,
     pageNum,
     isFetchingData,
     isFetchingCount,
+    isFetchingEventTypes,
     totalMatchingEvents,
     statusSummary,
     totalPages,
     filters,
     errorMsg,
     fetchEvents,
+    setFilters,
+    resetFilters,
   };
 }

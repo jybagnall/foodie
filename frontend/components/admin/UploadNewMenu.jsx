@@ -8,6 +8,7 @@ import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import BackToAdminDash from "../UI/BackToAdminDash";
 
 // 🚩백엔드에 관리자만 업로드가 가능하도록 미들웨어를 넣어야 함
 export default function UploadNewMenu() {
@@ -84,15 +85,7 @@ export default function UploadNewMenu() {
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
       <div className="w-full max-w-lg">
         <div className="mb-4">
-          <Link
-            to="/admin"
-            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            <span>
-              <ChevronLeftIcon className="size-5" />
-            </span>{" "}
-            Back to Admin Dashboard
-          </Link>
+          <BackToAdminDash title="Upload a new menu" />
         </div>
         {errorMsg && (
           <div className="mb-4">
