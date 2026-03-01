@@ -1,49 +1,47 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import AuthContext from "../../contexts/AuthContext";
 import StripeService from "../../services/stripe.service";
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { useMemo } from "react";
 
 export default function StripeErrorBanner() {
   const [count, setCount] = useState(0);
+  const [lastSeenTime, setLastSeenTime] = useState(null);
   const { accessToken } = useContext(AuthContext);
 
   const stripeService = useMemo(() => {
     return new StripeService(new AbortController(), () => accessToken);
   }, [accessToken]);
 
-  useEffect(() => {
-    let isMounted = true; // 언마운트 후 상태 변경 방지용 장치
-    let timeoutId;
-
-    const fetchData = async () => {
-      try {
-        const data = await stripeService.getStripeDeadEventsCount();
-        if (isMounted) setCount(data); // 컴포넌트가 살아있으므로 업데이트
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (isMounted) {
-          timeoutId = setTimeout(fetchData, 30000); // 30초 후 실행
-        }
-      }
-    };
-
-    fetchData(); // 즉시 실행
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId); // 예약된 함수 제거
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      const { count, lastSeenTime } =
+        await stripeService.getStripeDeadEventsCount();
+      setCount(count);
+      setLastSeenTime(lastSeenTime);
+    } catch (err) {
+      console.error(err);
+    }
   }, [stripeService]);
 
-  const markDeadEventsNotified = async () => {
+  useEffect(() => {
+    const run = () => {
+      fetchData();
+    };
+
+    run();
+
+    const intervalId = setInterval(run, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchData]);
+
+  const markDeadEventsNotified = async (time) => {
     try {
-      await stripeService.markStripeEventsAsNotified();
-      setCount(0);
+      await stripeService.markStripeEventsAsNotified(time);
+      await fetchData();
     } catch (err) {
       console.error(err);
     }
@@ -62,12 +60,15 @@ export default function StripeErrorBanner() {
       </div>
 
       <div className="flex gap-3 cursor-pointer">
-        <button onClick={markDeadEventsNotified} className="underline">
+        <button
+          onClick={() => markDeadEventsNotified(lastSeenTime)}
+          className="underline"
+        >
           Confirm
         </button>
 
         <button
-          onClick={markDeadEventsNotified}
+          onClick={() => markDeadEventsNotified(lastSeenTime)}
           className="font-bold cursor-pointer"
         >
           <XMarkIcon className="h-5 w-5" />

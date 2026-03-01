@@ -1,12 +1,14 @@
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { getPaginationRange } from "../../utils/pagination";
 
-export default function Pagination({
-  pageNum,
-  totalPages,
-  totalMatchingEvents,
-  onPageChange,
-}) {
+export default function Pagination({ pagination, onPageChange }) {
+  const { pageNum, totalPages, totalMatchingEvents } = pagination;
+
   if (totalPages <= 1) return null;
+
+  console.log("pageNum", pageNum);
+  console.log("totalPages", totalPages);
+  console.log("totalMatchingEvents", totalMatchingEvents);
 
   const pages = getPaginationRange(pageNum, totalPages);
 
@@ -40,7 +42,7 @@ export default function Pagination({
                 return (
                   <span
                     key={`...-${index}`}
-                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 inset-ring inset-ring-gray-300 focus:outline-offset-0"
+                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700"
                   >
                     ...
                   </span>

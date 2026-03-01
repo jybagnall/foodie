@@ -2,7 +2,7 @@
 // < 1 ... 8 9 10 >
 // < 1 ... 5 6 7 ... 10 >
 
-export function getSimplePagination(current, totalPages) {
+export function getPaginationRange(current, totalPages) {
   if (totalPages <= 1) return [1];
 
   const currentPage = Math.max(1, Math.min(current, totalPages));

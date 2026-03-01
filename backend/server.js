@@ -15,7 +15,7 @@ import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
 import cartRoutes from "./app/routes/cart.js";
 import stripeRoutes from "./app/routes/stripe.js";
-import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js/"
+import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js";
 
 const app = express();
 
@@ -32,7 +32,7 @@ const host = process.env.HOST || "0.0.0.0";
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
-  stripeWebhookHandler
+  stripeWebhookHandler,
 );
 
 app.use(express.json());

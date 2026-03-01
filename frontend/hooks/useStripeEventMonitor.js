@@ -3,17 +3,22 @@ import StripeService from "../services/stripe.service";
 import { getUserErrorMessage } from "../utils/getUserErrorMsg";
 import { getTimeRangeStart } from "../utils/format";
 
-// onPageChange 로 검색
-const LIMIT = 20;
+// React Query
+// const { data, isLoading } = useQuery(...)
+
+// loading 상태 3개
+
+// createService가 매번 controller 생성, 이전 요청 cancel 안 함.
+// useRef controller 패턴이 필요해?
+
+const LIMIT = 6;
 export default function useStripeEventMonitor(accessToken) {
   const [events, setEvents] = useState([]);
   const [eventTypes, setEventTypes] = useState([]);
-  const [pageNum, setPageNum] = useState(1);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [isFetchingCount, setIsFetchingCount] = useState(false);
   const [isFetchingEventTypes, setIsFetchingEventTypes] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [totalMatchingEvents, setTotalMatchingEvents] = useState(0);
   const [statusSummary, setStatusSummary] = useState({
     failed: 0,
     dead: 0,
@@ -24,7 +29,12 @@ export default function useStripeEventMonitor(accessToken) {
     timeRange: null, // '30m', '1h', '3h', '6h', '12h','24h'
   });
 
-  const totalPages = Math.ceil(totalMatchingEvents / LIMIT);
+  const [pagination, setPagination] = useState({
+    pageNum: 1,
+    totalMatchingEvents: 0,
+    pageLimit: 0,
+    totalPages: 0,
+  });
 
   const createService = () => {
     const controller = new AbortController();
@@ -40,8 +50,8 @@ export default function useStripeEventMonitor(accessToken) {
 
       const res = await stripeService.getErroredStripeEventsCount();
       setStatusSummary({
-        failed: res.failed,
-        dead: res.dead,
+        failed: res.failedCount,
+        dead: res.deadCount,
       });
     } catch (err) {
       console.error(err);
@@ -70,8 +80,18 @@ export default function useStripeEventMonitor(accessToken) {
           page,
         });
         setEvents(res.data);
-        setPageNum(page);
-        setTotalMatchingEvents(res.total);
+        // 디버깅이 필요함
+        console.log("🍋‍🟩keys:", Object.keys(res));
+        console.log("🍋‍🟩totalMatchingEvents:", res.totalMatchingEvents);
+        console.log("🍋‍🟩pageLimit:", res.pageLimit);
+        console.log("🍋‍🟩totalPages:", res.totalPages);
+
+        setPagination((prev) => ({
+          ...prev,
+          totalMatchingEvents: res.totalMatchingEvents,
+          pageLimit: res.pageLimit,
+          totalPages: res.totalPages,
+        }));
       } catch (err) {
         console.error(err);
         const message = getUserErrorMessage(err);
@@ -82,8 +102,8 @@ export default function useStripeEventMonitor(accessToken) {
         setIsFetchingData(false);
       }
     },
-    [filters, accessToken],
-  ); // 의존성 배열에 무엇을?
+    [accessToken, filters],
+  ); // 최신 filters 값을 참조해서 함수가 재생성됨.
 
   const fetchEventTypes = useCallback(async () => {
     const stripeService = createService();
@@ -106,34 +126,31 @@ export default function useStripeEventMonitor(accessToken) {
   }, [accessToken]);
 
   const resetFilters = () => {
-    setFilters({
+    const reset = {
       event_type: null,
       status: null,
       timeRange: null,
-    });
+    };
+    setFilters(reset);
+    fetchEvents(1);
   }; // useCallback 으로 감싸야 하나?
 
-  // ✅ 페이지 진입 시 1회
   useEffect(() => {
+    if (!accessToken) return;
+
     fetchCounts();
     fetchEventTypes();
-  }, [accessToken]);
-
-  // ✅ 필터 변경 시 테이블만 갱신
-  useEffect(() => {
     fetchEvents(1);
-  }, [filters]);
+  }, [accessToken]);
 
   return {
     events,
     eventTypes,
-    pageNum,
+    pagination,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,
-    totalMatchingEvents,
     statusSummary,
-    totalPages,
     filters,
     errorMsg,
     fetchEvents,

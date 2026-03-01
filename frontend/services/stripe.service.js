@@ -33,8 +33,10 @@ class StripeService {
     return data;
   }
 
-  async markStripeEventsAsNotified() {
-    const data = await this.client.post("/api/stripe/events/dead/acknowledge");
+  async markStripeEventsAsNotified(lastSeenTime) {
+    const data = await this.client.post("/api/stripe/events/dead/acknowledge", {
+      lastSeenTime,
+    });
     return data;
   }
 }
