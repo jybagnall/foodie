@@ -18,23 +18,28 @@ import Pagination from "../StripeEventMonitor/Pagination";
 // order_id 검색, payment_intent_id 검색
 
 // refresh 버튼이 있으면 좋을 것 같음.
+// ❌ 에러 메시지 처리가 잘 안 되고 있음.
 
 export default function StripeEventMonitor() {
   const { accessToken } = useContext(AuthContext);
   const {
     events,
     eventTypes,
-    pagination,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,
     statusSummary,
     filters,
-    errorMsg,
-    fetchEvents,
+    eventError,
+    eventTypesError,
+    eventsCountError,
     setFilters,
     resetFilters,
   } = useStripeEventMonitor(accessToken);
+
+  const errors = [eventError, eventTypesError, eventsCountError].filter(
+    Boolean,
+  );
 
   if (isFetchingData || isFetchingCount || isFetchingEventTypes) {
     return <Spinner />;
@@ -52,9 +57,12 @@ export default function StripeEventMonitor() {
   return (
     <main className="min-h-screen bg-gray-100 py-10 px-4 sm:px-6">
       <div className="w-full max-w-5xl mx-auto">
-        {errorMsg && (
+        {errors.length > 0 && (
           <div className="mb-4">
-            <ErrorAlert title="There was a problem" message={errorMsg} />
+            <ErrorAlert
+              title="There was a problem"
+              message={errors.map((e) => e.message).join(", ")}
+            />
           </div>
         )}
         <div className="mb-4">
@@ -68,15 +76,11 @@ export default function StripeEventMonitor() {
             eventTypes={eventTypes}
             onFilterChange={(newFilters) => setFilters(newFilters)}
             onReset={resetFilters}
-            fetchEvents={fetchEvents}
           />
 
           <div className="mt-6 overflow-x-auto">
             <StripeEventTable events={events} />
-            <Pagination
-              pagination={pagination}
-              onPageChange={(page) => fetchEvents(page)}
-            />
+            <Pagination />
           </div>
         </section>
       </div>

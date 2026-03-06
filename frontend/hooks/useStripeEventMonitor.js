@@ -1,160 +1,133 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import StripeService from "../services/stripe.service";
-import { getUserErrorMessage } from "../utils/getUserErrorMsg";
 import { getTimeRangeStart } from "../utils/format";
+import { queryKeys } from "../constants/queryKeys";
 
-// React Query
-// const { data, isLoading } = useQuery(...)
+const initialFilters = {
+  event_type: null,
+  status: null,
+  timeRange: null,
+};
 
-// loading 상태 3개
-
-// createService가 매번 controller 생성, 이전 요청 cancel 안 함.
-// useRef controller 패턴이 필요해?
-
-const LIMIT = 6;
 export default function useStripeEventMonitor(accessToken) {
-  const [events, setEvents] = useState([]);
-  const [eventTypes, setEventTypes] = useState([]);
-  const [isFetchingData, setIsFetchingData] = useState(false);
-  const [isFetchingCount, setIsFetchingCount] = useState(false);
-  const [isFetchingEventTypes, setIsFetchingEventTypes] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [statusSummary, setStatusSummary] = useState({
-    failed: 0,
-    dead: 0,
-  });
-  const [filters, setFilters] = useState({
-    event_type: null,
-    status: null,
-    timeRange: null, // '30m', '1h', '3h', '6h', '12h','24h'
-  });
+  const stripeService = useMemo(() => {
+    return new StripeService(() => accessToken);
+  }, [accessToken]);
 
-  const [pagination, setPagination] = useState({
-    pageNum: 1,
-    totalMatchingEvents: 0,
-    pageLimit: 0,
-    totalPages: 0,
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filters, setFilters] = useState(initialFilters);
 
-  const createService = () => {
-    const controller = new AbortController();
-    return new StripeService(controller, () => accessToken);
-  };
+  const pageParam = searchParams.get("page");
 
-  const fetchCounts = useCallback(async () => {
-    const stripeService = createService();
+  const currentPage =
+    pageParam && !isNaN(Number(pageParam)) ? Number(pageParam) : 1;
 
-    try {
-      setIsFetchingCount(true);
-      setErrorMsg("");
+  const queryClient = useQueryClient();
 
-      const res = await stripeService.getErroredStripeEventsCount();
-      setStatusSummary({
-        failed: res.failedCount,
-        dead: res.deadCount,
+  const { mutate: confirmDeadEvents } = useMutation({
+    mutationFn: (time) => stripeService.markStripeEventsAsNotified(time),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [queryKeys.stripeDeadCounts],
       });
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsFetchingCount(false);
-    }
-  }, [accessToken]);
-
-  const fetchEvents = useCallback(
-    async (page = 1) => {
-      const stripeService = createService();
-      const created_from = getTimeRangeStart(filters.timeRange);
-
-      try {
-        setIsFetchingData(true);
-        setErrorMsg("");
-
-        const res = await stripeService.getErroredStripeEvents({
-          event_type: filters.event_type,
-          status: filters.status,
-          created_from,
-          page,
-        });
-        setEvents(res.data);
-        // 디버깅이 필요함
-        console.log("🍋‍🟩keys:", Object.keys(res));
-        console.log("🍋‍🟩totalMatchingEvents:", res.totalMatchingEvents);
-        console.log("🍋‍🟩pageLimit:", res.pageLimit);
-        console.log("🍋‍🟩totalPages:", res.totalPages);
-
-        setPagination((prev) => ({
-          ...prev,
-          totalMatchingEvents: res.totalMatchingEvents,
-          pageLimit: res.pageLimit,
-          totalPages: res.totalPages,
-        }));
-      } catch (err) {
-        console.error(err);
-        const message = getUserErrorMessage(err);
-        if (message) {
-          setErrorMsg(message);
-        }
-      } finally {
-        setIsFetchingData(false);
-      }
     },
-    [accessToken, filters],
-  ); // 최신 filters 값을 참조해서 함수가 재생성됨.
+  });
 
-  const fetchEventTypes = useCallback(async () => {
-    const stripeService = createService();
+  const {
+    data: { data: events = [], totalMatchingEvents = 0, totalPages = 0 } = {},
+    error: eventError,
+    isFetching: isFetchingData,
+  } = useQuery({
+    queryKey: [
+      queryKeys.stripeEvents,
+      filters.event_type,
+      filters.status,
+      filters.timeRange,
+      currentPage,
+    ],
+    queryFn: () =>
+      stripeService.getErroredStripeEvents({
+        event_type: filters.event_type,
+        status: filters.status,
+        created_from: getTimeRangeStart(filters.timeRange),
+        page: currentPage,
+      }),
+    keepPreviousData: true, // 페이지 이동시 데이터 증발 방지.
+    staleTime: 0,
+    refetchInterval: 5000,
+    enabled: !!accessToken,
+  });
 
-    try {
-      setIsFetchingEventTypes(true);
-      setErrorMsg("");
+  const {
+    data: eventTypes = [],
+    isLoading: isFetchingEventTypes,
+    error: eventTypesError,
+  } = useQuery({
+    queryKey: [queryKeys.stripeEventTypes],
+    queryFn: () => stripeService.getEventTypes(),
+    staleTime: 1000 * 60 * 10,
+    enabled: !!accessToken,
+  });
 
-      const data = await stripeService.getEventTypes();
-      setEventTypes(data);
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsFetchingEventTypes(false);
-    }
-  }, [accessToken]);
+  const {
+    data: statusSummary = { failedCount: 0, deadCount: 0 },
+    isLoading: isFetchingCount,
+    error: eventsCountError,
+  } = useQuery({
+    queryKey: [
+      queryKeys.stripeErroredCounts,
+      filters.event_type,
+      filters.status,
+      filters.timeRange,
+    ],
+    queryFn: () => stripeService.getErroredStripeEventsCount(),
+    keepPreviousData: true,
+    staleTime: 0,
+    refetchInterval: 5000,
+    enabled: !!accessToken,
+  });
+
+  const {
+    data: deadSummary = { count: 0, lastSeenTime: null },
+    isLoading: isFetchingDeadCount,
+    error: deadEventsCountError,
+  } = useQuery({
+    queryKey: [queryKeys.stripeDeadCounts],
+    queryFn: () => stripeService.getStripeDeadEventsCount(),
+    staleTime: 0,
+    refetchInterval: 30000,
+    enabled: !!accessToken,
+  });
 
   const resetFilters = () => {
-    const reset = {
-      event_type: null,
-      status: null,
-      timeRange: null,
-    };
-    setFilters(reset);
-    fetchEvents(1);
-  }; // useCallback 으로 감싸야 하나?
+    setFilters(initialFilters);
 
-  useEffect(() => {
-    if (!accessToken) return;
-
-    fetchCounts();
-    fetchEventTypes();
-    fetchEvents(1);
-  }, [accessToken]);
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1");
+    setSearchParams(params);
+  };
 
   return {
     events,
     eventTypes,
-    pagination,
+    statusSummary,
+    filters,
+    totalMatchingEvents,
+    totalPages,
+    currentPage,
+    deadSummary,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,
-    statusSummary,
-    filters,
-    errorMsg,
-    fetchEvents,
+    isFetchingDeadCount,
     setFilters,
     resetFilters,
+    confirmDeadEvents,
+    eventError,
+    eventTypesError,
+    eventsCountError,
+    deadEventsCountError,
   };
 }

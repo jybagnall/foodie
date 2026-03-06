@@ -11,6 +11,8 @@ import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import BackToAdminDash from "../UI/BackToAdminDash";
 
 // 🚩백엔드에 관리자만 업로드가 가능하도록 미들웨어를 넣어야 함
+// 🚩메뉴가 1시간마다 다시 불리고 있으므로,
+// 메뉴 수정 후엔 invalidateQueries로 강제 갱신해야함
 export default function UploadNewMenu() {
   const [isUploadProcessing, setIsUploadProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");

@@ -52,7 +52,6 @@ export default function App() {
                 </Route>
               </Route>
 
-              {/* ✅✅✅ */}
               <Route
                 path="/order"
                 element={
@@ -68,8 +67,6 @@ export default function App() {
                   element={<OrderConfirmation />}
                 />
               </Route>
-
-              {/* ✅✅✅ */}
 
               <Route
                 path="/admin"

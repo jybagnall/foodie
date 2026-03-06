@@ -58,7 +58,7 @@ class Client {
       const { accessToken } = res.data;
       return accessToken; // Client는 토큰을 저장 안함, 저장 책임은 AuthContext
     } catch (err) {
-      if (err.response?.status === 401 || err.response?.status === 403) {
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
         throw new RefreshTokenExpiredError();
       } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
       throw err; // 네트워크/서버 오류
@@ -136,7 +136,7 @@ class Client {
       const res = await requestFn();
       return res;
     } catch (err) {
-      const status = err.response?.status;
+      const status = err?.response?.status;
       const shouldRefresh = status === 401 || status === 403; // 인증 실패함
 
       if (!isRetry && shouldRefresh) {

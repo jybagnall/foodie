@@ -1,23 +1,35 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { getPaginationRange } from "../../utils/pagination";
+import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
+import { useSearchParams } from "react-router-dom";
 
-export default function Pagination({ pagination, onPageChange }) {
-  const { pageNum, totalPages, totalMatchingEvents } = pagination;
+export default function Pagination({ onPageChange }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentPage, totalPages, totalMatchingEvents } =
+    useStripeEventMonitor();
+
+  const pages = getPaginationRange(currentPage, totalPages);
+
+  function nextPage() {
+    const next = currentPage === totalPages ? currentPage : currentPage + 1;
+    searchParams.set("page", next);
+    setSearchParams(searchParams);
+  }
+
+  function prevPage() {
+    const prev = currentPage === 1 ? currentPage : currentPage - 1;
+    searchParams.set("page", prev);
+    setSearchParams(searchParams);
+  }
 
   if (totalPages <= 1) return null;
-
-  console.log("pageNum", pageNum);
-  console.log("totalPages", totalPages);
-  console.log("totalMatchingEvents", totalMatchingEvents);
-
-  const pages = getPaginationRange(pageNum, totalPages);
 
   return (
     <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{pageNum}</span> to{" "}
+            Showing <span className="font-medium">{currentPage}</span> to{" "}
             <span className="font-medium">{totalPages}</span> of{" "}
             <span className="font-medium">{totalMatchingEvents}</span> results
           </p>
@@ -29,8 +41,8 @@ export default function Pagination({ pagination, onPageChange }) {
             className="isolate inline-flex -space-x-px rounded-md shadow-xs"
           >
             <button
-              disabled={pageNum === 1}
-              onClick={() => onPageChange(pageNum - 1)}
+              disabled={currentPage === 1}
+              onClick={prevPage}
               className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 inset-ring inset-ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
             >
               <span className="sr-only">Previous</span>
@@ -49,7 +61,7 @@ export default function Pagination({ pagination, onPageChange }) {
                 );
               }
 
-              const isActive = page === pageNum;
+              const isActive = page === currentPage;
               return (
                 <button
                   key={`${page}-${index}`}
@@ -69,8 +81,8 @@ export default function Pagination({ pagination, onPageChange }) {
             })}
 
             <button
-              disabled={pageNum === totalPages}
-              onClick={() => onPageChange(pageNum + 1)}
+              disabled={currentPage === totalPages}
+              onClick={nextPage}
               className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 inset-ring inset-ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
             >
               <span className="sr-only">Next</span>

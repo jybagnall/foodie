@@ -1,11 +1,13 @@
 import Client from "./client";
 
 class StripeService {
-  constructor(abortController, getAccessToken) {
-    this.client = new Client(abortController, getAccessToken);
+  constructor(getAccessToken) {
+    this.getAccessToken = getAccessToken;
   }
 
   async getErroredStripeEvents(params) {
+    const controller = new AbortController();
+    const client = new Client(controller, this.getAccessToken);
     const query = new URLSearchParams();
 
     if (params.event_type) query.append("event_type", params.event_type);
@@ -14,27 +16,35 @@ class StripeService {
     if (params.page) query.append("page", params.page);
 
     const url = `/api/stripe/events/unprocessed?${query.toString()}`;
-    const data = await this.client.get(url);
+    const data = await client.get(url);
     return data;
   }
 
   async getErroredStripeEventsCount() {
-    const data = await this.client.get("/api/stripe/events/unprocessed/count");
+    const controller = new AbortController();
+    const client = new Client(controller, this.getAccessToken);
+    const data = await client.get("/api/stripe/events/unprocessed/count");
     return data;
   }
 
   async getEventTypes() {
-    const data = await this.client.get("/api/stripe/events/types");
+    const controller = new AbortController();
+    const client = new Client(controller, this.getAccessToken);
+    const data = await client.get("/api/stripe/events/types");
     return data;
   }
 
   async getStripeDeadEventsCount() {
-    const data = await this.client.get("/api/stripe/events/dead/count");
+    const controller = new AbortController();
+    const client = new Client(controller, this.getAccessToken);
+    const data = await client.get("/api/stripe/events/dead/count");
     return data;
   }
 
   async markStripeEventsAsNotified(lastSeenTime) {
-    const data = await this.client.post("/api/stripe/events/dead/acknowledge", {
+    const controller = new AbortController();
+    const client = new Client(controller, this.getAccessToken);
+    const data = await client.post("/api/stripe/events/dead/acknowledge", {
       lastSeenTime,
     });
     return data;
