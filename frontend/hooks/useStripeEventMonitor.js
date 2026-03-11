@@ -1,52 +1,67 @@
-import { useState, useMemo } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import StripeService from "../services/stripe.service";
 import { getTimeRangeStart } from "../utils/format";
-import { queryKeys } from "../constants/queryKeys";
+import { stripeKeys } from "../react-query/queryKeys";
+import { POLLING_30S, adaptivePolling } from "../react-query/queryConfig";
+import { useSearchParams } from "react-router-dom";
 
-const initialFilters = {
-  event_type: null,
-  status: null,
-  timeRange: null,
-};
+// polling이 있으면 stale 여부가 중요하지 않음 (staleTime: 0)
 
 export default function useStripeEventMonitor(accessToken) {
   const stripeService = useMemo(() => {
     return new StripeService(() => accessToken);
   }, [accessToken]);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [filters, setFilters] = useState(initialFilters);
-
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const pageParam = searchParams.get("page");
 
   const currentPage =
     pageParam && !isNaN(Number(pageParam)) ? Number(pageParam) : 1;
 
-  const queryClient = useQueryClient();
+  const filters = useMemo(
+    () => ({
+      event_type: searchParams.get("event_type"),
+      status: searchParams.get("status"),
+      timeRange: searchParams.get("timeRange"),
+    }),
+    [searchParams],
+  ); // 불필요한 refetch 방지
 
   const { mutate: confirmDeadEvents } = useMutation({
-    mutationFn: (time) => stripeService.markStripeEventsAsNotified(time),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.stripeDeadCounts],
-      });
+    mutationFn: (time) => {
+      return stripeService.markStripeEventsAsNotified(time);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: stripeKeys.deadCounts(),
+      }); // 기존 숫자를 stale 처리, 자동 fetch
     },
   });
 
   const {
-    data: { data: events = [], totalMatchingEvents = 0, totalPages = 0 } = {},
+    data: {
+      events = [],
+      totalMatchingEvents = 0,
+      totalPages = 0,
+      pageLimit = 0,
+    } = {},
     error: eventError,
     isFetching: isFetchingData,
   } = useQuery({
-    queryKey: [
-      queryKeys.stripeEvents,
+    // 필터, 페이지가 바뀌면 다른 데이터
+    queryKey: stripeKeys.events(
       filters.event_type,
       filters.status,
       filters.timeRange,
       currentPage,
-    ],
+    ),
     queryFn: () =>
       stripeService.getErroredStripeEvents({
         event_type: filters.event_type,
@@ -54,10 +69,9 @@ export default function useStripeEventMonitor(accessToken) {
         created_from: getTimeRangeStart(filters.timeRange),
         page: currentPage,
       }),
-    keepPreviousData: true, // 페이지 이동시 데이터 증발 방지.
-    staleTime: 0,
-    refetchInterval: 5000,
+    placeholderData: keepPreviousData, // 새 데이터가 도착하면 그때 바꿈
     enabled: !!accessToken,
+    ...POLLING_30S,
   });
 
   const {
@@ -65,7 +79,11 @@ export default function useStripeEventMonitor(accessToken) {
     isLoading: isFetchingEventTypes,
     error: eventTypesError,
   } = useQuery({
-    queryKey: [queryKeys.stripeEventTypes],
+    queryKey: stripeKeys.eventTypes(
+      filters.event_type,
+      filters.status,
+      filters.timeRange,
+    ),
     queryFn: () => stripeService.getEventTypes(),
     staleTime: 1000 * 60 * 10,
     enabled: !!accessToken,
@@ -76,16 +94,17 @@ export default function useStripeEventMonitor(accessToken) {
     isLoading: isFetchingCount,
     error: eventsCountError,
   } = useQuery({
-    queryKey: [
-      queryKeys.stripeErroredCounts,
+    queryKey: stripeKeys.erroredCounts(
       filters.event_type,
       filters.status,
       filters.timeRange,
-    ],
+    ),
     queryFn: () => stripeService.getErroredStripeEventsCount(),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     staleTime: 0,
-    refetchInterval: 5000,
+    refetchInterval: adaptivePolling,
+    refetchIntervalInBackground: false, // 사용자가 안 보고 있으면 API 요청?
+    refetchOnWindowFocus: true, // 탭에 다시 돌아왔을 때 refetch?
     enabled: !!accessToken,
   });
 
@@ -94,20 +113,34 @@ export default function useStripeEventMonitor(accessToken) {
     isLoading: isFetchingDeadCount,
     error: deadEventsCountError,
   } = useQuery({
-    queryKey: [queryKeys.stripeDeadCounts],
+    queryKey: stripeKeys.deadCounts(),
     queryFn: () => stripeService.getStripeDeadEventsCount(),
-    staleTime: 0,
-    refetchInterval: 30000,
     enabled: !!accessToken,
+    ...POLLING_30S,
   });
 
-  const resetFilters = () => {
-    setFilters(initialFilters);
+  useEffect(() => {
+    if (currentPage >= totalPages) return;
 
-    const params = new URLSearchParams(searchParams);
-    params.set("page", "1");
-    setSearchParams(params);
-  };
+    const nextPage = currentPage + 1;
+
+    queryClient.prefetchQuery({
+      queryKey: stripeKeys.events(
+        filters.event_type,
+        filters.status,
+        filters.timeRange,
+        nextPage,
+      ),
+      queryFn: () =>
+        stripeService.getErroredStripeEvents({
+          event_type: filters.event_type,
+          status: filters.status,
+          created_from: getTimeRangeStart(filters.timeRange),
+          page: nextPage,
+        }),
+      staleTime: 1000 * 30, // 30초 동안 fresh 상태로 캐시에 저장
+    });
+  }, [queryClient, currentPage, totalPages, filters]);
 
   return {
     events,
@@ -116,15 +149,14 @@ export default function useStripeEventMonitor(accessToken) {
     filters,
     totalMatchingEvents,
     totalPages,
+    pageLimit,
     currentPage,
     deadSummary,
+    confirmDeadEvents,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,
     isFetchingDeadCount,
-    setFilters,
-    resetFilters,
-    confirmDeadEvents,
     eventError,
     eventTypesError,
     eventsCountError,

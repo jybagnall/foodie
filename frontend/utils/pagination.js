@@ -7,7 +7,7 @@ export function getPaginationRange(current, totalPages) {
 
   const currentPage = Math.max(1, Math.min(current, totalPages));
 
-  // 작은 페이지는 전부 출력
+  // 5 페이지 이하는 전부 출력, [1,2,3,4,5]
   if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }

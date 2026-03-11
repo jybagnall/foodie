@@ -6,7 +6,7 @@ export async function acknowledgeFailures(lastSeenTime) {
     SET notified_at = NOW()
     WHERE status = 'dead'
     AND notified_at IS NULL
-    AND created_at <= $1
+    AND created_at <= ($1::timestamptz + interval '1 millisecond')
   `;
   try {
     await pool.query(q, [lastSeenTime]);
@@ -78,10 +78,10 @@ export async function getUnprocessedEvents({
   const totalMatchingEvents = rows[0]?.total_count
     ? Number(rows[0].total_count)
     : 0;
-  const data = rows.map(({ total_count, ...rest }) => rest);
+  const events = rows.map(({ total_count, ...rest }) => rest);
 
   return {
-    data,
+    events,
     totalMatchingEvents,
     pageLimit: LIMIT,
     totalPages: Math.ceil(totalMatchingEvents / LIMIT),

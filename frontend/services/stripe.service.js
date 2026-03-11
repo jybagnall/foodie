@@ -51,5 +51,6 @@ class StripeService {
   }
 }
 
-// getFailedEvents(), retryEvent(id), replayEvent(id)
 export default StripeService;
+
+// getFailedEvents(), retryEvent(id), replayEvent(id)

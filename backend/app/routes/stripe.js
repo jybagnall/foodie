@@ -44,12 +44,12 @@ router.get("/events/unprocessed", verifyAdminAuth, async (req, res) => {
       page: Math.max(1, Number(req.query.page) || 1),
     };
 
-    const { data, totalMatchingEvents, pageLimit, totalPages } =
+    const { events, totalMatchingEvents, pageLimit, totalPages } =
       await getUnprocessedEvents(filters);
 
     return res
       .status(200)
-      .json({ data, totalMatchingEvents, pageLimit, totalPages });
+      .json({ events, totalMatchingEvents, pageLimit, totalPages });
   } catch (err) {
     console.error("fetching error:", err);
     return res.status(500).json({

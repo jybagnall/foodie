@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import AuthContext from "../../contexts/AuthContext";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
@@ -9,6 +9,7 @@ import EmptyEventState from "../StripeEventMonitor/EmptyEventState";
 import BackToAdminDash from "../UI/BackToAdminDash";
 import StripeEventTable from "../StripeEventMonitor/StripeEventTable";
 import Pagination from "../StripeEventMonitor/Pagination";
+import { useSearchParams } from "react-router-dom";
 
 // 🔴 Dead: 12
 // 🟡 Failed (3+): 7
@@ -17,35 +18,82 @@ import Pagination from "../StripeEventMonitor/Pagination";
 // 필터의 영역 추가 가능:
 // order_id 검색, payment_intent_id 검색
 
-// refresh 버튼이 있으면 좋을 것 같음.
-// ❌ 에러 메시지 처리가 잘 안 되고 있음.
-
+// URL = single source of truth
 export default function StripeEventMonitor() {
   const { accessToken } = useContext(AuthContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const {
     events,
     eventTypes,
+    statusSummary,
+    filters,
+    currentPage,
+    totalMatchingEvents,
+    totalPages,
+    pageLimit,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,
-    statusSummary,
-    filters,
     eventError,
     eventTypesError,
     eventsCountError,
-    setFilters,
-    resetFilters,
   } = useStripeEventMonitor(accessToken);
+
+  // UI 입력 상태 변경 시 url 업데이트
+  const initialFilters = {
+    event_type: searchParams.get("event_type") ?? "",
+    status: searchParams.get("status") ?? "",
+    timeRange: searchParams.get("timeRange") ?? "",
+  };
+
+  const [draftFilters, setDraftFilters] = useState(initialFilters);
+
+  const updateDraftFilter = (key, value) => {
+    setDraftFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const applyFilters = () => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+
+      Object.entries(draftFilters).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+        else params.delete(key);
+      });
+
+      params.set("page", "1");
+      return params;
+    });
+  };
+
+  // 기존 query params 지우고 page만 수정
+  // `/admin/events-monitor?page=1`
+  const resetFilters = () => {
+    setDraftFilters({
+      event_type: "",
+      status: "",
+      timeRange: "",
+    });
+
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    setSearchParams(params);
+  };
 
   const errors = [eventError, eventTypesError, eventsCountError].filter(
     Boolean,
   );
+  const isFiltered = filters.event_type || filters.status || filters.timeRange;
 
   if (isFetchingData || isFetchingCount || isFetchingEventTypes) {
     return <Spinner />;
   }
 
-  if (events.length === 0) {
+  if (totalMatchingEvents === 0 && !isFiltered) {
     return (
       <EmptyEventState
         title="All Stripe events are healthy"
@@ -72,15 +120,29 @@ export default function StripeEventMonitor() {
         <section className="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
           <StatusEventSummary statusSummary={statusSummary} />
           <StripeEventFilters
+            draftFilters={draftFilters}
             filters={filters}
             eventTypes={eventTypes}
-            onFilterChange={(newFilters) => setFilters(newFilters)}
+            updateDraftFilter={updateDraftFilter}
+            applyFilters={applyFilters}
             onReset={resetFilters}
           />
 
           <div className="mt-6 overflow-x-auto">
-            <StripeEventTable events={events} />
-            <Pagination />
+            {totalMatchingEvents === 0 ? (
+              <EmptyEventState
+                title="No results found"
+                description="No results found for the selected filters."
+              />
+            ) : (
+              <StripeEventTable events={events} />
+            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageLimit={pageLimit}
+              totalMatchingEvents={totalMatchingEvents}
+            />
           </div>
         </section>
       </div>

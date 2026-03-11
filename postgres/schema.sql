@@ -91,7 +91,7 @@ CREATE TABLE stripe_events (
   id TEXT PRIMARY KEY,
   event_type TEXT NOT NULL,
   payload JSONB NOT NULL,
-  status TEXT DEFAULT 'pending',
+  status TEXT DEFAULT 'pending', -- pending | processed | failed | dead |ignored
   retry_count INT DEFAULT 0,
   last_error TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
