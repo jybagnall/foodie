@@ -99,7 +99,7 @@ export default function AdminInvite() {
             <div className="mt-4">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Send invite
               </Button>

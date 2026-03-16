@@ -24,7 +24,10 @@ export default function ShippingForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const onAddressSubmit = async (shippingInfo) => {
-    if (items.length === 0) {
+    if (items.length === 0 || !totalAmount || totalAmount <= 0) {
+      setErrorMsg(
+        "Your cart is empty. Please add items before placing an order.",
+      );
       return;
     }
 
@@ -38,11 +41,10 @@ export default function ShippingForm() {
       },
       order: {
         items: items.map((i) => ({
+          menu_name: i.name,
           menu_id: i.id,
           qty: i.qty,
-          price: i.price,
         })),
-        total_amount: totalAmount,
       },
     };
 
@@ -80,12 +82,12 @@ export default function ShippingForm() {
 
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
-      {errorMsg && (
-        <div className="mb-4">
-          <ErrorAlert title="There was a problem" message={errorMsg} />
-        </div>
-      )}
       <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+        {errorMsg && (
+          <div className="mb-4">
+            <ErrorAlert title="There was a problem" message={errorMsg} />
+          </div>
+        )}
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
           Shipping Address
         </h2>
@@ -204,7 +206,7 @@ export default function ShippingForm() {
             <Button
               type="button"
               textOnly
-              propStyle="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700"
               onClick={onCancelSubmit}
             >
               Cancel

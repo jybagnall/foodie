@@ -4,7 +4,6 @@ import { Elements } from "@stripe/react-stripe-js";
 import { useNavigate, useParams } from "react-router-dom";
 import CartContext from "../../../contexts/CartContext";
 import Spinner from "../../user_feedback/Spinner";
-import PageError from "../../user_feedback/PageError";
 import AuthContext from "../../../contexts/AuthContext";
 import PaymentService from "../../../services/payment.service";
 import PaymentFormWrapper from "./PaymentFormWrapper";
@@ -38,9 +37,13 @@ export default function OrderPayment() {
     let isMounted = true;
 
     const createIntent = async () => {
+      if (!orderId) {
+        setErrorMsg("Invalid order.");
+        return;
+      }
+
       try {
         const { clientSecret } = await paymentService.createPaymentIntent({
-          amount: totalAmount * 100, // 결제 금액 (단위는 '센트'라서 *100)
           currency: "usd",
           orderId,
         });
@@ -59,7 +62,7 @@ export default function OrderPayment() {
     return () => {
       isMounted = false;
     };
-  }, [totalAmount, orderId]);
+  }, [orderId]);
 
   // 3D Secure 인증 후 URL에 ?redirect_status=succeeded 붙어서 돌아옴
   const redirectStatus = useMemo(() => {

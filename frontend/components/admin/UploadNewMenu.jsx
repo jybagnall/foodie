@@ -210,7 +210,7 @@ export default function UploadNewMenu() {
             <div className="mt-8">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Create a new menu
               </Button>

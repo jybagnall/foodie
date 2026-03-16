@@ -21,6 +21,7 @@ export default function ViewCart() {
   } = useContext(CartContext);
 
   const allChecked = items.every((i) => i.checked);
+  const anyChecked = items.some((i) => i.checked);
 
   const navigate = useNavigate();
 
@@ -146,12 +147,11 @@ export default function ViewCart() {
                 </Button>{" "}
                 <Button
                   onClick={goToCheckout}
-                  disabled={numOfCheckedItems === 0}
-                  className="bg-yellow-300 hover:bg-yellow-400 px-3 py-1 rounded-md text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={!anyChecked}
+                  className="bg-yellow-300 hover:bg-yellow-400 px-3 py-1 rounded-md text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Proceed to checkout
                 </Button>{" "}
-                {/* 🚩🚩🚩 */}
               </div>
             </div>
           </>

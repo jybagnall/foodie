@@ -4,7 +4,6 @@ import { PaymentElement } from "@stripe/react-stripe-js";
 
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
-import Spinner from "../../user_feedback/Spinner";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
@@ -47,20 +46,6 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       setErrorMsg(err.message);
       return;
     }
-    if (
-      err.type === "api_error" ||
-      err.type === "api_connection_error" ||
-      err.type === "rate_limit_error" ||
-      err.code === "ECONNREFUSED" ||
-      err.code === "ENETUNREACH" ||
-      err.code === "ETIMEDOUT" ||
-      err.message?.includes("NetworkError")
-    ) {
-      setErrorMsg(
-        "We're having trouble connecting to the payment service. Please try again in a few moments.",
-      );
-      return;
-    }
     setErrorMsg("Something went wrong during payment. Please try again.");
   };
 
@@ -72,15 +57,14 @@ export default function PaymentForm({ orderId, stripe, elements }) {
     setIsPayProcessing(true);
     setErrorMsg("");
 
-    const result = await confirmStripePayment();
+    try {
+      const result = await confirmStripePayment();
 
-    // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
-    if (result?.status === "succeeded") {
-      navigate(`/order/order-completed/${orderId}`, { replace: true });
-      return;
-    }
-
-    if (result?.status === "error") {
+      // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
+      if (result?.status === "succeeded") {
+        navigate(`/order/order-completed/${orderId}`, { replace: true });
+      }
+    } finally {
       setIsPayProcessing(false);
     }
   };
@@ -98,15 +82,15 @@ export default function PaymentForm({ orderId, stripe, elements }) {
 
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
-      {errorMsg && (
-        <div className="mb-4">
-          <ErrorAlert
-            title="We couldn’t complete your payment."
-            message={errorMsg}
-          />
-        </div>
-      )}
       <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+        {errorMsg && (
+          <div className="mb-4">
+            <ErrorAlert
+              title="We couldn’t complete your payment."
+              message={errorMsg}
+            />
+          </div>
+        )}
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
           Payment
         </h2>
@@ -118,7 +102,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
             <Button
               type="button"
               textOnly
-              propStyle="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700"
               onClick={onCancelSubmit}
             >
               Cancel

@@ -3,21 +3,23 @@ export default function Button({
   textOnly,
   type = "button",
   disabled = false,
-  propStyle = "",
+  className = "",
   ...props
 }) {
   let baseStyle = textOnly
     ? "cursor-pointer bg-transparent border-0 transition-colors"
-    : "cursor-pointer border rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200";
+    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200";
 
   let disabledStyle = disabled
-    ? " bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:shadow-none"
+    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:shadow-none"
     : "";
 
-  const styleToApply = `${baseStyle}${disabledStyle} ${propStyle}`.trim();
+  const styleToApply = [baseStyle, className, disabledStyle]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <button type={type} className={styleToApply} {...props}>
+    <button type={type} disabled={disabled} className={styleToApply} {...props}>
       {children}
     </button>
   );

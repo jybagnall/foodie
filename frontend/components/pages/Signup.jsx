@@ -54,16 +54,15 @@ export default function Signup() {
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
       <div className="w-full max-w-lg">
-        {errorMsg && (
-          <div className="mb-4">
-            <ErrorAlert
-              title="We couldn’t create your account"
-              message={errorMsg}
-            />
-          </div>
-        )}
-
         <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+          {errorMsg && (
+            <div className="mb-4">
+              <ErrorAlert
+                title="We couldn’t create your account"
+                message={errorMsg}
+              />
+            </div>
+          )}
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
             Create account
           </h2>
@@ -129,7 +128,7 @@ export default function Signup() {
             <div className="mt-8">
               <Button
                 type="submit"
-                propStyle="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Create your Foodie account
               </Button>

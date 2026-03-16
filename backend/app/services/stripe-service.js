@@ -70,7 +70,7 @@ export async function getUnprocessedEvents({
       AND ($3::timestamp IS NULL OR created_at >= $3)
     ORDER BY created_at DESC, id DESC
     LIMIT $4
-    OFFSET $5;
+    OFFSET $5
     `;
   const values = [event_type, status, created_from, LIMIT, offset];
   const result = await pool.query(q, values);

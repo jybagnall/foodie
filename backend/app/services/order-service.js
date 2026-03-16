@@ -18,6 +18,16 @@ export async function createOrderId(userId, addressId, totalAmount) {
   }
 }
 
+export async function getOrderById(orderId) {
+  const q = `
+  SELECT *
+  FROM orders
+  WHERE order_id = $1
+  `;
+  const result = await pool.query(q, [orderId]);
+  return result.rows[0];
+}
+
 export async function insertOrderItems(orderId, order) {
   const values = [];
   const placeholders = [];
@@ -78,12 +88,19 @@ export async function updateOrderStatus(client, orderId, status) {
     UPDATE orders
     SET status = $1
     WHERE id = $2
-    AND status != $1
+    AND status = 'pending'
     `;
 
   const values = [status, orderId];
   try {
-    await client.query(q, values);
+    const result = await client.query(q, values);
+
+    if (result.rowCount === 0) {
+      console.warn(
+        `Order ${orderId} not updated - already ${status} or not found`,
+      ); // 이미 paid였거나, orderId가 잘못됐거나
+    }
+
     return { success: true };
   } catch (err) {
     console.error("DB update error", err.message);

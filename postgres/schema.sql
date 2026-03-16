@@ -74,30 +74,36 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: requires_payment, paid, failed, refunded
+-- payment_status: requires_payment, paid, failed, refunded, succeeded
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,
   stripe_payment_intent_id VARCHAR(100) UNIQUE NOT NULL, 
-  stripe_customer_id VARCHAR(100),
   amount NUMERIC(10,2) NOT NULL,
   currency VARCHAR(10) DEFAULT 'usd',
   payment_status VARCHAR(20) DEFAULT 'requires_payment',
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(), --웹훅 재시도나 상태 변경 때 기록
+  paid_at TIMESTAMP, --실제 결제 완료 시점
+  stripe_charge_id VARCHAR(100) UNIQUE, --환불할 때 필요
+  failure_reason TEXT
 )
 
 -- 이벤트 저장
+-- 나중에 worker가 여러개라면 'processing_by TEXT' 도 넣으면 좋음.
+-- pending | processing | dead | ignored | success
 CREATE TABLE stripe_events (
   id TEXT PRIMARY KEY,
   event_type TEXT NOT NULL,
   payload JSONB NOT NULL,
-  status TEXT DEFAULT 'pending', -- pending | processed | failed | dead |ignored
+  status TEXT DEFAULT 'pending',
   retry_count INT DEFAULT 0,
   last_error TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   notified_at TIMESTAMP NULL,
-  resolved_at TIMESTAMP NULL
+  resolved_at TIMESTAMP NULL,
+  processing_at TIMESTAMP NULL
 );
+--DELETE FROM stripe_events;
 
 -- partial index: dead 상태이고 아직 알림 안 간 이벤트만 DB가 모아둠
 CREATE INDEX idx_stripe_dead_unnotified

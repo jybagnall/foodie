@@ -48,7 +48,7 @@ export default function MenuItem({ meal }) {
           <div className="mt-4">
             <Button
               onClick={() => handleAddToCart(meal)}
-              propStyle="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
+              className="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
             >
               Add to Cart
             </Button>

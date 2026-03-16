@@ -1,17 +1,5 @@
 import pool from "../config/db.js";
 
-export async function getMenu() {
-  const q = `SELECT * FROM menus`;
-
-  try {
-    const result = await pool.query(q);
-    return Array.isArray(result?.rows) ? result.rows : [];
-  } catch (err) {
-    console.error("DB fetch error:", err.message);
-    return [];
-  }
-}
-
 export async function createMenu(data) {
   const q = `
     INSERT INTO menus (name, price, description, image)
@@ -26,4 +14,26 @@ export async function createMenu(data) {
     console.error("DB insert error", err.message);
     throw err;
   }
+}
+
+export async function getMenu() {
+  const q = `SELECT * FROM menus`;
+
+  try {
+    const result = await pool.query(q);
+    return Array.isArray(result?.rows) ? result.rows : [];
+  } catch (err) {
+    console.error("DB fetch error:", err.message);
+    return [];
+  }
+}
+
+export async function getMenuPrices(menuIds) {
+  const q = `
+  SELECT id, price
+  FROM menus
+  WHERE id = ANY($1)
+  `;
+  const result = await pool.query(q, [menuIds]);
+  return result.rows;
 }
