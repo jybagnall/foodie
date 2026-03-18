@@ -28,12 +28,12 @@ export async function getMenu() {
   }
 }
 
-export async function getMenuPrices(menuIds) {
+export async function getMenuPrices(client, menuIds) {
   const q = `
   SELECT id, price
   FROM menus
   WHERE id = ANY($1)
   `;
-  const result = await pool.query(q, [menuIds]);
+  const result = await client.query(q, [menuIds]);
   return result.rows;
 }

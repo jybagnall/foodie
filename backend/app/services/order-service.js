@@ -1,6 +1,6 @@
 import pool from "../config/db.js";
 
-export async function createOrderId(userId, addressId, totalAmount) {
+export async function createOrderId(client, userId, addressId, totalAmount) {
   const q = `
    INSERT INTO orders (user_id, address_id, total_amount)
    VALUES ($1, $2, $3)
@@ -10,7 +10,7 @@ export async function createOrderId(userId, addressId, totalAmount) {
   const values = [userId, addressId, totalAmount];
 
   try {
-    const result = await pool.query(q, values);
+    const result = await client.query(q, values);
     return result.rows[0].id;
   } catch (err) {
     console.error("DB insert error", err.message);
@@ -20,19 +20,20 @@ export async function createOrderId(userId, addressId, totalAmount) {
 
 export async function getOrderById(orderId) {
   const q = `
-  SELECT *
+  SELECT user_id, total_amount
   FROM orders
-  WHERE order_id = $1
+  WHERE id = $1
   `;
   const result = await pool.query(q, [orderId]);
   return result.rows[0];
 }
 
-export async function insertOrderItems(orderId, order) {
+// [{ menu_name, menu_id, qty, price }, {}]
+export async function insertOrderItems(client, orderId, order) {
   const values = [];
   const placeholders = [];
 
-  order.items.forEach((item, i) => {
+  order.forEach((item, i) => {
     const baseIndex = i * 3;
     placeholders.push(
       `($1, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4})`,
@@ -51,14 +52,14 @@ export async function insertOrderItems(orderId, order) {
     `;
 
   try {
-    await pool.query(q, [orderId, ...values]);
+    await client.query(q, [orderId, ...values]);
   } catch (err) {
     console.error("DB insert error", err.message);
     throw err;
   }
 }
 
-export async function saveShippingInfo(userId, address) {
+export async function saveShippingInfo(client, userId, address) {
   const q = `
     INSERT INTO addresses (user_id, street, postal_code, city, phone, full_name)
     VALUES ($1, $2, $3, $4, $5, $6)
@@ -75,7 +76,7 @@ export async function saveShippingInfo(userId, address) {
   ];
 
   try {
-    const result = await pool.query(q, values);
+    const result = await client.query(q, values);
     return result.rows[0].id;
   } catch (err) {
     console.error("DB insert error", err.message);

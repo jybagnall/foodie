@@ -14,6 +14,8 @@ export default function PaymentFormWrapper({ orderId }) {
 }
 
 // ❗컴포넌트 존재의 이유:
-// 1. Stripe hook은 오직 한 곳에서만 호출
+// 1. Stripe hook (useStripe, useElements)은 오직 한 곳, 즉
+// <Elements> 컴포넌트 안에서만 호출 가능에서만 호출
+
 // 2. stripe / elements 준비 여부를 완전히 격리
 // 3. PaymentForm을 순수 컴포넌트로 유지

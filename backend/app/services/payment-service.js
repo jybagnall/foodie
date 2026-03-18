@@ -1,8 +1,8 @@
 import pool from "../config/db.js";
 
-export async function findUniqueOrder(orderId) {
+export async function findUniquePayment(orderId) {
   const q = `
-  SELECT *
+  SELECT stripe_payment_intent_id
   FROM payments
   WHERE order_id = $1
   `;

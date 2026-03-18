@@ -30,40 +30,34 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       redirect: "if_required",
     });
 
-    if (error) {
-      handlePaymentError(error);
-      return { status: "error" };
+    // 카드 번호 혹은 CVC 오류 (결제 시도조차 안 됨)
+    if (error.type === "validation_error") {
+      setErrorMsg(error.message);
+      return { status: "validation_error" };
     }
 
-    return { status: paymentIntent?.status };
-  };
-
-  // 오류의 종류: 카드 번호 오류, 카드 한도 초과, CVC 오류, 3DS 인증 실패 처리
-  // Webhook 아직 안 옴, DB 저장 없음
-  const handlePaymentError = (err) => {
-    if (!err) return;
-    if (err.type === "card_error" || err.type === "validation_error") {
-      setErrorMsg(err.message);
-      return;
-    }
-    setErrorMsg("Something went wrong during payment. Please try again.");
+    return { paymentIntent };
   };
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
 
-    if (isPayProcessing) return; // 중복 요청의 차단 ??
+    if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
 
     try {
       const result = await confirmStripePayment();
 
-      // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
-      if (result?.status === "succeeded") {
-        navigate(`/order/order-completed/${orderId}`, { replace: true });
-      }
+      if (result?.status === "validation_error") return; // 이동 안함
+
+      navigate(
+        `/order/order-completed/${orderId}?payment_intent=${result.paymentIntent.id}`,
+        {
+          replace: true,
+        },
+      ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
     } finally {
       setIsPayProcessing(false);
     }

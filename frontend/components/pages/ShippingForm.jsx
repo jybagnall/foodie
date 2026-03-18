@@ -39,7 +39,7 @@ export default function ShippingForm() {
         postal_code: shippingInfo.postal_code.trim(),
         phone: shippingInfo.phone.trim(),
       },
-      order: {
+      orderPayload: {
         items: items.map((i) => ({
           menu_name: i.name,
           menu_id: i.id,

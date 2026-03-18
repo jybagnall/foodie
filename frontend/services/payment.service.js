@@ -12,6 +12,13 @@ class PaymentService {
     );
     return data;
   }
+
+  async verifyPayment(paymentIntentId) {
+    const data = await this.client.get(
+      `/api/payments/verify?payment_intent=${paymentIntentId}`,
+    );
+    return data;
+  }
 }
 
 export default PaymentService;
