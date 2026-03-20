@@ -107,4 +107,9 @@ async function startStripeWorker() {
   }
 }
 
-startStripeWorker();
+// Worker 루프 시작 && Worker가 예상치 못하게 종료되면
+// 비정상 종료 신호를 보내고 Docker가 자동으로 재시작
+startStripeWorker().catch((err) => {
+  console.error("Worker crashed:", err);
+  process.exit(1);
+});

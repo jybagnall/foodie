@@ -28,6 +28,20 @@ export async function getOrderById(orderId) {
   return result.rows[0];
 }
 
+export async function getOrderConfirmationDetails(client, orderId) {
+  const q = `
+  SELECT 
+    u.email,
+    a.full_name, a.street, a.city, a.postal_code, a.phone
+  FROM orders o
+  JOIN addresses a ON o.address_id = a.id
+  JOIN users u ON o.user_id = u.id
+  WHERE o.id = $1
+  `;
+  const result = await client.query(q, [orderId]);
+  return result.rows[0];
+}
+
 // [{ menu_name, menu_id, qty, price }, {}]
 export async function insertOrderItems(client, orderId, order) {
   const values = [];
