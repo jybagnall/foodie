@@ -27,10 +27,8 @@ export default function OrderPayment() {
   // clientSecret = 그 주문서를 열 수 있는 1회용 코드
   // ❗렌더링마다 Elements 안의 clientSecret 객체가 새로 만들어짐
   useEffect(() => {
-    const paymentService = new PaymentService(
-      new AbortController(),
-      () => accessToken,
-    );
+    const controller = new AbortController();
+    const paymentService = new PaymentService(controller, () => accessToken);
 
     let isMounted = true;
 
@@ -55,8 +53,10 @@ export default function OrderPayment() {
     };
 
     createIntent();
+    // Stripe가 payment_intent.created 이벤트를 Webhook으로 자동 전송함
 
     return () => {
+      controller.abort();
       isMounted = false;
     };
   }, [orderId]);
@@ -78,7 +78,7 @@ export default function OrderPayment() {
 
   useEffect(() => {
     if (redirectStatus === "succeeded" || redirectStatus === "failed") {
-      navigate(`/order/order-completed/${orderId}`, {
+      navigate(`/order/completed/${orderId}`, {
         replace: true,
         state: { status: redirectStatus },
       });

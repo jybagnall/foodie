@@ -1,33 +1,44 @@
 import { Resend } from "resend";
 import dotenv from "dotenv";
-import { getOrderConfirmationDetails } from "../services/order-service";
-import { formatCurrency } from "./orderCalculations";
+import Stripe from "stripe";
+
+import { getOrderConfirmationDetails } from "../services/order-service.js";
+import { formatCurrency } from "./orderCalculations.js";
+import { formatPaymentMethodDisplay } from "./paymentInfo.js";
 
 dotenv.config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function sendOrderConfirmationEmail(
   client,
   orderId,
   paymentIntent,
 ) {
-  const { amount_received, payment_method_details, billing_details } =
-    paymentIntent;
+  const { amount_received, currency, latest_charge } = paymentIntent;
 
   try {
     const { email, full_name, street, city, postal_code, phone } =
       await getOrderConfirmationDetails(client, orderId);
 
-    await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
-      to: { email },
-      subject: `Payment Processed for Your Foodie Order`,
-      html: `
+    const charge = await stripe.charges.retrieve(latest_charge);
+    console.log(
+      "charge.payment_method_details",
+      JSON.stringify(charge.payment_method_details, null, 2),
+    );
+    const { type, card } = charge.payment_method_details;
+    const paymentInfo = {
+      method: type, // card, paypal
+      brand: card?.brand ?? null,
+      last4: card?.last4 ?? null,
+    };
+
+    const html = `
 <div style="
-    font-family: Arial, sans-serif;
-    background-color: #f9fafb;
-    padding: 40px 0;
+  font-family: Arial, sans-serif;
+  background-color: #f9fafb;
+  padding: 40px 0;
 ">
   <div style="
     max-width: 600px;
@@ -79,7 +90,7 @@ export async function sendOrderConfirmationEmail(
           font-weight: bold;
           color: #16a34a;
         ">
-          ${formatCurrency(billing_details.currency, amount_received)}
+          ${formatCurrency(currency, amount_received)}
         </td>
       </tr>
 
@@ -91,7 +102,7 @@ export async function sendOrderConfirmationEmail(
           padding: 8px 0;
           text-align: right;
         ">
-          ${payment_method_details.card.brand.toUpperCase()}
+          ${formatPaymentMethodDisplay(paymentInfo)}
         </td>
       </tr>
     </table>
@@ -136,10 +147,18 @@ export async function sendOrderConfirmationEmail(
     ">
       If you have any questions, feel free to contact our support team.
     </p>
+
   </div>
 </div>
-      `,
+    `;
+
+    await resend.emails.send({
+      from: "Acme <onboarding@resend.dev>",
+      to: email,
+      subject: "Payment Processed for Your Foodie Order",
+      html,
     });
+
     console.log("✅ Order confirmation email sent!");
   } catch (err) {
     console.error("❌ Failed to send email:", err.message);

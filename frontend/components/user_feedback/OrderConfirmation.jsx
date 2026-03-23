@@ -1,6 +1,7 @@
 import {
   Link,
   useLocation,
+  useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -8,15 +9,18 @@ import Spinner from "./Spinner";
 import { useContext, useEffect, useState } from "react";
 import PaymentService from "../../services/payment.service";
 import AuthContext from "../../contexts/AuthContext";
+import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
 
-// GET /order/order-completed/orderId
-//
+// GET /order/completed/orderId?payment_intent=
+
 export default function OrderConfirmation() {
+  const [searchParams] = useSearchParams();
   const paymentIntentId = searchParams.get("payment_intent");
   const { orderId } = useParams();
-  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
   const { accessToken } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!paymentIntentId) {
@@ -40,20 +44,32 @@ export default function OrderConfirmation() {
     verifyStatus();
   }, [paymentIntentId]);
 
-  // 실수로 페이지를 벗어나는 것을 방지
+  // 결제 페이지가 state: { from: "payment" }을 보냄
+  // 이 페이지는 결제 페이지에서만 도착 가능, 그외는 튕겨냄
   useEffect(() => {
-    if (status !== "processing") return; // 결제 처리 중에만 동작
+    const isFromPayment = getFromPayment();
 
-    const handleBeforeUnload = (e) => {
-      e.preventDefault(); // 브라우저가 페이지를 나갈 때 실행
-      e.returnValue = ""; // 브라우저가 경고창을 띄움
+    if (location.state?.from !== "payment" && !isFromPayment) {
+      navigate(`/my-account/orders`, { replace: true });
+      return;
+    } // 1. 다른 곳에서 뒤로가기로 재진입 시, 주문 내역 페이지로 튕겨냄
+
+    // 정상적으로 결제하고 들어온 경우에 실행
+    // 2. 현재 URL을 히스토리에 한 번 더 추가 (완료 페이지가 2개), 즉
+    // [결제창 페이지] → [결제 완료] → [결제 완료(카피), 유저 위치함]
+    window.history.pushState(null, "", window.location.href);
+
+    // 3. [결제 완료 복사본] → [결제 완료 페이지] → 튕겨짐
+    const handlePopstate = () =>
+      navigate(`/my-account/orders/${orderId}`, { replace: true });
+    window.addEventListener("popstate", handlePopstate);
+
+    // 4. 페이지 떠날 때 이벤트 리스너 정리
+    return () => {
+      window.removeEventListener("popstate", handlePopstate);
+      clearFromPayment(); // 페이지 떠날 때 sessionStorage 삭제
     };
-
-    window.addEventListener("beforeunload", handleBeforeUnload); // 브라우저 나감 감지
-
-    // 이전 이벤트 제거
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [status]);
+  }, []);
 
   const getContent = () => {
     switch (status) {
@@ -84,7 +100,7 @@ export default function OrderConfirmation() {
         return {
           title: "Payment failed",
           message: "Please try another payment method.",
-          action: <Link to={`/order/pay-order/${orderId}`}>Try again</Link>,
+          action: <Link to={`/order/payment/${orderId}`}>Try again</Link>,
         };
       case "failed":
         return {
@@ -93,7 +109,7 @@ export default function OrderConfirmation() {
             "We couldn't process your payment. Please try again or use a different method.",
           action: (
             <Link
-              to={`/order/pay-order/${orderId}`}
+              to={`/order/payment/${orderId}`}
               className="text-orange-400 underline"
             >
               Try again
@@ -113,7 +129,8 @@ export default function OrderConfirmation() {
     }
   };
 
-  const { title, message, action } = getContent(); // 상태에 따른 객체가 반환됨.
+  // status에 따른 객체가 반환됨.
+  const { title, message, action } = getContent();
 
   return (
     <div className="text-center p-20">

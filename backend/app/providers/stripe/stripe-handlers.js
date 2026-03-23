@@ -3,12 +3,12 @@ import {
   markPaymentFailed,
 } from "../../services/payment-service.js";
 import { updateOrderStatus } from "../../services/order-service.js";
+import { sendOrderConfirmationEmail } from "../../utils/email-orderConfirm.js";
 
 // 여기서의 실패: DB 저장 실패, 주문 상태 업데이트 실패, 트랜잭션 롤백, 서버 장애
 // 이 실패들은 유저에게 실시간으로 보여줄 수 없음.
 
 // metadata는 모든 값이 string으로 저장됨
-// ❗try, catch 필요하지 않음?
 export async function handlePaymentIntentSucceeded(client, paymentIntent) {
   const orderId = Number(paymentIntent.metadata?.orderId);
 
@@ -30,6 +30,7 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
   });
 
   await updateOrderStatus(client, orderId, "paid");
+  await sendOrderConfirmationEmail(client, orderId, paymentIntent);
 }
 
 export async function handlePaymentIntentFailed(client, paymentIntent) {

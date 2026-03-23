@@ -56,7 +56,7 @@ export default function ShippingForm() {
     try {
       setIsOrderProcessing(true);
       const { orderId } = await orderService.initializeOrder(orderDetails);
-      navigate(`/order/pay-order/${orderId}`);
+      navigate(`/order/payment/${orderId}`);
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);

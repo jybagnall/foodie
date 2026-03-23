@@ -13,7 +13,7 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/stripe/webhook
-// 결제 시도 후, Stripe가 상태를 확정 후 Webhook URL 호출함.
+// 결제 완료 후, Stripe가 Webhook URL 호출함.
 
 const HANDLED_EVENTS = [
   "payment_intent.succeeded",

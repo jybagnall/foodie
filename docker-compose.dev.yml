@@ -81,6 +81,8 @@ services:
     working_dir: /app
     command: npm run worker
     container_name: foodie-stripe-worker
+    ports:
+      - "9230:9230"
     restart: on-failure
     volumes:
       - ./backend:/app

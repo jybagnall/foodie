@@ -66,7 +66,7 @@ async function startStripeWorker() {
         try {
           const result = await handleStripeEvent(client, eventRow.payload);
           const newStatus = result.ignored ? "ignored" : "success";
-          // 성공 처리
+          // 서버에 업데이트 성공 처리
           await client.query(
             `
           UPDATE stripe_events
@@ -79,6 +79,7 @@ async function startStripeWorker() {
 
           await client.query("COMMIT");
         } catch (err) {
+          // Stripe 결제 자체는 성공했으나 서버에서 저장에 실패함
           await client.query("ROLLBACK"); // 현재 트랜잭션 취소
           await client.query("BEGIN"); // 실패 카운트 증가를 위한 새 트랜잭션 시작
           await client.query(

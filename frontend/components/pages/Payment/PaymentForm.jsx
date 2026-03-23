@@ -4,6 +4,7 @@ import { PaymentElement } from "@stripe/react-stripe-js";
 
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
+import { markAsFromPayment } from "../../../storage/paymentStorage";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
@@ -20,18 +21,18 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   // 결제 트리거 함수.
-  // paymentIntent: 결제가 지금 어디까지 왔는지 알려주는 상태
+  // paymentIntent: 결제 상태 (성공 여부, 금액 등)
   const confirmStripePayment = async () => {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/order/pay-order/${orderId}`,
+        return_url: `${window.location.origin}/order/payment/${orderId}`,
       }, // 3D Secure (은행 인증 페이지) 완료 후 리디렉팅되는 페이지
       redirect: "if_required",
     });
 
     // 카드 번호 혹은 CVC 오류 (결제 시도조차 안 됨)
-    if (error.type === "validation_error") {
+    if (error?.type === "validation_error") {
       setErrorMsg(error.message);
       return { status: "validation_error" };
     }
@@ -52,10 +53,12 @@ export default function PaymentForm({ orderId, stripe, elements }) {
 
       if (result?.status === "validation_error") return; // 이동 안함
 
+      markAsFromPayment();
       navigate(
-        `/order/order-completed/${orderId}?payment_intent=${result.paymentIntent.id}`,
+        `/order/completed/${orderId}?payment_intent=${result.paymentIntent.id}`,
         {
-          replace: true,
+          replace: true, // 뒤로가기에 이 페이지 삭제
+          state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
         },
       ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
     } finally {

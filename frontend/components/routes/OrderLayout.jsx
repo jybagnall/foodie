@@ -9,6 +9,3 @@ export default function OrderLayout() {
     </div>
   );
 }
-
-// 🔑stripe={stripePromise}: “이 웹페이지는 이 Stripe 계정으로 결제를 진행할 거야!”
-// clientSecret은 결제할 주문에 대한 특정 PaymentIntent에 속한 값
