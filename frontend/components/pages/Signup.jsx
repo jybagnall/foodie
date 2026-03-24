@@ -21,7 +21,8 @@ export default function Signup() {
   } = useForm();
 
   const onSignupSubmit = async ({ name, email, password }) => {
-    const accountService = new AccountService(new AbortController());
+    const abortController = new AbortController();
+    const accountService = new AccountService(abortController.signal);
 
     setIsSignupProcessing(true);
     setErrorMsg("");

@@ -1,51 +1,23 @@
-import { useState, useEffect, useContext } from "react";
+import { useEffect } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import MenuItem from "../Home/MenuItem";
-import MenuService from "../../../services/menu.service";
 import PageError from "../../user_feedback/PageError";
+import useMenu from "../../../hooks/useMenu";
 
 // 에러 메시지 렌더링을 넣어야 함
-// 빈 배열이면 로고가 떠야 하는데?
 export default function UserLanding() {
-  const [menu, setMenu] = useState([]);
-  const [isFetchProcessing, setIsFetchProcessing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const { menu, fetchingError, isFetchingMenu } = useMenu();
 
   useEffect(() => {
     document.title = "Menu | Foodie";
-
-    const abortController = new AbortController();
-    const menuService = new MenuService(abortController);
-
-    const fetchMenu = async () => {
-      try {
-        setIsFetchProcessing(true);
-        const data = await menuService.getMenu();
-        setMenu(data);
-      } catch (err) {
-        if (!abortController.signal.aborted) {
-          console.error(err);
-          const returnedErrorMsg = err?.response?.data?.error || err.message;
-          setErrorMsg(returnedErrorMsg);
-        }
-      } finally {
-        setIsFetchProcessing(false);
-      }
-    };
-
-    fetchMenu();
-
-    return () => {
-      abortController.abort();
-    };
   }, []);
 
-  if (isFetchProcessing) {
+  if (isFetchingMenu) {
     return <Spinner />;
   }
 
-  if (errorMsg) {
-    return <PageError title="We couldn’t load the menu" message={errorMsg} />;
+  if (fetchingError) {
+    return <PageError title="We couldn’t load the menu" />;
   } // 스타일을 바꿔야함
 
   return (

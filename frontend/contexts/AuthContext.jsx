@@ -51,7 +51,10 @@ export function AuthContextProvider({ children }) {
 
   const fetchCartAndSync = useCallback(async () => {
     const abortController = new AbortController();
-    const cartService = new CartService(abortController, () => accessToken);
+    const cartService = new CartService(
+      abortController.signal,
+      () => accessToken,
+    );
 
     try {
       const serverCartItems = await cartService.getMyCart();
@@ -84,7 +87,7 @@ export function AuthContextProvider({ children }) {
   // 로그아웃 정책을 정의
   const logout = useCallback(async () => {
     const abortController = new AbortController();
-    const accountService = new AccountService(abortController);
+    const accountService = new AccountService(abortController.signal);
 
     await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
     setAccessToken(null);

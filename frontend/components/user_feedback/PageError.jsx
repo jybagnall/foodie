@@ -3,7 +3,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 // what color is bg-[#111827]?
 export default function PageError({
   title = "An unexpected error occured",
-  message = " Please try refreshing the page or come back later.",
+  message = "Please try refreshing the page or come back later.",
 }) {
   return (
     <div

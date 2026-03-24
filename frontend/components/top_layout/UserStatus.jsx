@@ -38,8 +38,9 @@ export default function UserStatus() {
   };
 
   const persistCart = async () => {
+    const abortController = new AbortController();
     const cartService = new CartService(
-      new AbortController(),
+      abortController.signal,
       () => accessToken,
     );
 

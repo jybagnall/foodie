@@ -14,10 +14,6 @@ import { useSearchParams } from "react-router-dom";
 // polling이 있으면 stale 여부가 중요하지 않음 (staleTime: 0)
 
 export default function useStripeEventMonitor(accessToken) {
-  const stripeService = useMemo(() => {
-    return new StripeService(() => accessToken);
-  }, [accessToken]);
-
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const pageParam = searchParams.get("page");
@@ -35,9 +31,10 @@ export default function useStripeEventMonitor(accessToken) {
   ); // 불필요한 refetch 방지
 
   const { mutate: confirmDeadEvents } = useMutation({
-    mutationFn: (time) => {
-      return stripeService.markStripeEventsAsNotified(time);
-    },
+    mutationFn: (time) =>
+      new StripeService(null, () => accessToken).markStripeEventsAsNotified(
+        time,
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: stripeKeys.deadCounts(),
@@ -62,8 +59,8 @@ export default function useStripeEventMonitor(accessToken) {
       filters.timeRange,
       currentPage,
     ),
-    queryFn: () =>
-      stripeService.getErroredStripeEvents({
+    queryFn: ({ signal }) =>
+      new StripeService(signal, () => accessToken).getErroredStripeEvents({
         event_type: filters.event_type,
         status: filters.status,
         created_from: getTimeRangeStart(filters.timeRange),
@@ -84,7 +81,8 @@ export default function useStripeEventMonitor(accessToken) {
       filters.status,
       filters.timeRange,
     ),
-    queryFn: () => stripeService.getEventTypes(),
+    queryFn: ({ signal }) =>
+      new StripeService(signal, () => accessToken).getEventTypes(),
     staleTime: 1000 * 60 * 10,
     enabled: !!accessToken,
   });
@@ -99,7 +97,11 @@ export default function useStripeEventMonitor(accessToken) {
       filters.status,
       filters.timeRange,
     ),
-    queryFn: () => stripeService.getErroredStripeEventsCount(),
+    queryFn: ({ signal }) =>
+      new StripeService(
+        signal,
+        () => accessToken,
+      ).getErroredStripeEventsCount(),
     placeholderData: keepPreviousData,
     staleTime: 0,
     refetchInterval: adaptivePolling,
@@ -114,7 +116,8 @@ export default function useStripeEventMonitor(accessToken) {
     error: deadEventsCountError,
   } = useQuery({
     queryKey: stripeKeys.deadCounts(),
-    queryFn: () => stripeService.getStripeDeadEventsCount(),
+    queryFn: ({ signal }) =>
+      new StripeService(signal, () => accessToken).getStripeDeadEventsCount(),
     enabled: !!accessToken,
     ...POLLING_30S,
   });
@@ -131,8 +134,8 @@ export default function useStripeEventMonitor(accessToken) {
         filters.timeRange,
         nextPage,
       ),
-      queryFn: () =>
-        stripeService.getErroredStripeEvents({
+      queryFn: ({ signal }) =>
+        new StripeService(signal, () => accessToken).getErroredStripeEvents({
           event_type: filters.event_type,
           status: filters.status,
           created_from: getTimeRangeStart(filters.timeRange),

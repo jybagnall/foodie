@@ -27,13 +27,13 @@ export default function AdminInvite() {
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");
 
   const handleInvitation = async (email) => {
-    setIsInviteProcessing(true);
-
+    const abortController = new AbortController();
     const adminService = new AdminService(
-      new AbortController(),
+      abortController.signal,
       () => accessToken,
     );
 
+    setIsInviteProcessing(true);
     try {
       const res = await adminService.inviteNewAdmin(email);
       setInviteSuccessMsg(res?.message);

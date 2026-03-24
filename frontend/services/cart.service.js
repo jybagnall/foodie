@@ -1,8 +1,8 @@
 import Client from "./client";
 
 class CartService {
-  constructor(abortController, getAccessToken) {
-    this.client = new Client(abortController, getAccessToken);
+  constructor(signal, getAccessToken) {
+    this.client = new Client(signal, getAccessToken);
   }
 
   async getMyCart() {

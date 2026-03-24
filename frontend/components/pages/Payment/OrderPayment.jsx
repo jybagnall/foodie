@@ -27,8 +27,11 @@ export default function OrderPayment() {
   // clientSecret = 그 주문서를 열 수 있는 1회용 코드
   // ❗렌더링마다 Elements 안의 clientSecret 객체가 새로 만들어짐
   useEffect(() => {
-    const controller = new AbortController();
-    const paymentService = new PaymentService(controller, () => accessToken);
+    const abortController = new AbortController();
+    const paymentService = new PaymentService(
+      abortController.signal,
+      () => accessToken,
+    );
 
     let isMounted = true;
 

@@ -24,6 +24,12 @@ export default function ShippingForm() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const onAddressSubmit = async (shippingInfo) => {
+    const abortController = new AbortController();
+     const orderService = new OrderService(
+       abortController.signal,
+       () => accessToken,
+     );
+
     if (items.length === 0 || !totalAmount || totalAmount <= 0) {
       setErrorMsg(
         "Your cart is empty. Please add items before placing an order.",
@@ -48,10 +54,7 @@ export default function ShippingForm() {
       },
     };
 
-    const orderService = new OrderService(
-      new AbortController(),
-      () => accessToken,
-    );
+   
 
     try {
       setIsOrderProcessing(true);

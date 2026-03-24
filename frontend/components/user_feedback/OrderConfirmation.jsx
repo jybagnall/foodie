@@ -9,6 +9,7 @@ import Spinner from "./Spinner";
 import { useContext, useEffect, useState } from "react";
 import PaymentService from "../../services/payment.service";
 import AuthContext from "../../contexts/AuthContext";
+import CartContext from "../../contexts/CartContext";
 import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
 
 // GET /order/completed/orderId?payment_intent=
@@ -19,6 +20,8 @@ export default function OrderConfirmation() {
   const { orderId } = useParams();
   const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
   const { accessToken } = useContext(AuthContext);
+  const { clearCart } = useContext(CartContext);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -27,8 +30,9 @@ export default function OrderConfirmation() {
       return;
     }
 
+    const abortController = new AbortController();
     const paymentService = new PaymentService(
-      new AbortController(),
+      abortController.signal,
       () => accessToken,
     );
 
@@ -36,6 +40,10 @@ export default function OrderConfirmation() {
       try {
         const { status } = await paymentService.verifyPayment(paymentIntentId);
         setStatus(status);
+
+        if (status === "succeeded") {
+          clearCart();
+        }
       } catch {
         setStatus("error");
       }

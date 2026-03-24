@@ -1,24 +1,20 @@
 import { useForm } from "react-hook-form";
 import { useEffect, useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import MenuService from "../../services/menu.service";
+
 import Spinner from "../user_feedback/Spinner";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
-import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import BackToAdminDash from "../UI/BackToAdminDash";
+import useMenuMutations from "../../hooks/useMenuMutations";
 
-// 🚩백엔드에 관리자만 업로드가 가능하도록 미들웨어를 넣어야 함
-// 🚩메뉴가 1시간마다 다시 불리고 있으므로,
-// 메뉴 수정 후엔 invalidateQueries로 강제 갱신해야함
 export default function UploadNewMenu() {
-  const [isUploadProcessing, setIsUploadProcessing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
-
   const { accessToken } = useContext(AuthContext);
+  const { createMenu, isError, error, isUploading } =
+    useMenuMutations(accessToken);
   const navigate = useNavigate();
   const {
     register,
@@ -44,11 +40,6 @@ export default function UploadNewMenu() {
   }, [watchFile]);
 
   const onUploadSubmit = async ({ name, price, description }) => {
-    const menuService = new MenuService(
-      new AbortController(),
-      () => accessToken,
-    );
-
     const formData = new FormData();
 
     if (watchFile && watchFile[0]) {
@@ -58,28 +49,20 @@ export default function UploadNewMenu() {
     formData.append("price", price);
     formData.append("description", description);
 
-    try {
-      setIsUploadProcessing(true);
-      await menuService.createMenu(formData);
-      navigate("/admin/menu-preview", { replace: true });
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsUploadProcessing(false);
-      reset(); // 모든 input 필드 값을 초기 상태로
-      setPreviewUrl(null);
-    }
+    createMenu(formData, {
+      onSuccess: () => {
+        reset(); // 모든 input 필드 값을 초기 상태로
+        setPreviewUrl(null);
+        navigate("/admin/menu-preview", { replace: true });
+      },
+    });
   };
 
   useEffect(() => {
     document.title = "Upload new menu | Foodie";
   }, []);
 
-  if (isUploadProcessing) {
+  if (isUploading) {
     return <Spinner />;
   }
 
@@ -89,11 +72,11 @@ export default function UploadNewMenu() {
         <div className="mb-4">
           <BackToAdminDash title="Upload a new menu" />
         </div>
-        {errorMsg && (
+        {isError && (
           <div className="mb-4">
             <ErrorAlert
               title="There was a problem with your request"
-              message={errorMsg}
+              message={error.message}
             />
           </div>
         )}
