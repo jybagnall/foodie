@@ -104,15 +104,19 @@ router.post("/login", async (req, res) => {
 // 쿠키 제거는 서버에서만
 router.post("/logout", async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  if (refreshToken) {
-    const decoded = jwt.decode(refreshToken);
 
-    if (decoded?.id) {
-      await updateUserRefreshToken(decoded.id, null);
+  if (refreshToken) {
+    try {
+      const decoded = jwt.decode(refreshToken);
+      if (decoded?.id) {
+        await updateUserRefreshToken(decoded.id, null);
+      }
+    } catch (err) {
+      console.error("Token decode failed during logout", err);
     }
   }
 
-  // 브라우저 쿠키 저장소에서 refreshToken 제거
+  // jwt.decode가 실패해도, 브라우저 쿠키 저장소에서 refreshToken 제거
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

@@ -11,6 +11,18 @@ import pool from "../config/db.js";
 
 const router = express.Router();
 
+router.get("/shipping-addresses", verifyUserAuth, async (req, res) => {
+  try {
+    // const menu = await getMenu();
+    // res.status(200).json(menu);
+  } catch (err) {
+    console.error("fetching error,", err.message);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while loading the data." });
+  }
+});
+
 // orderPayload: [{ menu_name, menu_id, qty }, {}]
 // 트랜잭션 써야함.
 router.post("/initialize-order", verifyUserAuth, async (req, res) => {

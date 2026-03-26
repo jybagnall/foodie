@@ -1,17 +1,15 @@
-import { useForm } from "react-hook-form";
-import { useEffect, useState, useContext } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-
-import Spinner from "../user_feedback/Spinner";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import BackToAdminDash from "../UI/BackToAdminDash";
 import useMenuMutations from "../../hooks/useMenuMutations";
+import SpinnerMini from "../user_feedback/SpinnerMini";
+import ErrorAlert from "../user_feedback/ErrorAlert";
 
 export default function UploadNewMenu() {
-  const [previewUrl, setPreviewUrl] = useState(null);
   const { accessToken } = useContext(AuthContext);
   const { createMenu, isError, error, isUploading } =
     useMenuMutations(accessToken);
@@ -19,31 +17,34 @@ export default function UploadNewMenu() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
     reset,
+    control,
   } = useForm();
 
   // register("image")로 등록된 값을 지켜보고 변수로 저장
   // 파일 입력은 항상 배열로 전달됨 & 배열의 첫번째 값이 이미지
-  const watchFile = watch("image");
-
   // 브라우저가 파일을 미리보기 주소로 바꿔줌 (URL.createObjectURL)
-  useEffect(() => {
-    if (watchFile && watchFile[0]) {
-      const file = watchFile[0];
-      const imageURL = URL.createObjectURL(file);
-      setPreviewUrl(imageURL);
+  const watchFile = useWatch({ control, name: "image" });
+  const file = watchFile?.[0] ?? null;
 
-      return () => URL.revokeObjectURL(imageURL);
-    }
-  }, [watchFile]);
+  const previewUrl = useMemo(() => {
+    if (!file) return null;
+    return URL.createObjectURL(file);
+  }, [file]); // 파일이 바뀔 때마다 브라우저에서 임시 URL 생성
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+  // previewUrl이 바뀌거나 컴포넌트가 사라질 때 임시 URL 제거
 
   const onUploadSubmit = async ({ name, price, description }) => {
     const formData = new FormData();
 
-    if (watchFile && watchFile[0]) {
-      formData.append("image", watchFile[0]);
+    if (file) {
+      formData.append("image", file);
     }
     formData.append("name", name);
     formData.append("price", price);
@@ -52,7 +53,6 @@ export default function UploadNewMenu() {
     createMenu(formData, {
       onSuccess: () => {
         reset(); // 모든 input 필드 값을 초기 상태로
-        setPreviewUrl(null);
         navigate("/admin/menu-preview", { replace: true });
       },
     });
@@ -61,10 +61,6 @@ export default function UploadNewMenu() {
   useEffect(() => {
     document.title = "Upload new menu | Foodie";
   }, []);
-
-  if (isUploading) {
-    return <Spinner />;
-  }
 
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
@@ -194,8 +190,9 @@ export default function UploadNewMenu() {
               <Button
                 type="submit"
                 className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isUploading}
               >
-                Create a new menu
+                {isUploading ? <SpinnerMini /> : "Create a new menu"}
               </Button>
             </div>
           </form>

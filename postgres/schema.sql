@@ -26,10 +26,11 @@ CREATE TABLE addresses (
   created_at TIMESTAMP DEFAULT NOW(),
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
   street TEXT NOT NULL,
-  postal_code INTEGER NOT NULL,
+  postal_code VARCHAR(20) NOT NULL,
   city TEXT NOT NULL,
   phone VARCHAR(20) NOT NULL,
-  full_name VARCHAR(50) NOT NULL
+  full_name VARCHAR(50) NOT NULL,
+  is_default BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE menus (
@@ -121,6 +122,8 @@ CREATE INDEX idx_stripe_dead_unresolved
 ON stripe_events (created_at DESC, id DESC)
 WHERE status = 'dead'
 AND resolved_at IS NULL;
+
+SELECT * FROM addresses WHERE user_id = 123;
 
 -- 생성 전
 CREATE TABLE payment_methods (

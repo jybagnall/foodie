@@ -11,7 +11,7 @@ export default function Button({
     : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200";
 
   let disabledStyle = disabled
-    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:shadow-none"
+    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none pointer-events-none"
     : "";
 
   const styleToApply = [baseStyle, className, disabledStyle]

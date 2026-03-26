@@ -22,5 +22,6 @@ export default function useMenuMutations(accessToken) {
   return { createMenu, isError, error, isUploading };
 }
 
-// onError 는 정확히 뭘까
-// 🤔 enabled: !!accessToken 은 필요없나?
+// 여기서 onError 필요없는 이유:
+// isError와 error를 반환해서 컴포넌트에서 직접 처리함
+// 만약 toast 알림을 쓴다면 여기서 onError에 정의 가능.

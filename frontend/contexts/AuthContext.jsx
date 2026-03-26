@@ -11,7 +11,7 @@ import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
 import CartService from "../services/cart.service";
 import CartContext from "./CartContext";
-import { clearCartStorage, loadCart } from "../storage/cartStorage";
+import { clearCartStorage } from "../storage/cartStorage";
 import { mergeCarts } from "../utils/merge";
 
 // refresh 실패 시 → logout, 성공 시 → state 갱신, Client 에러 타입 해석
@@ -28,9 +28,11 @@ export function AuthContextProvider({ children }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(null);
   const [decodedUser, setDecodedUser] = useState(null);
+
   const hasTriedRestoreRef = useRef(false);
   const hasFetchedCartRef = useRef(false);
   const refreshTimerRef = useRef(null);
+
   const cartContext = useContext(CartContext);
   const navigate = useNavigate();
 
@@ -67,11 +69,11 @@ export function AuthContextProvider({ children }) {
       }
 
       cartContext.setItems(finalCart);
-      clearCartStorage(); //
+      clearCartStorage();
     } catch (err) {
       console.error("Failed to fetch & sync cart", err);
     }
-  }, [accessToken]);
+  }, [accessToken, cartContext.items, cartContext.setItems]);
 
   const handleLoginSuccess = useCallback(
     async (accessToken) => {
@@ -84,27 +86,31 @@ export function AuthContextProvider({ children }) {
   );
 
   // 쿠키 삭제는 서버에서 함
-  // 로그아웃 정책을 정의
+
   const logout = useCallback(async () => {
     const abortController = new AbortController();
     const accountService = new AccountService(abortController.signal);
 
-    await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
-    setAccessToken(null);
-    setDecodedUser(null);
-    hasFetchedCartRef.current = false; // 오류의 원인
-    navigate("/");
-  }, []);
+    try {
+      await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
+    } finally {
+      abortController.abort();
+      setAccessToken(null);
+      setDecodedUser(null);
+      hasFetchedCartRef.current = false;
+      navigate("/");
+    }
+  }, [navigate]);
 
   // 액세스 토큰이 있다 = 로그인 상태,
   // 액세스 토큰이 없는데 + refresh 성공 = 로그인 유지
+  // 액세스 토큰이 없는데 + refresh 실패 = 로그아웃
   // refresh token 쿠키를 이용해서 새 accessToken 하나만 재발급
 
-  // 액세스 토큰이 없는데 + refresh 실패 = 로그아웃
   // ❗앱 시작시 액세스 토큰이 없다면 자동 실행
   const restoreUserSession = useCallback(async () => {
     const abortController = new AbortController();
-    const client = new Client(abortController, () => accessToken);
+    const client = new Client(abortController.signal, () => accessToken);
 
     try {
       const newAccessToken = await client.refreshAccessToken();
@@ -117,7 +123,7 @@ export function AuthContextProvider({ children }) {
     } finally {
       setIsAuthLoading(false);
     }
-  }, [accessToken, applyAccessToken, logout]);
+  }, [accessToken, applyAccessToken]);
 
   useEffect(() => {
     if (hasTriedRestoreRef.current) return;
