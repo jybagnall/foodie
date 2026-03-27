@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import { fileURLToPath } from "url";
 
 import accountRoutes from "./app/routes/account.js";
+import addressRoutes from "./app/routes/address.js";
 import adminRoutes from "./app/routes/admin.js";
 import menuRoutes from "./app/routes/menu.js";
 import orderRoutes from "./app/routes/order.js";
@@ -41,6 +42,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/accounts", accountRoutes);
+app.use("/api/addresses", addressRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);

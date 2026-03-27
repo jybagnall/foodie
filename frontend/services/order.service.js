@@ -12,11 +12,6 @@ class OrderService {
     );
     return data;
   }
-
-  async getShippingAddresses() {
-    const data = await this.client.get("/api/orders/shipping-addresses");
-    return data;
-  }
 }
 
 export default OrderService;

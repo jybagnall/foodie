@@ -7,28 +7,31 @@ import CartContext from "../../contexts/CartContext";
 import OrderService from "../../services/order.service";
 import AuthContext from "../../contexts/AuthContext";
 import ErrorAlert from "../user_feedback/ErrorAlert";
-import Spinner from "../user_feedback/Spinner";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import Checkbox from "../UI/Checkbox";
+import useAddress from "../../hooks/useAddress";
+import SpinnerMini from "../user_feedback/SpinnerMini";
 
 export default function ShippingForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty, isSubmitted },
   } = useForm();
-
   const { items, totalAmount } = useContext(CartContext);
   const { accessToken } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { defaultAddress, addressFetchingError } = useAddress(accessToken);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const navigate = useNavigate();
 
   const onAddressSubmit = async (shippingInfo) => {
     const abortController = new AbortController();
-     const orderService = new OrderService(
-       abortController.signal,
-       () => accessToken,
-     );
+    const orderService = new OrderService(
+      abortController.signal,
+      () => accessToken,
+    );
 
     if (items.length === 0 || !totalAmount || totalAmount <= 0) {
       setErrorMsg(
@@ -44,6 +47,7 @@ export default function ShippingForm() {
         city: shippingInfo.city.trim(),
         postal_code: shippingInfo.postal_code.trim(),
         phone: shippingInfo.phone.trim(),
+        is_default: shippingInfo.is_default,
       },
       orderPayload: {
         items: items.map((i) => ({
@@ -53,8 +57,6 @@ export default function ShippingForm() {
         })),
       },
     };
-
-   
 
     try {
       setIsOrderProcessing(true);
@@ -79,8 +81,14 @@ export default function ShippingForm() {
     document.title = "Shipping form | Foodie";
   }, []);
 
-  if (isOrderProcessing) {
-    return <Spinner />;
+  useEffect(() => {
+    if (defaultAddress && !isDirty && !isSubmitted) {
+      reset(defaultAddress);
+    }
+  }, [defaultAddress, reset, isDirty, isSubmitted]);
+
+  if (addressFetchingError) {
+    console.error(addressFetchingError);
   }
 
   return (
@@ -89,6 +97,14 @@ export default function ShippingForm() {
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert title="There was a problem" message={errorMsg} />
+          </div>
+        )}
+        {addressFetchingError && (
+          <div className="mb-4">
+            <ErrorAlert
+              title="We couldn't load your saved address"
+              message="Please enter a new one"
+            />
           </div>
         )}
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
@@ -102,13 +118,13 @@ export default function ShippingForm() {
           <Input
             label="Receiver's Name"
             type="text"
-            id="name"
-            register={register("name", {
+            id="full_name"
+            register={register("full_name", {
               required: true,
               minLength: 5,
               maxLength: 20,
             })}
-            error={errors.name}
+            error={errors.full_name}
           />
           <Input
             label="Phone number"
@@ -203,6 +219,11 @@ export default function ShippingForm() {
               })}
               error={errors.city}
             />
+            <Checkbox
+              label="Set as default address"
+              id="is_default"
+              register={register("is_default")}
+            />
           </div>
 
           <div className="flex justify-between items-center mt-8">
@@ -219,7 +240,7 @@ export default function ShippingForm() {
               disabled={isOrderProcessing}
               className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
             >
-              Next
+              {isOrderProcessing ? <SpinnerMini /> : "Next"}
             </Button>
           </div>
         </form>
