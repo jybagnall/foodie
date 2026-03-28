@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect, useMemo } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Spinner from "../../user_feedback/Spinner";
 import AuthContext from "../../../contexts/AuthContext";
 import PaymentService from "../../../services/payment.service";
@@ -20,6 +20,8 @@ export default function OrderPayment() {
   const [errorMsg, setErrorMsg] = useState("");
   const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isRetry = location.state?.retry === true;
 
   // 해당 결제에 대한 준비, race condition을 막는 장치 넣음.
   // PaymentIntent(금액, 통화, customerId)는 서버에서 고정됨,
@@ -36,11 +38,6 @@ export default function OrderPayment() {
     let isMounted = true;
 
     const createIntent = async () => {
-      if (!orderId) {
-        setErrorMsg("Invalid order.");
-        return;
-      }
-
       try {
         const { clientSecret } = await paymentService.createPaymentIntent({
           orderId,
@@ -55,18 +52,31 @@ export default function OrderPayment() {
       }
     };
 
-    createIntent();
-    // Stripe가 payment_intent.created 이벤트를 Webhook으로 자동 전송함
+    const findExistingPayment = async () => {
+      try {
+        const { clientSecret } = await paymentService.findPayment(orderId);
+        if (isMounted) setClientSecret(clientSecret);
+      } catch (err) {
+        const message = getUserErrorMessage(err);
+        if (isMounted) setErrorMsg(message);
+      }
+    };
+
+    if (isRetry) {
+      findExistingPayment();
+    } else {
+      createIntent();
+      // Stripe가 payment_intent.created 이벤트를 Webhook으로 자동 전송함
+    }
 
     return () => {
-      controller.abort();
+      abortController.abort();
       isMounted = false;
     };
-  }, [orderId]);
+  }, [orderId, isRetry]);
 
   // 3D Secure 인증 후 URL에 ?redirect_status=succeeded 혹은 failed가 붙어서 돌아옴,
-  // 그때 이 컴포넌트가 다시 열리고 그 결과를 체크함.
-  // redirectStatus === "failed" (결제 실패이면) clientSecret을 새로 만들 필요 없음.
+  // redirectStatus === "failed" (결제 실패) clientSecret을 새로 만들 필요 없음.
 
   const redirectStatus = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -96,6 +106,15 @@ export default function OrderPayment() {
 
   if (!clientSecret) {
     return <Spinner />;
+  }
+
+  if (!orderId) {
+    return (
+      <ErrorAlert
+        title="We couldn't start your payment"
+        message="Invalid order."
+      />
+    );
   }
 
   return (

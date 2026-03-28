@@ -1,7 +1,10 @@
 import express from "express";
 import Stripe from "stripe";
 import { updateUserStripeId } from "../services/account-service.js";
-import { findUniquePayment } from "../services/payment-service.js";
+import {
+  createPaymentRecord,
+  findUniquePayment,
+} from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { getOrderById } from "../services/order-service.js";
 
@@ -37,6 +40,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 //   }
 // });
 
+router.get("/client-secret", verifyUserAuth, async (req, res) => {
+  try {
+    const orderId = req.query.order_id;
+    const existing = await findUniquePayment(orderId);
+    if (!existing) return res.status(404).json({ error: "Payment not found." });
+
+    const intent = await stripe.paymentIntents.retrieve(
+      existing.stripe_payment_intent_id,
+    );
+    res.json({ clientSecret: intent.client_secret });
+  } catch (err) {
+    console.error("Stripe verification error:", err);
+    return res.status(500).json({
+      error: "Something went wrong during payment. Please try again.",
+    });
+  }
+});
+
 router.get("/verify", verifyUserAuth, async (req, res) => {
   try {
     const paymentIntentId = req.query.payment_intent;
@@ -59,6 +80,13 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
     const { orderId } = req.body;
     const currency = "usd";
     let customerId = req.user.stripe_customer_id;
+
+    if (!orderId || isNaN(Number(orderId))) {
+      return res.status(400).json({
+        errorCode: "INVALID_ORDER_ID",
+        error: "Something went wrong during payment. Please try again.",
+      });
+    }
 
     if (customerId) {
       try {
@@ -132,6 +160,27 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
       });
     }
 
+    try {
+      await createPaymentRecord(orderId, paymentIntent.id, amount, currency);
+    } catch (dbErr) {
+      console.error("DB insert failed after PaymentIntent creation", {
+        paymentIntentId: paymentIntent.id,
+        orderId,
+        error: dbErr.message,
+      });
+
+      try {
+        await stripe.paymentIntents.cancel(paymentIntent.id);
+      } catch (cancelErr) {
+        console.error("Failed to cancel orphaned PaymentIntent", {
+          paymentIntentId: paymentIntent.id,
+          error: cancelErr.message,
+        });
+      }
+      return res.status(500).json({
+        error: "Something went wrong during payment. Please try again.",
+      });
+    }
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error("Stripe payment session error,", err.message);

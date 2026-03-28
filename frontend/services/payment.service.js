@@ -13,6 +13,13 @@ class PaymentService {
     return data;
   }
 
+  async findPayment(orderId) {
+    const data = await this.client.get(
+      `/api/payments/client-secret?order_id=${orderId}`,
+    );
+    return data;
+  }
+
   async verifyPayment(paymentIntentId) {
     const data = await this.client.get(
       `/api/payments/verify?payment_intent=${paymentIntentId}`,

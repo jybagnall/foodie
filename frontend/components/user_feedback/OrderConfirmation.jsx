@@ -15,19 +15,28 @@ import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
 // GET /order/completed/orderId?payment_intent=
 
 export default function OrderConfirmation() {
-  const [searchParams] = useSearchParams();
-  const paymentIntentId = searchParams.get("payment_intent");
-  const { orderId } = useParams();
-  const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
-  const { accessToken } = useContext(AuthContext);
-  const { clearCart } = useContext(CartContext);
-
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paymentIntentId = searchParams.get("payment_intent");
+  const redirectStatus = location.state?.status; // "succeeded", "failed", undefined
+  const { orderId } = useParams();
+  const [status, setStatus] = useState(() => {
+    if (redirectStatus === "succeeded") return "succeeded";
+    if (redirectStatus === "failed") return "failed";
+    return paymentIntentId ? "loading" : "error";
+  });
+  const { accessToken } = useContext(AuthContext);
+  const { clearCart } = useContext(CartContext);
 
   useEffect(() => {
     if (!paymentIntentId) {
       return;
+    }
+
+    if (redirectStatus === "succeeded") {
+      clearCart();
+      return; // 3DS 성공
     }
 
     const abortController = new AbortController();
@@ -108,7 +117,15 @@ export default function OrderConfirmation() {
         return {
           title: "Payment failed",
           message: "Please try another payment method.",
-          action: <Link to={`/order/payment/${orderId}`}>Try again</Link>,
+          action: (
+            <Link
+              to={`/order/payment/${orderId}`}
+              state={{ retry: true }}
+              className="text-orange-400 underline"
+            >
+              Try again
+            </Link>
+          ),
         };
       case "failed":
         return {
@@ -118,6 +135,7 @@ export default function OrderConfirmation() {
           action: (
             <Link
               to={`/order/payment/${orderId}`}
+              state={{ retry: true }}
               className="text-orange-400 underline"
             >
               Try again

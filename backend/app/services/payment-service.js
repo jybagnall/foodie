@@ -1,5 +1,25 @@
 import pool from "../config/db.js";
 
+export async function createPaymentRecord(
+  orderId,
+  paymentIntentId,
+  amount,
+  currency,
+) {
+  const q = `
+    INSERT INTO payments (order_id, stripe_payment_intent_id, amount, currency)
+    VALUES ($1, $2, $3, $4)
+  `;
+  const values = [orderId, paymentIntentId, amount, currency];
+  try {
+    await pool.query(q, values);
+    return { success: true };
+  } catch (err) {
+    console.error("DB insert error", err.message);
+    throw err;
+  }
+}
+
 export async function findUniquePayment(orderId) {
   const q = `
   SELECT stripe_payment_intent_id

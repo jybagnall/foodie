@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import CartContext from "../../contexts/CartContext";
@@ -25,6 +26,7 @@ export default function ShippingForm() {
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const onAddressSubmit = async (shippingInfo) => {
     const abortController = new AbortController();
@@ -42,7 +44,7 @@ export default function ShippingForm() {
 
     const orderDetails = {
       address: {
-        full_name: shippingInfo.name.trim(),
+        full_name: shippingInfo.full_name.trim(),
         street: shippingInfo.street.trim(),
         city: shippingInfo.city.trim(),
         postal_code: shippingInfo.postal_code.trim(),
@@ -61,6 +63,7 @@ export default function ShippingForm() {
     try {
       setIsOrderProcessing(true);
       const { orderId } = await orderService.initializeOrder(orderDetails);
+      await queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
       navigate(`/order/payment/${orderId}`);
     } catch (err) {
       console.error(err);
@@ -83,7 +86,10 @@ export default function ShippingForm() {
 
   useEffect(() => {
     if (defaultAddress && !isDirty && !isSubmitted) {
-      reset(defaultAddress);
+      reset({
+        ...defaultAddress,
+        postal_code: String(defaultAddress.postal_code),
+      });
     }
   }, [defaultAddress, reset, isDirty, isSubmitted]);
 
@@ -174,8 +180,8 @@ export default function ShippingForm() {
           <div className="grid grid-cols-2 gap-5">
             <Input
               label="Postal code"
-              type="number"
-              id="postal-code"
+              type="text"
+              id="postal_code"
               register={register("postal_code", {
                 required: "Postal code is required",
                 minLength: {
