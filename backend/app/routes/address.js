@@ -33,4 +33,47 @@ router.get("/default", verifyUserAuth, async (req, res) => {
   }
 });
 
+// client
+router.patch("/edit/:addressId", verifyUserAuth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { addressId } = req.params;
+    const { formData } = req.body;
+    await client.query("BEGIN");
+    // logic
+    await client.query("COMMIT");
+    res.status(200).json({ message: "", orderId });
+  } catch (err) {
+    console.error("update error,", err.message);
+    await client.query("ROLLBACK");
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/create", verifyUserAuth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { formData } = req.body;
+    await client.query("BEGIN");
+    // logic
+    await client.query("COMMIT");
+    res.status(200).json({ message: "", orderId });
+  } catch (err) {
+    console.error("update error,", err.message);
+    await client.query("ROLLBACK");
+  } finally {
+    client.release();
+  }
+});
+
+router.delete("/delete/:addressId", verifyUserAuth, async (req, res) => {
+  const { addressId } = req.params;
+  try {
+    // await deleteAddress(req.user.id, addressId);
+  } catch (err) {
+    console.error("update error,", err.message);
+  }
+});
+
 export default router;

@@ -10,7 +10,7 @@ import AuthContext from "../../contexts/AuthContext";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import Checkbox from "../UI/Checkbox";
-import useAddress from "../../hooks/useAddress";
+import useDefaultAddress from "../../hooks/useAddress";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 
 export default function ShippingForm() {
@@ -22,7 +22,8 @@ export default function ShippingForm() {
   } = useForm();
   const { items, totalAmount } = useContext(CartContext);
   const { accessToken } = useContext(AuthContext);
-  const { defaultAddress, addressFetchingError } = useAddress(accessToken);
+  const { defaultAddress, addressFetchingError } =
+    useDefaultAddress(accessToken);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export default function ShippingForm() {
     try {
       setIsOrderProcessing(true);
       const { orderId } = await orderService.initializeOrder(orderDetails);
-      await queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
       navigate(`/order/payment/${orderId}`);
     } catch (err) {
       console.error(err);

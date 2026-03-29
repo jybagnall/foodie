@@ -31,6 +31,8 @@ CREATE TABLE addresses (
   phone VARCHAR(20) NOT NULL,
   full_name VARCHAR(50) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE
+
+  UNIQUE (user_id, street, postal_code, city, phone, full_name)
 );
 
 CREATE TABLE menus (
@@ -123,7 +125,10 @@ ON stripe_events (created_at DESC, id DESC)
 WHERE status = 'dead'
 AND resolved_at IS NULL;
 
-SELECT * FROM addresses WHERE user_id = 123;
+-- 유저는 기본 배송지를 1개만 가진다
+CREATE UNIQUE INDEX one_default_per_user  
+ON addresses(user_id)  
+WHERE is_default = TRUE;
 
 -- 생성 전
 CREATE TABLE payment_methods (

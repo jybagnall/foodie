@@ -62,6 +62,8 @@ export default function App() {
                 <Route path="orders/:orderId" element={<MyOrders />} />
                 <Route path="orders" element={<OrderDetail />} />
                 <Route path="address" element={<AddressBook />} />
+                {/* <Route path="address/new" element={<AddressFields />} />
+                <Route path="address/:id/edit" element={<AddressFields />} /> */}
                 <Route path="payment-methods" element={<PaymentMethod />} />
               </Route>
 

@@ -33,3 +33,7 @@ export function getTimeRangeStart(rangeKey) {
 
   return new Date(now.getTime() - diff).toISOString();
 } // ISO 문자열로 변환: "2026-02-22T05:12:31.234Z"
+
+export const formatPhone = (phone) => {
+  return phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
+};
