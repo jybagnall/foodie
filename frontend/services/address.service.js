@@ -15,7 +15,7 @@ class AddressService {
     return data;
   }
 
-  async editAddress(formData, addressId) {
+  async editAddress(addressId, formData) {
     const data = await this.client.patch(
       `/api/addresses/edit/${addressId}`,
       formData,
@@ -30,6 +30,13 @@ class AddressService {
 
   async getDefaultAddress() {
     const data = await this.client.get("/api/addresses/default");
+    return data;
+  }
+
+  async setDefaultAddress(addressId) {
+    const data = await this.client.patch(
+      `/api/addresses/set-default/${addressId}`,
+    );
     return data;
   }
 }

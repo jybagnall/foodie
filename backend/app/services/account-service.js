@@ -11,14 +11,8 @@ export async function createAccount(name, email, password, role = "user") {
     `;
 
   const values = [account.name, account.email, account.passwordHash, role];
-
-  try {
-    const result = await pool.query(q, values);
-    return result.rows[0];
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  const result = await pool.query(q, values);
+  return result.rows[0];
 }
 
 export async function findUserByEmail(email) {
@@ -51,24 +45,6 @@ export async function getHashedPassword(email) {
   return result.rows[0]?.password || null;
 }
 
-export async function saveStripeCustomerId(customerId, userId) {
-  const q = `
-    UPDATE users
-    SET stripe_customer_id = $1
-    WHERE id = $2
-    `;
-
-  const values = [customerId, userId];
-
-  try {
-    await pool.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
-}
-
 export async function updateUserRefreshToken(userId, hashedNewRefresh) {
   const q = `
     UPDATE users
@@ -76,14 +52,8 @@ export async function updateUserRefreshToken(userId, hashedNewRefresh) {
     WHERE id = $2
     `;
   const values = [hashedNewRefresh, userId];
-
-  try {
-    await pool.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB update error", err.message);
-    throw err;
-  }
+  await pool.query(q, values);
+  return { success: true };
 }
 
 export async function updateUserStripeId(userId, newStripeCustomerId) {
@@ -94,11 +64,6 @@ export async function updateUserStripeId(userId, newStripeCustomerId) {
     `;
   const values = [newStripeCustomerId, userId];
 
-  try {
-    await pool.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB update error", err.message);
-    throw err;
-  }
+  await pool.query(q, values);
+  return { success: true };
 }

@@ -21,11 +21,9 @@ router.post("/initialize-order", verifyUserAuth, async (req, res) => {
     const itemsWithPrice = await getMenuPrices(client, menuIds); // [{ id, price }, {}]
 
     if (missingAddressField > 0) {
-      return res
-        .status(400)
-        .json({
-          error: `Missing address fields: ${missingAddressField.join(" ,")}`,
-        });
+      return res.status(400).json({
+        error: `Missing address fields: ${missingAddressField.join(" ,")}`,
+      });
     }
     // 유저가 존재하지 않는 menu_id를 보냈을 때
     if (itemsWithPrice.length !== menuIds.length) {
@@ -55,7 +53,7 @@ router.post("/initialize-order", verifyUserAuth, async (req, res) => {
     await client.query("COMMIT");
     res.status(201).json({ message: "Order info is saved.", orderId });
   } catch (err) {
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK").catch(() => {});
     console.error("Order error,", err.message);
     res
       .status(500)

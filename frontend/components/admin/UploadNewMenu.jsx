@@ -72,7 +72,7 @@ export default function UploadNewMenu() {
           <div className="mb-4">
             <ErrorAlert
               title="There was a problem with your request"
-              message={error.message}
+              message="Something went wrong while saving a new menu"
             />
           </div>
         )}

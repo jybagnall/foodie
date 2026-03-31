@@ -8,14 +8,8 @@ export async function createOrderId(client, userId, addressId, totalAmount) {
     `;
 
   const values = [userId, addressId, totalAmount];
-
-  try {
-    const result = await client.query(q, values);
-    return result.rows[0].id;
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  const result = await client.query(q, values);
+  return result.rows[0].id;
 }
 
 export async function getOrderById(orderId) {
@@ -65,12 +59,7 @@ export async function insertOrderItems(client, orderId, order) {
    VALUES ${placeholders.join(", ")}
     `;
 
-  try {
-    await client.query(q, [orderId, ...values]);
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  await client.query(q, [orderId, ...values]);
 }
 
 export async function updateOrderStatus(client, orderId, status) {
@@ -82,18 +71,14 @@ export async function updateOrderStatus(client, orderId, status) {
     `;
 
   const values = [status, orderId];
-  try {
-    const result = await client.query(q, values);
 
-    if (result.rowCount === 0) {
-      console.warn(
-        `Order ${orderId} not updated - already ${status} or not found`,
-      ); // 이미 paid였거나, orderId가 잘못됐거나
-    }
+  const result = await client.query(q, values);
 
-    return { success: true };
-  } catch (err) {
-    console.error("DB update error", err.message);
-    throw err;
+  if (result.rowCount === 0) {
+    console.warn(
+      `Order ${orderId} not updated - already ${status} or not found`,
+    ); // 이미 paid였거나, orderId가 잘못됐거나
   }
+
+  return { success: true };
 }

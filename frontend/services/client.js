@@ -25,7 +25,7 @@ export class RefreshTokenExpiredError extends Error {
 class Client {
   constructor(signal, getAccessToken) {
     this.getAccessToken = getAccessToken;
-    this.axios = axios.create({ signal }); // 요청마다 독립된 Axios 객체를 생성함
+    this.axios = axios.create({ ...(signal && { signal }) }); // 요청마다 독립된 Axios 객체를 생성함
 
     // 모든 요청 전에 실행.
     // Axios: 택배 기사,  interceptor: 택배 송장(Authorization 헤더) 검사원

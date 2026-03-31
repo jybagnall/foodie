@@ -7,25 +7,14 @@ export async function createMenu(data) {
     `;
 
   const values = [data.name, data.price, data.description, data.imgSrc];
-
-  try {
-    await pool.query(q, values);
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  await pool.query(q, values);
 }
 
 export async function getMenu() {
   const q = `SELECT * FROM menus`;
 
-  try {
-    const result = await pool.query(q);
-    return Array.isArray(result?.rows) ? result.rows : [];
-  } catch (err) {
-    console.error("DB fetch error:", err.message);
-    return [];
-  }
+  const result = await pool.query(q);
+  return result.rows ?? [];
 }
 
 export async function getMenuPrices(client, menuIds) {

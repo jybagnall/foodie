@@ -1,7 +1,21 @@
+import { Link } from "react-router-dom";
 import { formatPhone } from "../../utils/format";
+import { useState } from "react";
+import AlertModal from "../UI/AlertModal";
 
-export default function AddressCard({ info }) {
+export default function AddressCard({
+  info,
+  setDefaultAddress,
+  deleteAddress,
+  isDeleting,
+  isDeleteError,
+}) {
   const { id, full_name, street, city, postal_code, phone, is_default } = info;
+  const [showAlert, setShowAlert] = useState(false);
+
+  if (isDeleteError) {
+    setShowAlert(false);
+  }
 
   return (
     <div className="w-full rounded-lg border-2 border-gray-400 p-6 text-left hover:border-gray-300">
@@ -20,16 +34,16 @@ export default function AddressCard({ info }) {
       </div>
 
       <div className="flex items-center gap-2 mt-7">
-        <button
-          onClick={() => {}}
+        <Link
+          to={`/my-account/address/${id}/edit`}
+          state={{ address: info }}
           className="px-3 py-1 border rounded cursor-pointer"
         >
           Edit
-        </button>
+        </Link>
 
         <button
-          onClick={() => {}}
-          disabled={is_default}
+          onClick={() => setShowAlert(true)}
           className="px-3 py-1 border rounded cursor-pointer"
         >
           Remove
@@ -37,13 +51,24 @@ export default function AddressCard({ info }) {
 
         {!is_default && (
           <button
-            onClick={() => {}}
+            onClick={() => setDefaultAddress(id)}
             className="ml-auto text-yellow-600 underline text-sm cursor-pointer"
           >
             Set as default
           </button>
         )}
       </div>
+
+      {showAlert && (
+        <AlertModal
+          activateFn={() => deleteAddress(id)}
+          isActivating={isDeleting}
+          modalIsOpen={showAlert}
+          onCancel={() => setShowAlert(false)}
+          alertText={`Are you sure to delete this address? ${street} ${city}?`}
+          userIntentionText="Delete"
+        />
+      )}
     </div>
   );
 }

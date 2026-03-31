@@ -8,13 +8,16 @@ export default function Button({
 }) {
   let baseStyle = textOnly
     ? "cursor-pointer bg-transparent border-0 transition-colors"
-    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200";
+    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200 py-1 px-3";
 
-  let disabledStyle = disabled
-    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none pointer-events-none"
-    : "";
+  const disabledStyle =
+    "bg-gray-300 text-gray-500 cursor-not-allowed shadow-md pointer-events-none";
 
-  const styleToApply = [baseStyle, className, disabledStyle]
+  const styleToApply = [
+    baseStyle,
+    !disabled && className,
+    disabled && disabledStyle,
+  ]
     .filter(Boolean)
     .join(" ");
 

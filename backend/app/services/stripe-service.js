@@ -8,13 +8,9 @@ export async function acknowledgeFailures(lastSeenTime) {
     AND notified_at IS NULL
     AND created_at <= ($1::timestamptz + interval '1 millisecond')
   `;
-  try {
-    await pool.query(q, [lastSeenTime]);
-    return { success: true };
-  } catch (err) {
-    console.error("DB update error", err.message);
-    throw err;
-  }
+
+  await pool.query(q, [lastSeenTime]);
+  return { success: true };
 }
 
 export async function getDeadEventsCount() {

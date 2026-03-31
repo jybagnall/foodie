@@ -14,13 +14,9 @@ export async function getCartItemsByUserId(userId) {
       ) cart
     ON cart.id = sci.cart_id
     `;
-  try {
-    const result = await pool.query(q, [userId]);
-    return Array.isArray(result?.rows) ? result.rows : [];
-  } catch (err) {
-    console.error("DB cart items fetch error", err.message);
-    throw err;
-  }
+
+  const result = await pool.query(q, [userId]);
+  return result.rows ?? [];
 }
 
 // user_id가 겹치면(ON CONFLICT) 업데이트 시간만 바꿩(DO UPDATE)
@@ -34,13 +30,8 @@ export async function saveCurrentCart(client, userId) {
      RETURNING id
      `;
   const values = [userId];
-  try {
-    const result = await client.query(q, values);
-    return result.rows[0].id;
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  const result = await client.query(q, values);
+  return result.rows[0].id;
 }
 
 export async function saveCurrentCartItems(client, cartId, items = []) {

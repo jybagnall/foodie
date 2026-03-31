@@ -11,13 +11,9 @@ export async function createPaymentRecord(
     VALUES ($1, $2, $3, $4)
   `;
   const values = [orderId, paymentIntentId, amount, currency];
-  try {
-    await pool.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+
+  await pool.query(q, values);
+  return { success: true };
 }
 
 export async function findUniquePayment(orderId) {
@@ -30,20 +26,16 @@ export async function findUniquePayment(orderId) {
   return result.rows[0];
 }
 
-export async function linkOrderPaymentMethod() {
-  const q = `
-    INSERT INTO order_payments (order_id, payment_method_id)
-    VALUES ($1, $2)
-    ON CONFLICT (order_id) DO NOTHING
-  `;
-  try {
-    await pool.query(q, [orderId, paymentMethodId]);
-    return { success: true };
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
-}
+// export async function linkOrderPaymentMethod(orderId, paymentMethodId) {
+//   const q = `
+//     INSERT INTO order_payments (order_id, payment_method_id)
+//     VALUES ($1, $2)
+//     ON CONFLICT (order_id) DO NOTHING
+//   `;
+
+//     await pool.query(q, [orderId, paymentMethodId]);
+//     return { success: true };
+// }
 
 export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
   const q = `
@@ -55,13 +47,8 @@ export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
     `;
   const values = [failureMsg, paymentIntentId];
 
-  try {
-    await client.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB update error", err.message);
-    throw err;
-  }
+  await client.query(q, values);
+  return { success: true };
 }
 
 // 📍webhook 상태 저장
@@ -101,13 +88,8 @@ export async function upsertPaymentFromIntent(client, paymentDetails) {
     paymentDetails.stripe_charge_id,
   ];
 
-  try {
-    await client.query(q, values);
-    return { success: true };
-  } catch (err) {
-    console.error("DB insert error", err.message);
-    throw err;
-  }
+  await client.query(q, values);
+  return { success: true };
 }
 
 export async function upsertPaymentMethod(card) {
