@@ -30,10 +30,12 @@ CREATE TABLE addresses (
   city TEXT NOT NULL,
   phone VARCHAR(20) NOT NULL,
   full_name VARCHAR(50) NOT NULL,
-  is_default BOOLEAN DEFAULT FALSE
+  is_default BOOLEAN DEFAULT FALSE,
+  deleted_at TIMESTAMP DEFAULT NULL
 
   UNIQUE (user_id, street, postal_code, city, phone, full_name)
 );
+
 
 CREATE TABLE menus (
   id SERIAL PRIMARY KEY,
@@ -64,7 +66,12 @@ CREATE TABLE orders (
   address_id INT REFERENCES addresses(id),
   total_amount NUMERIC(8,2) NOT NULL,
   status VARCHAR(20) DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  shipping_street TEXT,
+  shipping_postal_code VARCHAR(20),
+  shipping_city TEXT,
+  shipping_phone VARCHAR(20),
+  shipping_full_name VARCHAR(50)
 );
 --status: pending, paid, cancelled (preparing, delievered)
 

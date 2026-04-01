@@ -1,13 +1,30 @@
 import pool from "../config/db.js";
 
-export async function createOrderId(client, userId, addressId, totalAmount) {
+export async function createOrderId(
+  client,
+  userId,
+  addressId,
+  totalAmount,
+  address,
+) {
   const q = `
-   INSERT INTO orders (user_id, address_id, total_amount)
-   VALUES ($1, $2, $3)
+   INSERT INTO orders (
+    user_id, address_id, total_amount,
+    shipping_full_name, shipping_street, shipping_city, shipping_postal_code, shipping_phone)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
    RETURNING id
     `;
 
-  const values = [userId, addressId, totalAmount];
+  const values = [
+    userId,
+    addressId,
+    totalAmount,
+    address.full_name,
+    address.street,
+    address.city,
+    address.postal_code,
+    address.phone,
+  ];
   const result = await client.query(q, values);
   return result.rows[0].id;
 }
@@ -50,8 +67,7 @@ export async function insertOrderItems(client, orderId, order) {
   });
 
   if (placeholders.length === 0) {
-    console.warn("insertOrderItems called with no items, skipping insert.");
-    return;
+    throw new Error("insertOrderItems called with no items, skipping insert.");
   }
 
   const q = `

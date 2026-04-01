@@ -20,7 +20,7 @@ router.post("/initialize-order", verifyUserAuth, async (req, res) => {
     const menuIds = orderPayload.items.map((i) => i.menu_id);
     const itemsWithPrice = await getMenuPrices(client, menuIds); // [{ id, price }, {}]
 
-    if (missingAddressField > 0) {
+    if (missingAddressField.length > 0) {
       return res.status(400).json({
         error: `Missing address fields: ${missingAddressField.join(" ,")}`,
       });
@@ -48,6 +48,7 @@ router.post("/initialize-order", verifyUserAuth, async (req, res) => {
       req.user.id,
       addressId,
       totalAmount,
+      address,
     );
     await insertOrderItems(client, orderId, completeOrder); // [{ menu_name, menu_id, qty, price }, {}]
     await client.query("COMMIT");

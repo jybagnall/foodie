@@ -34,7 +34,8 @@ export async function createUserAddress(client, payload, userId) {
 
 export async function deleteAddress(userId, addressId) {
   const q = `
-    DELETE FROM addresses
+    UPDATE addresses 
+    SET deleted_at = NOW()
     WHERE (user_id = $1 AND id = $2)
   `;
 
@@ -45,7 +46,7 @@ export async function getAllAddresses(userId) {
   const q = `
     SELECT id, street, postal_code, city, phone, full_name, is_default
     FROM addresses
-    WHERE user_id = $1
+    WHERE user_id = $1 AND deleted_at IS NULL
     `;
 
   const result = await pool.query(q, [userId]);
@@ -58,6 +59,7 @@ export async function getDefaultAddress(userId) {
   FROM addresses
   WHERE user_id = $1
   AND is_default = TRUE 
+  AND deleted_at IS NULL
   LIMIT 1;
   `;
   const result = await pool.query(q, [userId]);

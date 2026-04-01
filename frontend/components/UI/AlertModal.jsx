@@ -50,10 +50,9 @@ export default function AlertModal({
                   </div>
                 </div>
               </div>
-              {/* <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3"> */}
+
               <div className="mt-5 flex justify-center">
                 <div className="mt-5 flex gap-3">
-                  {/* Confirm 버튼 */}
                   <button
                     onClick={activateFn}
                     disabled={isActivating}
@@ -62,7 +61,6 @@ export default function AlertModal({
                     {isActivating ? <SpinnerMini /> : userIntentionText}
                   </button>
 
-                  {/* Cancel 버튼 */}
                   <button
                     type="button"
                     onClick={onCancel}

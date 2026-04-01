@@ -95,7 +95,7 @@ router.post("/create", verifyUserAuth, async (req, res) => {
   }
 });
 
-router.delete("/delete/:addressId", verifyUserAuth, async (req, res) => {
+router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
   const { addressId } = req.params;
   try {
     await deleteAddress(req.user.id, addressId);

@@ -11,8 +11,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const PROCESSING_TIMEOUT_MINS =
-  parseInt(process.env.STRIPE_WORKER_TIMEOUT_MINUTES) || 10;
+const timeout = parseInt(process.env.STRIPE_WORKER_TIMEOUT_MINUTES) || 10;
 
 let isShuttingDown = false;
 
@@ -43,7 +42,7 @@ async function startStripeWorker() {
             WHERE 
             (
               status = 'pending'
-              OR (status = 'processing' AND processing_at < NOW() - interval '${PROCESSING_TIMEOUT_MINS} minutes')
+              OR (status = 'processing' AND processing_at < NOW() - interval '${timeout} minutes')
               )
             AND retry_count < 5
             ORDER BY created_at
@@ -78,6 +77,7 @@ async function startStripeWorker() {
           );
 
           await client.query("COMMIT");
+          await sleep(200); // DB 부하 방지용
         } catch (err) {
           // Stripe 결제 자체는 성공했으나 서버에서 저장에 실패함
           await client.query("ROLLBACK"); // 현재 트랜잭션 취소

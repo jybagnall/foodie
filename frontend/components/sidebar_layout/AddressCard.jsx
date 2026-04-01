@@ -11,11 +11,8 @@ export default function AddressCard({
   isDeleteError,
 }) {
   const { id, full_name, street, city, postal_code, phone, is_default } = info;
-  const [showAlert, setShowAlert] = useState(false);
 
-  if (isDeleteError) {
-    setShowAlert(false);
-  }
+  const [showAlert, setShowAlert] = useState(false);
 
   return (
     <div className="w-full rounded-lg border-2 border-gray-400 p-6 text-left hover:border-gray-300">
@@ -61,7 +58,12 @@ export default function AddressCard({
 
       {showAlert && (
         <AlertModal
-          activateFn={() => deleteAddress(id)}
+          activateFn={() =>
+            deleteAddress(id, {
+              onSuccess: () => setShowAlert(false),
+              onError: () => setShowAlert(false),
+            })
+          }
           isActivating={isDeleting}
           modalIsOpen={showAlert}
           onCancel={() => setShowAlert(false)}

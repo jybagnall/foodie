@@ -11,6 +11,8 @@ import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import useDefaultAddress from "../../hooks/useAddress";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import AddressFields from "../UI/AddressFields";
+import useAddressBook from "../../hooks/useAddressBook";
+import AddressSelector from "../sidebar_layout/AddressSelector";
 
 export default function ShippingForm() {
   const {
@@ -21,8 +23,13 @@ export default function ShippingForm() {
   } = useForm();
   const { items, totalAmount } = useContext(CartContext);
   const { accessToken } = useContext(AuthContext);
+
   const { defaultAddress, addressFetchingError } =
     useDefaultAddress(accessToken);
+  const { addresses, isFetching } = useAddressBook(accessToken); // ← 추가
+
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
@@ -84,15 +91,6 @@ export default function ShippingForm() {
     document.title = "Shipping form | Foodie";
   }, []);
 
-  useEffect(() => {
-    if (defaultAddress && !isDirty && !isSubmitted) {
-      reset({
-        ...defaultAddress,
-        postal_code: String(defaultAddress.postal_code),
-      });
-    }
-  }, [defaultAddress, reset, isDirty, isSubmitted]);
-
   if (addressFetchingError) {
     console.error(addressFetchingError.message);
   }
@@ -113,7 +111,9 @@ export default function ShippingForm() {
             />
           </div>
         )}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+        <h2
+          className={`text-2xl font-semibold text-gray-800 mb-6 pb-3 ${addresses.length > 0 ? "" : "border-b"}`}
+        >
           Shipping Address
         </h2>
 
@@ -121,7 +121,19 @@ export default function ShippingForm() {
           className="flex flex-col gap-5"
           onSubmit={handleSubmit(onAddressSubmit)}
         >
-          <AddressFields register={register} errors={errors} />
+          {addresses.length > 0 ? (
+            <AddressSelector
+              addresses={addresses}
+              selectedAddressId={selectedAddressId}
+              showNewAddressForm={showNewAddressForm}
+              setSelectedAddressId={setSelectedAddressId}
+              setShowNewAddressForm={setShowNewAddressForm}
+              register={register}
+              errors={errors}
+            />
+          ) : (
+            <AddressFields register={register} errors={errors} />
+          )}
 
           <div className="flex justify-between items-center mt-8">
             <Button

@@ -11,7 +11,7 @@ class AddressService {
   }
 
   async deleteAddress(addressId) {
-    const data = await this.client.delete(`/api/addresses/delete/${addressId}`);
+    const data = await this.client.patch(`/api/addresses/delete/${addressId}`);
     return data;
   }
 
