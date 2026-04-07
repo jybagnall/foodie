@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
 import CartService from "../services/cart.service";
@@ -32,9 +33,11 @@ export function AuthContextProvider({ children }) {
   const hasTriedRestoreRef = useRef(false);
   const hasFetchedCartRef = useRef(false);
   const refreshTimerRef = useRef(null);
+  const guestItemsRef = useRef([]);
 
   const cartContext = useContext(CartContext);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
   // 토큰 갱신 시 적용됨.
@@ -51,29 +54,30 @@ export function AuthContextProvider({ children }) {
     }
   }, []);
 
-  const fetchCartAndSync = useCallback(async () => {
-    const abortController = new AbortController();
-    const cartService = new CartService(
-      abortController.signal,
-      () => accessToken,
-    );
+  const fetchCartAndSync = useCallback(
+    async (guestCartItems) => {
+      const abortController = new AbortController();
+      const cartService = new CartService(
+        abortController.signal,
+        () => accessToken,
+      );
 
-    try {
-      const serverCartItems = await cartService.getMyCart();
-      const guestCartItems = cartContext.items;
+      try {
+        const serverCartItems = await cartService.getMyCart();
 
-      let finalCart = serverCartItems;
+        const finalCart =
+          guestCartItems.length > 0
+            ? mergeCarts(guestCartItems, serverCartItems)
+            : serverCartItems;
 
-      if (guestCartItems.length > 0) {
-        finalCart = mergeCarts(guestCartItems, serverCartItems);
+        cartContext.setItems(finalCart);
+        clearCartStorage();
+      } catch (err) {
+        console.error("Failed to fetch & sync cart", err);
       }
-
-      cartContext.setItems(finalCart);
-      clearCartStorage();
-    } catch (err) {
-      console.error("Failed to fetch & sync cart", err);
-    }
-  }, [accessToken, cartContext.items, cartContext.setItems]);
+    },
+    [accessToken],
+  );
 
   const handleLoginSuccess = useCallback(
     async (accessToken) => {
@@ -98,9 +102,12 @@ export function AuthContextProvider({ children }) {
       setAccessToken(null);
       setDecodedUser(null);
       hasFetchedCartRef.current = false;
+      queryClient.removeQueries({ queryKey: ["addressBook"] });
+      queryClient.removeQueries({ queryKey: ["defaultAddress"] });
+      queryClient.removeQueries({ queryKey: ["orders"] });
       navigate("/");
     }
-  }, [navigate]);
+  }, []);
 
   // 액세스 토큰이 있다 = 로그인 상태,
   // 액세스 토큰이 없는데 + refresh 성공 = 로그인 유지
@@ -168,8 +175,9 @@ export function AuthContextProvider({ children }) {
     if (hasFetchedCartRef.current) return;
 
     hasFetchedCartRef.current = true;
+    guestItemsRef.current = cartContext.items;
     cartContext.switchToServerMode();
-    fetchCartAndSync();
+    fetchCartAndSync(guestItemsRef.current);
   }, [accessToken]);
 
   return (

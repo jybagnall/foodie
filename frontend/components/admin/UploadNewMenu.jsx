@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
-import BackToAdminDash from "../UI/BackToAdminDash";
+import BackToDash from "../UI/BackToDash";
 import useMenuMutations from "../../hooks/useMenuMutations";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import ErrorAlert from "../user_feedback/ErrorAlert";
@@ -66,7 +66,11 @@ export default function UploadNewMenu() {
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
       <div className="w-full max-w-lg">
         <div className="mb-4">
-          <BackToAdminDash title="Upload a new menu" />
+          <BackToDash
+            url="/admin"
+            dashboardName="Back to admin dashboard"
+            title="Send invite"
+          />
         </div>
         {isError && (
           <div className="mb-4">

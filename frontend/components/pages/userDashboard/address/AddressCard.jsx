@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
-import { formatPhone } from "../../utils/format";
 import { useState } from "react";
-import AlertModal from "../UI/AlertModal";
+import { formatPhone } from "../../../../utils/format";
+import AlertModal from "../../../UI/AlertModal";
 
 export default function AddressCard({
   info,
   setDefaultAddress,
   deleteAddress,
   isDeleting,
-  isDeleteError,
 }) {
   const { id, full_name, street, city, postal_code, phone, is_default } = info;
 

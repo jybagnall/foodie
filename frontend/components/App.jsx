@@ -8,23 +8,23 @@ import UserProtectedRoutes from "./routes/UserProtectedRoutes";
 import AdminLayout from "./routes/AdminLayout";
 import OrderLayout from "./routes/OrderLayout";
 import UserLayout from "./routes/UserLayout";
-import AddressForm from "./sidebar_layout/AddressForm";
+import AddressForm from "../components/pages/userDashboard/address/AddressForm";
 import AdminLanding from "./admin/AdminLanding";
 import AdminAccount from "./admin/AdminAccount";
 import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
-import AddressBook from "./sidebar_layout/AddressBook";
-import MyAccount from "./sidebar_layout/MyAccount";
-import MyOrders from "./sidebar_layout/MyOrders";
+import AddressBook from "../components/pages/userDashboard/address/AddressBook";
+import MyAccount from "../components/pages/userDashboard/account/MyAccount";
+import MyOrders from "../components/pages/userDashboard/orders/MyOrders";
 import ForgotPassword from "./pages/ForgotPassword";
-import Header from "./top_layout/Header";
+import Header from "./top_layout/header/Header";
 import Login from "./pages/Login";
 import MenuLiveView from "./admin/MenuLiveView";
 import OrderConfirmation from "./user_feedback/OrderConfirmation";
-import OrderDetail from "./sidebar_layout/OrderDetail";
+import OrderDetail from "../components/pages/userDashboard/orders/OrderDetail";
 import OrderPayment from "./pages/Payment/OrderPayment";
 import PageNotFound from "./user_feedback/PageNotFound";
-import PaymentMethod from "./sidebar_layout/PaymentMethod";
+import PaymentMethod from "../components/pages/userDashboard/payment/PaymentMethod";
 import Signup from "./pages/Signup";
 import ShippingForm from "./pages/ShippingForm";
 import StripeEventMonitor from "./admin/StripeEventMonitor";
@@ -60,8 +60,8 @@ export default function App() {
                 }
               >
                 <Route index element={<MyAccount />} />
-                <Route path="orders/:orderId" element={<MyOrders />} />
-                <Route path="orders" element={<OrderDetail />} />
+                <Route path="orders/:orderId" element={<OrderDetail />} />
+                <Route path="orders" element={<MyOrders />} />
                 <Route path="address" element={<AddressBook />} />
                 <Route path="address/new" element={<AddressForm />} />
                 <Route path="address/:id/edit" element={<AddressForm />} />

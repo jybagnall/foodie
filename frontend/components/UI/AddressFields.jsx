@@ -1,7 +1,13 @@
+import { useFormContext } from "react-hook-form";
 import Checkbox from "./Checkbox";
 import Input from "./Input";
 
-export default function AddressFields({ register, errors }) {
+export default function AddressFields() {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext();
+
   return (
     <>
       <Input

@@ -3,13 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 export default function AddingItemFeedback({ t, meal, isNew, nextQty }) {
   const navigate = useNavigate();
-  const msg = isNew ? (
-    <>added to cart.</>
-  ) : (
-    <>
-      quantity increased <b>({nextQty})</b>.
-    </>
-  );
+  const msg = isNew
+    ? `${meal.name} added to cart`
+    : `${meal.name} quantity updated to ${nextQty}`;
 
   return (
     <div

@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import CurrentCart from "./CurrentCart.jsx";
-import UserStatus from "./UserStatus.jsx";
+import CurrentCart from "./cart/CurrentCart.jsx";
+import UserName from "./user-menu/UserName.jsx";
 
 export default function Header() {
   return (
     <>
-      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-[#1f2937] flex-nowrap overflow-hidden">
+      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-[#1f2937] flex-nowrap">
         <Link className="flex items-center gap-2 sm:gap-4 flex-shrink-0" to="/">
           <img
             src="/logo.jpg"
@@ -18,7 +18,8 @@ export default function Header() {
         </Link>
 
         <nav className="flex items-center gap-4 sm:gap-8 flex-shrink-0">
-          <UserStatus />
+          <UserName />
+
           <Link to="/cart" className="text-yellow-300 hover:text-yellow-400">
             <CurrentCart />
           </Link>

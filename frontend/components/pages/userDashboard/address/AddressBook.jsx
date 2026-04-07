@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import AuthContext from "../../contexts/AuthContext";
-import useAddressBook from "../../hooks/useAddressBook";
-import ErrorAlert from "../user_feedback/ErrorAlert";
-import AddressCard from "./AddressCard";
-import Spinner from "../user_feedback/Spinner";
+import AuthContext from "../../../..//contexts/AuthContext";
+import useAddressBook from "../../../..//hooks/useAddressBook";
+import ErrorAlert from "../../../user_feedback/ErrorAlert";
+import AddressCard from "../../userDashboard/address/AddressCard";
+import Spinner from "../../../user_feedback/Spinner";
 
 export default function AddressBook() {
   const { accessToken } = useContext(AuthContext);
@@ -74,7 +74,6 @@ export default function AddressBook() {
             setDefaultAddress={setDefaultAddress}
             deleteAddress={deleteAddress}
             isDeleting={isDeleting}
-            isDeleteError={isDeleteError}
           />
         ))}
       </div>

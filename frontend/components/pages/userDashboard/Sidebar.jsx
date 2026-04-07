@@ -1,15 +1,12 @@
 import {
   UserIcon,
-  ArrowRightStartOnRectangleIcon,
   BookOpenIcon,
   CreditCardIcon,
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import SidebarContext from "../../contexts/SidebarContext";
-import AuthContext from "../../contexts/AuthContext";
-import CartContext from "../../contexts/CartContext";
+import SidebarContext from "../../../contexts/SidebarContext";
 
 const navigation = [
   { name: "My Account", to: "/my-account", icon: UserIcon, current: true },
@@ -35,14 +32,7 @@ const navigation = [
 
 export default function Sidebar() {
   const { isSidebarOpen, toggleSidebar } = useContext(SidebarContext);
-  const { logout } = useContext(AuthContext);
-  const { clearCart } = useContext(CartContext);
   const location = useLocation();
-
-  const handleLogout = () => {
-    logout();
-    clearCart();
-  };
 
   return (
     <>
@@ -73,16 +63,6 @@ export default function Sidebar() {
                 {item.name}
               </Link>
             ))}
-          </div>
-          <div
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-gray-400 hover:text-yellow-50 text-sm font-medium transition-colors cursor-pointer"
-          >
-            <ArrowRightStartOnRectangleIcon
-              aria-hidden="true"
-              className="size-6 shrink-0"
-            />
-            Logout
           </div>
         </nav>
       </div>

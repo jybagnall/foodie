@@ -41,7 +41,7 @@ export function CartContextProvider({ children }) {
     clearCartStorage();
   }, []);
 
-  const uniqueMenuCount = useMemo(() => items.length, [items]);
+  const uniqueMenuCount = items.length;
 
   const numOfCheckedItems = useMemo(
     () => items.filter((i) => i.checked).length,
@@ -58,15 +58,13 @@ export function CartContextProvider({ children }) {
 
   // setItems 안에서 값이 바뀌어야 하므로 let을 씀
   const addItem = useCallback((item) => {
-    let isNew = true;
-    let nextQty = 1;
+    let result = { isNew: true, nextQty: 1 };
 
     setItems((prev) => {
       const existingItem = prev.find((i) => i.id === item.id);
 
       if (existingItem) {
-        isNew = false;
-        nextQty = existingItem.qty + 1;
+        result = { isNew: false, nextQty: existingItem.qty + 1 };
 
         return prev.map((i) =>
           i.id === item.id ? { ...i, qty: i.qty + 1, checked: true } : i,
@@ -75,7 +73,7 @@ export function CartContextProvider({ children }) {
       return [...prev, { ...item, qty: 1, checked: true }];
     });
 
-    return { isNew, nextQty };
+    return result;
   }, []);
 
   const clearCart = useCallback(() => {

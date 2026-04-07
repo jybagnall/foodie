@@ -12,6 +12,16 @@ class OrderService {
     );
     return data;
   }
+
+  async getMyOrder(orderId) {
+    const data = await this.client.get(`/api/orders/${orderId}`);
+    return data;
+  }
+
+  async getMyOrders() {
+    const data = await this.client.get("/api/orders/all");
+    return data;
+  }
 }
 
 export default OrderService;

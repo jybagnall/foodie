@@ -2,7 +2,7 @@ import { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import CartContext from "../../contexts/CartContext";
-import EmptyCart from "../top_layout/EmptyCart";
+import EmptyCart from "../top_layout/header/cart/EmptyCart";
 import Button from "../UI/Button";
 import { currencyFormatter } from "../../utils/format";
 
@@ -42,24 +42,25 @@ export default function ViewCart() {
           <>
             <div className="flex justify-between items-center mt-2 mb-4">
               <div className="flex items-center gap-2">
+                {/* name attribute는 폼 제출 시 필요함 */}
+                {/* <label>의 htmlFor과 id가 연결되면 텍스트 클릭 시 체크박스가 토글됨 */}
+
                 <input
                   checked={allChecked}
                   onChange={(e) => setAllChecked(e.target.checked)}
                   id="all"
-                  name="all"
                   type="checkbox"
-                  aria-describedby="checkbox to select all"
+                  aria-label="Select all menu"
                   className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white 
                      checked:bg-gray-300 checked:border-gray-300 transition-colors"
                 />
-
-                <h3>
-                  Select all{" "}
+                <label htmlFor="all" className="cursor-pointer">
+                  Select all
                   <span className="ml-2 font-semibold">
                     {numOfCheckedItems}
                   </span>
                   /<span className="font-semibold">{uniqueMenuCount}</span>
-                </h3>
+                </label>
               </div>
             </div>
 
@@ -70,18 +71,22 @@ export default function ViewCart() {
                   className="flex items-start gap-x-3 text-gray-700 mt-4"
                 >
                   <div className="flex flex-col gap-y-2 w-full">
-                    {/* 체크박스, 이름 */}
+                    {/* 각 메뉴의 체크박스 */}
                     <div className="flex items-center gap-x-2">
                       <input
                         id={i.name}
-                        name={i.name}
                         type="checkbox"
                         checked={i.checked}
                         onChange={() => toggleCheckedItem(i.id)}
-                        aria-describedby="checkbox to select all"
+                        aria-label={`Select ${i.name}`}
                         className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white checked:bg-gray-300 checked:border-gray-300 transition-colors"
                       />
-                      <span className="font-medium text-md">{i.name}</span>
+                      <label
+                        htmlFor={i.name}
+                        className="font-medium text-md cursor-pointer"
+                      >
+                        {i.name}
+                      </label>
                     </div>
 
                     <div className="flex items-center gap-x-4 ml-7">
@@ -102,8 +107,8 @@ export default function ViewCart() {
                               type="button"
                               className={`group relative mr-1 ml-0.5 size-3.5 rounded-xs ${
                                 i.qty === 1
-                                  ? "text-gray-300 cursor-not-allowed"
-                                  : "text-gray-700 hover:text-gray-900"
+                                  ? "text-gray-300"
+                                  : "text-gray-700 hover:text-gray-900 cursor-pointer"
                               }`}
                               onClick={() => decreaseItem(i.id)}
                             >

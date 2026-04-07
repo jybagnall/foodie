@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { toast } from "react-hot-toast";
 
 import { currencyFormatter } from "../../../utils/format";
@@ -12,6 +12,8 @@ export default function MenuItem({ meal }) {
 
   const handleAddToCart = (meal) => {
     const result = addItem(meal);
+
+    // 커스텀 토스트에 같은 ID의 토스트가 이미 떠있으면 새로 안 만듬.
     toast.custom(
       (t) => (
         <AddingItemFeedback
@@ -22,6 +24,7 @@ export default function MenuItem({ meal }) {
         />
       ),
       {
+        id: "cart-feedback",
         duration: 2000,
       },
     );

@@ -1,4 +1,4 @@
-import { formatDate } from "../../utils/format.js";
+import { formatDateTime } from "../../utils/format.js";
 import StatusBadge from "./StatusBadge.jsx";
 
 const columns = [
@@ -14,7 +14,7 @@ const columns = [
   {
     key: "created_at",
     label: "Created At",
-    render: (value) => formatDate(value),
+    render: (value) => formatDateTime(value),
   },
   // { key: "", label: "Actions" },
 ];

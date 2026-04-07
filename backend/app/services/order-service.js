@@ -29,6 +29,40 @@ export async function createOrderId(
   return result.rows[0].id;
 }
 
+export async function getAllOrders(userId) {
+  const q = `
+  SELECT 
+    o.id, o.created_at, o.total_amount, 
+    p.payment_status,
+    COUNT(DISTINCT oi.id) AS item_count,
+    (
+      SELECT JSON_AGG(
+        JSON_BUILD_OBJECT(
+          'name', m.name,
+          'image', m.image,
+          'price', oi2.price,
+          'qty', oi2.qty
+        )
+      )
+      FROM (
+      SELECT oi2.qty, oi2.menu_id, oi2.price
+      FROM order_items oi2
+      WHERE oi2.order_id = o.id
+      ORDER BY oi2.id
+      ) oi2
+      JOIN menus m ON oi2.menu_id = m.id
+    ) AS preview_items
+  FROM orders o
+  JOIN payments p ON p.order_id = o.id
+  JOIN order_items oi ON oi.order_id = o.id
+  WHERE o.user_id = $1
+  GROUP BY o.id, o.created_at, o.total_amount, o.status, p.payment_status
+  ORDER BY o.created_at DESC
+  `;
+  const result = await pool.query(q, [userId]);
+  return result.rows;
+}
+
 export async function getOrderById(orderId) {
   const q = `
   SELECT user_id, total_amount
@@ -51,6 +85,21 @@ export async function getOrderConfirmationDetails(client, orderId) {
   `;
   const result = await client.query(q, [orderId]);
   return result.rows[0];
+}
+
+export async function getOrderDetails(orderId, userId) {
+  const q = `
+    SELECT
+      shipping_street,
+      shipping_city,
+      shipping_postal_code,
+      shipping_phone,
+      shipping_full_name
+    FROM orders 
+    WHERE id = $1 AND user_id = $2
+  `;
+  const result = await pool.query(q, [orderId, userId]);
+  return result.rows[0] ?? null;
 }
 
 // [{ menu_name, menu_id, qty, price }, {}]

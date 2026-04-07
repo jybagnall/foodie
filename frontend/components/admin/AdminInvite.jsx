@@ -7,7 +7,7 @@ import AuthContext from "../../contexts/AuthContext";
 import AdminService from "../../services/admin.service";
 import Spinner from "../user_feedback/Spinner";
 import AdminFeedback from "./AdminFeedback";
-import BackToAdminDash from "../UI/BackToAdminDash";
+import BackToDash from "../UI/BackToDash";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
 export default function AdminInvite() {
@@ -74,7 +74,11 @@ export default function AdminInvite() {
         <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
           <div className="flex flex p-3 -ml-4">
             <div className="mb-4">
-              <BackToAdminDash title="Send invite" />
+              <BackToDash
+                url="/admin"
+                dashboardName="Back to admin dashboard"
+                title="Send invite"
+              />
             </div>
           </div>
 

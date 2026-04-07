@@ -41,7 +41,7 @@ CREATE TABLE menus (
   id SERIAL PRIMARY KEY,
   created_at TIMESTAMP DEFAULT NOW(),
   name VARCHAR(32) UNIQUE NOT NULL,
-  price NUMERIC(5,2) NOT NULL,
+  price NUMERIC(5,2) NOT NULL, -- 지금 현재 판매 가격 (바뀔 수 있음)
   description TEXT NOT NULL,
   image TEXT NOT NULL
 );
@@ -80,7 +80,7 @@ CREATE TABLE order_items (
   order_id INT REFERENCES orders(id) ON DELETE CASCADE,
   menu_id INT REFERENCES menus(id),
   qty INT NOT NULL,
-  price NUMERIC(8,2) NOT NULL
+  price NUMERIC(8,2) NOT NULL -- 유저가 실제로 결제했던 그 시점의 가격
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨

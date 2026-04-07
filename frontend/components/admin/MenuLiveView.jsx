@@ -1,12 +1,16 @@
 import UserLanding from "../pages/Home/UserLanding";
-import BackToAdminDash from "../UI/BackToAdminDash";
+import BackToDash from "../UI/BackToDash";
 
 export default function MenuLiveView() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex p-6">
         <div className="mb-4">
-          <BackToAdminDash title="Menu Preview" />
+          <BackToDash
+            url="/admin"
+            dashboardName="Back to admin dashboard"
+            title="Send invite"
+          />
         </div>
       </div>
 

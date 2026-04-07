@@ -9,9 +9,14 @@ export const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export const formatDate = (date) => {
+export const formatDateTime = (date) => {
   if (!date) return "-";
   return dayjs(date).format("YYYY-MM-DD HH:mm");
+};
+
+export const formatDateOnly = (date) => {
+  if (!date) return "-";
+  return dayjs(date).format("MMMM D, YYYY");
 };
 
 export function getTimeRangeStart(rangeKey) {

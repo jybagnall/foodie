@@ -6,7 +6,7 @@ import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
 import StatusEventSummary from "../StripeEventMonitor/StripeEventSummary";
 import StripeEventFilters from "../StripeEventMonitor/StripeEventFilters";
 import EmptyEventState from "../StripeEventMonitor/EmptyEventState";
-import BackToAdminDash from "../UI/BackToAdminDash";
+import BackToDash from "../UI/BackToDash";
 import StripeEventTable from "../StripeEventMonitor/StripeEventTable";
 import Pagination from "../StripeEventMonitor/Pagination";
 import { useSearchParams } from "react-router-dom";
@@ -114,7 +114,11 @@ export default function StripeEventMonitor() {
           </div>
         )}
         <div className="mb-4">
-          <BackToAdminDash />
+          <BackToDash
+            url="/admin"
+            dashboardName="Back to admin dashboard"
+            title="Send invite"
+          />
         </div>
 
         <section className="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
