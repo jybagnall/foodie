@@ -15,6 +15,16 @@ export async function createAccount(name, email, password, role = "user") {
   return result.rows[0];
 }
 
+export async function findMyProfile(id) {
+  const q = `
+  SELECT id, name, email, created_at FROM users
+  WHERE id = $1 
+  `;
+
+  const result = await pool.query(q, [id]);
+  return result.rows[0];
+}
+
 export async function findUserByEmail(email) {
   const q = `
   SELECT id, name, email, role, stripe_customer_id FROM users

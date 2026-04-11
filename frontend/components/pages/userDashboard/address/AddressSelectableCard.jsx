@@ -1,7 +1,5 @@
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useContext } from "react";
 import { formatPhone } from "../../../../utils/format";
-import AuthContext from "../../../../contexts/AuthContext";
 import useAddressBook from "../../../../hooks/useAddressBook";
 
 export default function AddressSelectableCard({
@@ -10,8 +8,7 @@ export default function AddressSelectableCard({
   selectedAddressId,
   handleRadioChange,
 }) {
-  const { accessToken } = useContext(AuthContext);
-  const { deleteAddress, isDeleting } = useAddressBook(accessToken);
+  const { deleteAddress, isDeleting } = useAddressBook();
 
   return (
     <div className="flex justify-between items-start">

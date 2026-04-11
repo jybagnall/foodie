@@ -73,7 +73,7 @@ CREATE TABLE orders (
   shipping_phone VARCHAR(20),
   shipping_full_name VARCHAR(50)
 );
---status: pending, paid, cancelled (preparing, delievered)
+--status: pending, paid, cancelled, preparing, delivered
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
@@ -84,7 +84,7 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: requires_payment, failed, refunded, succeeded
+-- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, refunded, succeeded
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,

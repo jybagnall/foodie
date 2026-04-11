@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 // Intl.NumberFormat이라는 내장 클래스를 이용해서
 // “숫자를 통화 형식으로 바꿔주는 객체”를 만드는 것.
 // 따라서 이 객체가 가지고 있는 메서드 .format()을 써서 실제 변환을 수행함
-
+// currencyFormatter.format(12.59)
 export const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -42,3 +42,28 @@ export function getTimeRangeStart(rangeKey) {
 export const formatPhone = (phone) => {
   return phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
 };
+
+export function formatPaymentStatus(status) {
+  const map = {
+    requires_payment: "Awaiting Payment",
+    requires_confirmation: "Confirming",
+    requires_action: "Action Required",
+    processing: "Processing",
+    succeeded: "Paid",
+    canceled: "Canceled",
+    failed: "Payment Failed",
+    refunded: "Refunded",
+  };
+  return map[status] ?? status;
+}
+
+export function formatOrderStatus(status) {
+  const map = {
+    pending: "Order Received",
+    paid: "Payment Confirmed",
+    preparing: "Preparing",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+  };
+  return map[status] ?? status;
+}

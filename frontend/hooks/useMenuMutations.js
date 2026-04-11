@@ -1,7 +1,10 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useContext } from "react";
+import AuthContext from "../contexts/AuthContext";
 import MenuService from "../services/menu.service";
 
-export default function useMenuMutations(accessToken) {
+export default function useMenuMutations() {
+  const { accessToken } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
   const {

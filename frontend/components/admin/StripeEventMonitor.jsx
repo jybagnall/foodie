@@ -1,5 +1,4 @@
-import { useContext, useEffect, useState } from "react";
-import AuthContext from "../../contexts/AuthContext";
+import { useState } from "react";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
@@ -20,7 +19,6 @@ import { useSearchParams } from "react-router-dom";
 
 // URL = single source of truth
 export default function StripeEventMonitor() {
-  const { accessToken } = useContext(AuthContext);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const {
@@ -38,7 +36,7 @@ export default function StripeEventMonitor() {
     eventError,
     eventTypesError,
     eventsCountError,
-  } = useStripeEventMonitor(accessToken);
+  } = useStripeEventMonitor();
 
   // UI 입력 상태 변경 시 url 업데이트
   const initialFilters = {

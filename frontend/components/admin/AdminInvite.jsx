@@ -1,14 +1,14 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
-import AuthContext from "../../contexts/AuthContext";
 import AdminService from "../../services/admin.service";
 import Spinner from "../user_feedback/Spinner";
 import AdminFeedback from "./AdminFeedback";
 import BackToDash from "../UI/BackToDash";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import useAccessToken from "../../hooks/useAccessToken";
 
 export default function AdminInvite() {
   const {
@@ -21,7 +21,7 @@ export default function AdminInvite() {
     document.title = "Invite a new admin | Foodie";
   }, []);
 
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
   const [isInviteProcessing, setIsInviteProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");

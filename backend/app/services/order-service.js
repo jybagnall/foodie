@@ -32,9 +32,10 @@ export async function createOrderId(
 export async function getAllOrders(userId) {
   const q = `
   SELECT 
-    o.id, o.created_at, o.total_amount, 
+    o.id, o.created_at, o.total_amount, o.status,
     p.payment_status,
     COUNT(DISTINCT oi.id) AS item_count,
+    
     (
       SELECT JSON_AGG(
         JSON_BUILD_OBJECT(
@@ -45,20 +46,26 @@ export async function getAllOrders(userId) {
         )
       )
       FROM (
-      SELECT oi2.qty, oi2.menu_id, oi2.price
-      FROM order_items oi2
-      WHERE oi2.order_id = o.id
-      ORDER BY oi2.id
-      ) oi2
-      JOIN menus m ON oi2.menu_id = m.id
+        SELECT oi2.qty, oi2.menu_id, oi2.price
+        FROM order_items oi2
+        WHERE oi2.order_id = o.id
+        ORDER BY oi2.id
+      ) AS oi2
+      JOIN menus m 
+        ON oi2.menu_id = m.id
     ) AS preview_items
+
   FROM orders o
-  JOIN payments p ON p.order_id = o.id
-  JOIN order_items oi ON oi.order_id = o.id
+  JOIN payments p 
+    ON p.order_id = o.id
+  JOIN order_items oi 
+    ON oi.order_id = o.id
   WHERE o.user_id = $1
-  GROUP BY o.id, o.created_at, o.total_amount, o.status, p.payment_status
+  GROUP BY o.id, o.created_at, o.total_amount, o.status, 
+           p.payment_status
   ORDER BY o.created_at DESC
   `;
+
   const result = await pool.query(q, [userId]);
   return result.rows;
 }
@@ -90,13 +97,28 @@ export async function getOrderConfirmationDetails(client, orderId) {
 export async function getOrderDetails(orderId, userId) {
   const q = `
     SELECT
-      shipping_street,
-      shipping_city,
-      shipping_postal_code,
-      shipping_phone,
-      shipping_full_name
-    FROM orders 
-    WHERE id = $1 AND user_id = $2
+      o.id, o.created_at, o.total_amount, o.status, o.shipping_street, 
+      o.shipping_city, o.shipping_postal_code, 
+      o.shipping_phone, o.shipping_full_name,
+      p.payment_status,
+
+      JSON_AGG( 
+          JSON_BUILD_OBJECT(
+            'menu_id', m.id,
+            'name', m.name,
+            'image', m.image,
+            'price', oi.price,
+            'qty', oi.qty
+          )
+          ORDER BY oi.id
+      ) AS items
+
+      FROM orders o
+      JOIN payments p ON p.order_id = o.id
+      JOIN order_items oi ON oi.order_id = o.id
+      JOIN menus m ON m.id = oi.menu_id
+      WHERE o.id = $1 AND o.user_id = $2
+      GROUP BY o.id, p.payment_status
   `;
   const result = await pool.query(q, [orderId, userId]);
   return result.rows[0] ?? null;

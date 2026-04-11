@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   useQuery,
   useQueryClient,
@@ -9,11 +10,12 @@ import StripeService from "../services/stripe.service";
 import { getTimeRangeStart } from "../utils/format";
 import { stripeKeys } from "../react-query/queryKeys";
 import { POLLING_30S, adaptivePolling } from "../react-query/queryConfig";
-import { useSearchParams } from "react-router-dom";
+import useAccessToken from "../hooks/useAccessToken"
 
 // polling이 있으면 stale 여부가 중요하지 않음 (staleTime: 0)
 
-export default function useStripeEventMonitor(accessToken) {
+export default function useStripeEventMonitor() {
+const accessToken = useAccessToken();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const pageParam = searchParams.get("page");

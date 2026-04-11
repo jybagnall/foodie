@@ -6,6 +6,7 @@ import Spinner from "../../../user_feedback/Spinner";
 import CartContext from "../../../../contexts/CartContext";
 import CartService from "../../../../services/cart.service";
 import UserDropdown from "./UserDropdown";
+import useMyProfile from "../../../../hooks/useMyProfile";
 
 // 로그아웃 실패 시 에러 메시지
 export default function UserName() {
@@ -14,6 +15,7 @@ export default function UserName() {
 
   const [isSavingCart, setIsSavingCart] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useMyProfile();
   const { clearCart, items } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
@@ -93,7 +95,7 @@ export default function UserName() {
             className="cursor-pointer inline-flex items-center gap-1 whitespace-nowrap text-gray-200 hover:text-yellow-400"
             onClick={handleNameClick}
           >
-            Hello, {decodedUser.name}
+            Hello, {user?.name}
             <ChevronDownIcon className="w-4 h-4 mt-2" />
           </span>
 

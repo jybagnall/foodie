@@ -1,22 +1,22 @@
 import { useParams } from "react-router-dom";
-import AuthContext from "../../../../contexts/AuthContext";
-import { useContext } from "react";
 import useOrder from "../../../../hooks/useOrder";
-import Spinner from "../../../user_feedback/Spinner";
 import PageError from "../../../user_feedback/PageError";
 import BackToDash from "../../../UI/BackToDash";
-import { formatDateOnly } from "../../../../utils/format";
+import Spinner from "../../../user_feedback/Spinner";
+import { currencyFormatter, formatPhone } from "../../../../utils/format";
+import OrderPreviewItem from "./OrderPreviewItem";
+import OrderHeader from "./OrderHeader";
+
+// 주문 status가 더 많아질 수도 있음
+// orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
+// payments.status    → 돈이 잘 결제됐는지       (결제완료, 결제실패 등)
 
 export default function OrderDetail() {
   const { orderId } = useParams();
-  const { accessToken } = useContext(AuthContext);
-  const { order, orderFetchingError, isFetchingOrder } = useOrder(
-    accessToken,
-    orderId,
-  );
+  const { order, orderFetchingError, isFetching } = useOrder(orderId);
 
-  // ErrorPage 필요함
-  if (isFetchingOrder) return <Spinner />; // 너무 큼
+  // "데이터 요청 중인 상태" & "데이터 존재 여부" 확인!
+  if (isFetching || !order) return <Spinner />;
   if (orderFetchingError) return <PageError />;
 
   return (
@@ -25,18 +25,8 @@ export default function OrderDetail() {
         <div className="mb-4">
           <BackToDash url="/my-account/orders" dashboardName="Back to orders" />
 
-          <div className="w-full rounded-lg border-2 border-gray-400 p-6 text-left mt-5">
-            {/* Order Header */}
-            <div className="pb-2 sm:pb-3">
-              <div className="flex justify-between items-center">
-                <p className="font-semibold text-lg">Order #3333</p>
-                <span className="text-sm px-3 py-1 rounded-full bg-gray-500">
-                  Delievered
-                </span>
-              </div>
-              <p className="text-sm text-gray-300">Placed on 02. 26. 2025</p>
-            </div>
-            {/* Order Header */}
+          <div className="w-full rounded-lg border-2 border-yellow-600 p-6 text-left mt-5">
+            <OrderHeader order={order} />
 
             {/* Main Layout */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -52,13 +42,13 @@ export default function OrderDetail() {
                     <div>
                       <p className="font-semibold">Shipping address</p>
                       <p className="text-sm text-gray-400">
-                        광주광역시 남구 금당로3길 20
+                        {order.shipping_street}, {order.shipping_city}
                         <br />
-                        103동 901호
+                        {order.shipping_postal_code}
                         <br />
-                        Korea, Republic of
+                        {order.shipping_full_name}
                         <br />
-                        010-2862-0402
+                        {formatPhone(order.shipping_phone)}
                       </p>
                     </div>
                   </div>
@@ -66,48 +56,9 @@ export default function OrderDetail() {
 
                 {/* Delivered Section */}
                 <div className="border rounded-lg p-5">
-                  <p className="text-green-500 font-semibold mb-2">Delivered</p>
-                  <p className="text-sm text-gray-400 mb-4">
-                    Delivered on November 28, 2025
-                  </p>
-
-                  {/* Item 1 */}
-                  <div className="flex gap-4 mb-6">
-                    <img src="/item1.png" className="w-16 h-16 object-cover" />
-                    <div className="flex-1">
-                      <p>Ancient Nutrition, 종합 콜라겐 단백질</p>
-                      <p className="text-sm text-red-400">₩45,994</p>
-                      <p className="text-sm">Quantity: 1</p>
-
-                      <div className="mt-2 flex gap-2">
-                        <button className="border px-3 py-1 rounded">
-                          Buy again
-                        </button>
-                        <button className="border px-3 py-1 rounded">
-                          Write a Review
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Item 2 */}
-                  <div className="flex gap-4">
-                    <img src="/item2.png" className="w-16 h-16 object-cover" />
-                    <div className="flex-1">
-                      <p>California Gold Nutrition, 크릴 오일</p>
-                      <p className="text-sm text-red-400">₩38,850</p>
-                      <p className="text-sm">Quantity: 1</p>
-
-                      <div className="mt-2 flex gap-2">
-                        <button className="border px-3 py-1 rounded">
-                          Buy again
-                        </button>
-                        <button className="border px-3 py-1 rounded">
-                          Write a Review
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  {order.items.map((item) => (
+                    <OrderPreviewItem key={item.name} item={item} showPrice />
+                  ))}
                 </div>
               </div>
 
@@ -124,7 +75,7 @@ export default function OrderDetail() {
 
                   <div className="flex justify-between text-sm mb-2">
                     <span>Subtotal</span>
-                    <span>₩84,844</span>
+                    <span>{currencyFormatter.format(order.total_amount)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm mb-2">
@@ -139,7 +90,7 @@ export default function OrderDetail() {
 
                   <div className="border-t pt-3 flex justify-between font-semibold">
                     <span>Order total</span>
-                    <span>₩84,844</span>
+                    <span>{currencyFormatter.format(order.total_amount)}</span>
                   </div>
 
                   <div className="mt-3 text-green-500 text-sm">

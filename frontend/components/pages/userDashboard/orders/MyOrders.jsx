@@ -1,5 +1,3 @@
-import { useContext } from "react";
-import AuthContext from "../../../../contexts/AuthContext";
 import useMyOrders from "../../../../hooks/useMyOrders";
 import Spinner from "../../../user_feedback/Spinner";
 import PageError from "../../../user_feedback/PageError";
@@ -10,10 +8,7 @@ import OrderCard from "./OrderCard";
 
 // {id, created_at, total_amount, payment_status, item_count, preview_items= {name, image, qty}}
 export default function MyOrders() {
-  const { accessToken } = useContext(AuthContext);
-
-  const { orders, ordersFetchingError, isFetchingOrders } =
-    useMyOrders(accessToken);
+  const { orders, ordersFetchingError, isFetchingOrders } = useMyOrders();
 
   if (isFetchingOrders) return <Spinner />;
   if (ordersFetchingError) return <PageError />;

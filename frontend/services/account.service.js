@@ -33,6 +33,11 @@ class AccountService {
     return data;
   }
 
+  async getMyProfile() {
+    const data = await this.client.get(`/api/accounts/my-profile`);
+    return data;
+  }
+
   async getUserInfo() {
     const data = await this.client.get(`/api/accounts/user`);
     return data;

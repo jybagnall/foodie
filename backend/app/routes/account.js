@@ -10,6 +10,7 @@ import {
   findUserById,
   updateUserStripeId,
   updateUserRefreshToken,
+  findMyProfile,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -21,10 +22,27 @@ import { verifyUserAuth } from "../middleware/auth.middleware.js";
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+router.get("/my-profile", verifyUserAuth, async (req, res) => {
+  try {
+    const profile = await findMyProfile(req.user.id);
+
+    if (!profile) {
+      return res.status(400).json({
+        error: "We couldn’t verify your account. Please sign in again.",
+      });
+    }
+
+    res.status(200).json(profile);
+  } catch (err) {
+    res.status(500).json({
+      error: "We're having trouble verifying your account right now.",
+    });
+  }
+});
+
 router.get("/user", verifyUserAuth, async (req, res) => {
   try {
-    const { id } = req.user.id;
-    const existingUser = await findUserById(id);
+    const existingUser = await findUserById(req.user.id);
 
     if (!existingUser) {
       return res.status(400).json({
@@ -43,11 +61,9 @@ router.get("/user", verifyUserAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    if (err) {
-      res.status(500).json({
-        error: "We're having trouble verifying your account right now.",
-      });
-    }
+    res.status(500).json({
+      error: "We're having trouble verifying your account right now.",
+    });
   }
 });
 

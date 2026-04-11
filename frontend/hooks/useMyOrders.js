@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { useContext } from "react";
+import AuthContext from "../contexts/AuthContext";
 import OrderService from "../services/order.service";
 
-export default function useMyOrders(accessToken) {
+export default function useMyOrders() {
+  const { accessToken } = useContext(AuthContext);
+
   const {
     data: orders = [],
     error: ordersFetchingError,

@@ -1,13 +1,13 @@
-import { useContext, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Spinner from "../../user_feedback/Spinner";
-import AuthContext from "../../../contexts/AuthContext";
 import PaymentService from "../../../services/payment.service";
 import PaymentFormWrapper from "./PaymentFormWrapper";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
+import useAccessToken from "../../../hooks/useAccessToken";
 
 // 🤔 컴포넌트의 목적:
 // 해당 주문에 대한 Stripe 결제 준비 * 결제 UI의 컨테이너 컴포넌트
@@ -18,7 +18,7 @@ export default function OrderPayment() {
   const { orderId } = useParams();
   const [clientSecret, setClientSecret] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
   const navigate = useNavigate();
   const location = useLocation();
   const isRetry = location.state?.retry === true;

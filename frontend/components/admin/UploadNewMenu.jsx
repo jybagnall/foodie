@@ -1,7 +1,6 @@
 import { useForm, useWatch } from "react-hook-form";
-import { useEffect, useContext, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../../contexts/AuthContext";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import BackToDash from "../UI/BackToDash";
@@ -10,9 +9,7 @@ import SpinnerMini from "../user_feedback/SpinnerMini";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 
 export default function UploadNewMenu() {
-  const { accessToken } = useContext(AuthContext);
-  const { createMenu, isError, error, isUploading } =
-    useMenuMutations(accessToken);
+  const { createMenu, isError, isUploading } = useMenuMutations();
   const navigate = useNavigate();
   const {
     register,

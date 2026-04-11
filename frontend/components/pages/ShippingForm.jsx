@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import Button from "../UI/Button";
 import CartContext from "../../contexts/CartContext";
 import OrderService from "../../services/order.service";
-import AuthContext from "../../contexts/AuthContext";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Spinner from "../user_feedback/Spinner";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
@@ -13,13 +12,14 @@ import SpinnerMini from "../user_feedback/SpinnerMini";
 import AddressFields from "../UI/AddressFields";
 import useAddressBook from "../../hooks/useAddressBook";
 import AddressSelector from "./userDashboard/address/AddressSelector";
+import useAccessToken from "../../hooks/useAccessToken";
 
 export default function ShippingForm() {
   const methods = useForm();
   const { items, totalAmount } = useContext(CartContext);
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
   const { addresses, isFetching, fetchingError, isDeleteError } =
-    useAddressBook(accessToken);
+    useAddressBook();
 
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [editingAddressId, setEditingAddressId] = useState(null);

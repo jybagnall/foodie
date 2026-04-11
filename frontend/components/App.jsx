@@ -14,6 +14,8 @@ import AdminAccount from "./admin/AdminAccount";
 import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import AddressBook from "../components/pages/userDashboard/address/AddressBook";
+import DeleteAccount from "./pages/userDashboard/account/DeleteAccount";
+import EditProfile from "./pages/userDashboard/account/EditProfile";
 import MyAccount from "../components/pages/userDashboard/account/MyAccount";
 import MyOrders from "../components/pages/userDashboard/orders/MyOrders";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -65,6 +67,8 @@ export default function App() {
                 <Route path="address" element={<AddressBook />} />
                 <Route path="address/new" element={<AddressForm />} />
                 <Route path="address/:id/edit" element={<AddressForm />} />
+                <Route path="edit/:field" element={<EditProfile />} />
+                <Route path="account-deletion" element={<DeleteAccount />} />
                 <Route path="payment-methods" element={<PaymentMethod />} />
               </Route>
 

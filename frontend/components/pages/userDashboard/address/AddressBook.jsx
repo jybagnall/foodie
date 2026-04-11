@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
-import { useContext } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import AuthContext from "../../../..//contexts/AuthContext";
 import useAddressBook from "../../../..//hooks/useAddressBook";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import AddressCard from "../../userDashboard/address/AddressCard";
 import Spinner from "../../../user_feedback/Spinner";
 
 export default function AddressBook() {
-  const { accessToken } = useContext(AuthContext);
   const {
     addresses,
     setDefaultAddress,
@@ -19,7 +16,7 @@ export default function AddressBook() {
     isUpdatingDefaultAddress,
     isDefaultUpdateError,
     isDeleteError,
-  } = useAddressBook(accessToken);
+  } = useAddressBook();
 
   const errorProps = [
     {
@@ -47,6 +44,7 @@ export default function AddressBook() {
 
   return (
     <main className="min-h-screen flex flex-col items-center py-10 px-4 space-y-6">
+      <p className="font-bold text-xl">Address Book</p>
       {currentError && (
         <div className="w-full max-w-2xl">
           <ErrorAlert

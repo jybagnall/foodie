@@ -1,8 +1,7 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { useContext, useEffect } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { useEffect } from "react";
 import AddressFields from "../../../UI/AddressFields";
-import AuthContext from "../../../../contexts/AuthContext";
 import useAddressBook from "../../../../hooks/useAddressBook";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import Button from "../../../UI/Button";
@@ -11,17 +10,16 @@ import ErrorAlert from "../../../user_feedback/ErrorAlert";
 export default function AddressForm() {
   const { id } = useParams();
   const isEditMode = Boolean(id);
-  const { accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const { state } = useLocation();
   const address = state?.address;
-
+  const methods = useForm();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isDirty },
-  } = useForm();
+  } = methods;
 
   const {
     createAddress,
@@ -30,7 +28,7 @@ export default function AddressForm() {
     updateAddress,
     isUpdating,
     isUpdateError,
-  } = useAddressBook(accessToken);
+  } = useAddressBook();
 
   const onAddressSubmit = async ({
     full_name,
@@ -105,30 +103,32 @@ export default function AddressForm() {
           {isEditMode ? "Edit Address" : "Add Address"}
         </h2>
 
-        <form
-          className="flex flex-col gap-5"
-          onSubmit={handleSubmit(onAddressSubmit)}
-        >
-          <AddressFields register={register} errors={errors} />
+        <FormProvider {...methods}>
+          <form
+            className="flex flex-col gap-5"
+            onSubmit={handleSubmit(onAddressSubmit)}
+          >
+            <AddressFields register={register} errors={errors} />
 
-          <div className="flex justify-between items-center mt-8">
-            <Button
-              type="button"
-              textOnly
-              className="text-gray-800 hover:text-gray-700"
-              onClick={onCancelSubmit}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isCreating || isUpdating || (isEditMode && !isDirty)}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
-            >
-              {isCreating || isUpdating ? <SpinnerMini /> : "Save"}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-between items-center mt-8">
+              <Button
+                type="button"
+                textOnly
+                className="text-gray-800 hover:text-gray-700"
+                onClick={onCancelSubmit}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isCreating || isUpdating || (isEditMode && !isDirty)}
+                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
+              >
+                {isCreating || isUpdating ? <SpinnerMini /> : "Save"}
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
       </section>
     </main>
   );

@@ -8,9 +8,9 @@ import {
 import Spinner from "./Spinner";
 import { useContext, useEffect, useState } from "react";
 import PaymentService from "../../services/payment.service";
-import AuthContext from "../../contexts/AuthContext";
 import CartContext from "../../contexts/CartContext";
 import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
+import useAccessToken from "../../hooks/useAccessToken";
 
 // GET /order/completed/orderId?payment_intent=
 
@@ -26,7 +26,7 @@ export default function OrderConfirmation() {
     if (redirectStatus === "failed") return "failed";
     return paymentIntentId ? "loading" : "error";
   });
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
   const { clearCart } = useContext(CartContext);
 
   useEffect(() => {

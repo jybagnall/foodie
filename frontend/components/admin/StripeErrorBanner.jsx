@@ -2,14 +2,11 @@ import {
   XMarkIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { useContext } from "react";
 import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
-import AuthContext from "../../contexts/AuthContext";
-//deadSummary = { count: 0, lastSeenTime: null }
 
+//deadSummary = { count: 0, lastSeenTime: null }
 export default function StripeErrorBanner() {
-  const { accessToken } = useContext(AuthContext);
-  const { deadSummary, confirmDeadEvents } = useStripeEventMonitor(accessToken);
+  const { deadSummary, confirmDeadEvents } = useStripeEventMonitor();
 
   const showBanner = deadSummary.count > 0;
   if (!showBanner) return null;
