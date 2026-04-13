@@ -1,5 +1,6 @@
 import {
   PencilIcon,
+  EnvelopeIcon,
   LockClosedIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
@@ -17,6 +18,7 @@ export default function MyAccount() {
   if (userFetchingError) return <PageError />;
 
   const fields = [
+    { label: "Email", path: "", value: user.email, icon: EnvelopeIcon },
     { label: "Full Name", path: "name", value: user.name, icon: UserIcon },
     {
       label: "Password",
@@ -30,7 +32,7 @@ export default function MyAccount() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <p className="font-bold text-xl">My Account</p>
-        <div className="w-full rounded-lg border-2 border-gray-400 p-6 text-left mt-5">
+        <div className="w-full p-6 text-left mt-5">
           {fields.map((f) => (
             <div
               key={f.path}
@@ -47,19 +49,20 @@ export default function MyAccount() {
                   <span className="text-base font-medium">{f.value}</span>
                 </div>
               </div>
-
-              <Link
-                to={`/my-account/edit/${f.path}`}
-                className="text-yellow-500 hover:text-yellow-600"
-              >
-                <PencilIcon className="w-4 h-4" />
-              </Link>
+              {f.value !== user.email && (
+                <Link
+                  to={`/my-account/edit/${f.path}`}
+                  className="text-gray-300"
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           ))}
 
           <Link
             to="/my-account/account-deletion"
-            className="block text-red-400 hover:text-red-500 mt-3"
+            className="block text-red-400 hover:text-red-500 mt-5"
           >
             Delete your Foodie account
           </Link>

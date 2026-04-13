@@ -9,7 +9,7 @@ export default function Input({ label, id, type, register, error, ...props }) {
     <div className="flex flex-col gap-1">
       <label
         htmlFor={id}
-        className="text-sm font-medium text-gray-700 tracking-wide"
+        className="text-sm font-medium text-gray-300 tracking-wide mb-1"
       >
         {label}
       </label>
@@ -21,7 +21,7 @@ export default function Input({ label, id, type, register, error, ...props }) {
           {...register}
           {...props}
           type={isPassword ? (showPassword ? "text" : "password") : type}
-          className={`w-full border rounded-md px-3 py-2 text-gray-800 focus:outline-none transition 
+          className={`w-full border rounded-md px-3 py-2 text-gray-400 focus:outline-none transition 
           ${
             error
               ? "border-red-500 focus:ring-2 focus:ring-red-400"

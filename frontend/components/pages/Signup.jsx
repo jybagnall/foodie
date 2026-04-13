@@ -106,10 +106,6 @@ export default function Signup() {
                   value: 6,
                   message: "Password must be at least 6 characters long.",
                 },
-                maxLength: {
-                  value: 12,
-                  message: "Password must not exceed 12 characters.",
-                },
               })}
               error={errors.password}
             />

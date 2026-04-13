@@ -29,6 +29,7 @@ export default function Login() {
   const handleLogin = async (email, password) => {
     const abortController = new AbortController();
     const accountService = new AccountService(abortController.signal);
+
     setIsLoginProcessing(true);
     setErrorMsg("");
     try {
@@ -101,10 +102,6 @@ export default function Login() {
                 minLength: {
                   value: 6,
                   message: "Password must be at least 6 characters long.",
-                },
-                maxLength: {
-                  value: 12,
-                  message: "Password must not exceed 12 characters.",
                 },
               })}
               error={errors.password}

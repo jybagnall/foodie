@@ -4,13 +4,13 @@ import Stripe from "stripe";
 import jwt from "jsonwebtoken";
 
 import {
-  getHashedPassword,
   createAccount,
   findUserByEmail,
   findUserById,
   updateUserStripeId,
   updateUserRefreshToken,
   findMyProfile,
+  updateUserName,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -70,15 +70,26 @@ router.get("/user", verifyUserAuth, async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const storedPassword = await getHashedPassword(email.trim());
 
-    if (!storedPassword) {
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ error: "Valid email is required." });
+    }
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ error: "Password is required." });
+    }
+
+    const loggedInUser = await findUserByEmail(email.trim());
+
+    if (!loggedInUser) {
       return res
         .status(401)
         .json({ error: "Please check your email or password and try again." });
-    } // 유저 없음
+    }
 
-    const passwordMatches = await verifyPassword(password, storedPassword);
+    const passwordMatches = await verifyPassword(
+      password,
+      loggedInUser.password,
+    );
 
     if (!passwordMatches) {
       return res
@@ -86,7 +97,6 @@ router.post("/login", async (req, res) => {
         .json({ error: "Incorrect email or password. Please try again." });
     }
 
-    const loggedInUser = await findUserByEmail(email.trim());
     const { accessToken, refreshToken } = generateTokens({
       id: loggedInUser.id,
       role: loggedInUser.role,
@@ -212,6 +222,27 @@ router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ error: "Name is required." });
+    }
+    const trimmedName = name.trim();
+    if (trimmedName.length < 5 || trimmedName.length > 20) {
+      return res.status(400).json({ error: "Name must be 5–20 characters." });
+    }
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ error: "Valid email is required." });
+    }
+
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ error: "Password is required." });
+    }
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters." });
+    }
+
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({ error: "Email already in use." });
@@ -261,6 +292,30 @@ router.post("/signup", async (req, res) => {
         .status(500)
         .json({ error: "Something went wrong while creating your account." });
     }
+  }
+});
+
+router.patch("/update-name", verifyUserAuth, async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ error: "Name is required." });
+    }
+
+    const trimmed = name.trim();
+
+    if (trimmed.length < 5 || trimmed.length > 20) {
+      return res.status(400).json({ error: "Name must be 5–20 characters." });
+    }
+
+    await updateUserName(req.user.id, trimmed);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("DB update error,", err.message);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while uploading the name." });
   }
 });
 

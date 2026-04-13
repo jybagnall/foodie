@@ -1,26 +1,17 @@
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useContext,
-} from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
-import CartService from "../services/cart.service";
-import CartContext from "./CartContext";
-import { clearCartStorage } from "../storage/cartStorage";
-import { mergeCarts } from "../utils/merge";
+import { authEvents } from "../utils/authEvents";
+import { useCartSync } from "../hooks/useCartSync";
 
 // refresh 실패 시 → logout, 성공 시 → state 갱신, Client 에러 타입 해석
 const AuthContext = React.createContext({
   accessToken: null, // 메모리에만 저장됨, XSS 공격 방지
   decodedUser: null,
   isAuthLoading: true,
-  applyAccessToken: () => {},
   handleLoginSuccess: () => {},
   logout: () => {},
 });
@@ -31,13 +22,11 @@ export function AuthContextProvider({ children }) {
   const [decodedUser, setDecodedUser] = useState(null);
 
   const hasTriedRestoreRef = useRef(false);
-  const hasFetchedCartRef = useRef(false);
   const refreshTimerRef = useRef(null);
-  const guestItemsRef = useRef([]);
 
-  const cartContext = useContext(CartContext);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useCartSync(accessToken);
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
   // 토큰 갱신 시 적용됨.
@@ -53,31 +42,6 @@ export function AuthContextProvider({ children }) {
       return null;
     }
   }, []);
-
-  const fetchCartAndSync = useCallback(
-    async (guestCartItems) => {
-      const abortController = new AbortController();
-      const cartService = new CartService(
-        abortController.signal,
-        () => accessToken,
-      );
-
-      try {
-        const serverCartItems = await cartService.getMyCart();
-
-        const finalCart =
-          guestCartItems.length > 0
-            ? mergeCarts(guestCartItems, serverCartItems)
-            : serverCartItems;
-
-        cartContext.setItems(finalCart);
-        clearCartStorage();
-      } catch (err) {
-        console.error("Failed to fetch & sync cart", err);
-      }
-    },
-    [accessToken],
-  );
 
   const handleLoginSuccess = useCallback(
     async (accessToken) => {
@@ -101,10 +65,11 @@ export function AuthContextProvider({ children }) {
       abortController.abort();
       setAccessToken(null);
       setDecodedUser(null);
-      hasFetchedCartRef.current = false;
       queryClient.removeQueries({ queryKey: ["addressBook"] });
       queryClient.removeQueries({ queryKey: ["defaultAddress"] });
       queryClient.removeQueries({ queryKey: ["orders"] });
+      queryClient.removeQueries({ queryKey: ["user", "me"] });
+
       navigate("/");
     }
   }, []);
@@ -168,17 +133,22 @@ export function AuthContextProvider({ children }) {
   }, [accessToken]);
 
   useEffect(() => {
-    if (!accessToken) {
-      hasFetchedCartRef.current = false; // 로그아웃 대응
-      return;
-    }
-    if (hasFetchedCartRef.current) return;
+    const onTokenRefreshed = (e) => applyAccessToken(e.detail);
+    const onSessionExpired = () => {
+      setAccessToken(null);
+      setDecodedUser(null);
+      navigate("/login");
+    };
 
-    hasFetchedCartRef.current = true;
-    guestItemsRef.current = cartContext.items;
-    cartContext.switchToServerMode();
-    fetchCartAndSync(guestItemsRef.current);
-  }, [accessToken]);
+    // 이벤트를 구독해서 로그인 상태를 자동으로 관리
+    authEvents.addEventListener("tokenRefreshed", onTokenRefreshed);
+    authEvents.addEventListener("sessionExpired", onSessionExpired);
+
+    return () => {
+      authEvents.removeEventListener("tokenRefreshed", onTokenRefreshed);
+      authEvents.removeEventListener("sessionExpired", onSessionExpired);
+    };
+  }, [applyAccessToken]);
 
   return (
     <AuthContext.Provider
@@ -186,7 +156,6 @@ export function AuthContextProvider({ children }) {
         accessToken,
         decodedUser,
         isAuthLoading,
-        applyAccessToken,
         handleLoginSuccess,
         logout,
       }}

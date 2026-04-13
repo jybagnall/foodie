@@ -5,7 +5,6 @@ import OrderService from "../services/order.service";
 
 export default function useMyOrders() {
   const { accessToken } = useContext(AuthContext);
-
   const {
     data: orders = [],
     error: ordersFetchingError,
