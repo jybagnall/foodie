@@ -1,22 +1,6 @@
 import axios from "axios";
 import { emitTokenRefreshed, emitSessionExpired } from "../utils/authEvents";
 
-// Axios는 “HTTP 요청 도구”
-// Client는 프론트엔드의 모든 API 요청을 통제 &
-// 모든 API 요청마다 최신 accessToken을 자동으로 헤더에 삽입
-// 왜? 백엔드는 클라이언트가 누구인지 알아야 함
-//🤔 "로그인한 유저 A가 보냈구만"(인증 정보를 담은 헤더가 알랴쥼)
-
-// 🔑 Axios 요청은 여기서 3단계로 완성돼.
-// 1. axios 인스턴스 기본 설정
-// 2. 요청 함수에서 넘긴 config (url, method, headers, data)
-// 3. interceptor에서 최종 수정
-
-//   headers: {
-//     "Content-Type": "multipart/form-data",
-//     "Authorization": "Bearer accessToken"
-//   }
-
 // 무조건 로그아웃 필요 상황이라는 refresh token 전용 에러
 export class RefreshTokenExpiredError extends Error {
   constructor() {
@@ -25,6 +9,7 @@ export class RefreshTokenExpiredError extends Error {
   }
 }
 
+// 요청마다 독립된 Axios 객체를 생성함
 class Client {
   constructor(signal, getAccessToken) {
     this.getAccessToken = getAccessToken;
@@ -32,9 +17,9 @@ class Client {
     this.axios = axios.create({
       ...(signal && { signal }),
       headers: {
-        "Content-Type": "application/json", // 기본 헤더 선언
+        "Content-Type": "application/json",
       },
-    }); // 요청마다 독립된 Axios 객체를 생성함
+    });
 
     // 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
     this.axios.interceptors.request.use((config) => {
@@ -106,7 +91,8 @@ class Client {
     return res.data;
   }
 
-  // 인증 상태와 상관없는 요청(로그아웃, accessToken not needed)
+  // 인증 상태와 상관없는 요청(로그인, 로그아웃, signup)
+  // 토큰이 필요없는 요청
   async rawPost(endpoint, payload = {}, options = {}) {
     const res = await this.axios.post(endpoint, payload, {
       ...options,

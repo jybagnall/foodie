@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
@@ -17,23 +17,33 @@ export default function AdminInvite() {
     formState: { errors },
   } = useForm();
 
-  useEffect(() => {
-    document.title = "Invite a new admin | Foodie";
-  }, []);
-
   const accessToken = useAccessToken();
+  const abortControllerRef = useRef(null);
   const [isInviteProcessing, setIsInviteProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState("");
 
-  const handleInvitation = async (email) => {
-    const abortController = new AbortController();
+  useEffect(() => {
+    document.title = "Invite Admin | Foodie";
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  const onInvitation = async ({ email }) => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
     const adminService = new AdminService(
-      abortController.signal,
+      abortControllerRef.current.signal,
       () => accessToken,
     );
 
+    setErrorMsg("");
+    setInviteSuccessMsg("");
     setIsInviteProcessing(true);
+
     try {
       const res = await adminService.inviteNewAdmin(email);
       setInviteSuccessMsg(res?.message);
@@ -46,10 +56,6 @@ export default function AdminInvite() {
     } finally {
       setIsInviteProcessing(false);
     }
-  };
-
-  const onInvitation = ({ email }) => {
-    handleInvitation(email);
   };
 
   if (isInviteProcessing) {

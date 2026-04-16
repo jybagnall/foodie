@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../../../../contexts/AuthContext";
 import Spinner from "../../../user_feedback/Spinner";
@@ -8,10 +8,10 @@ import CartService from "../../../../services/cart.service";
 import UserDropdown from "./UserDropdown";
 import useMyProfile from "../../../../hooks/useMyProfile";
 
-// 로그아웃 실패 시 에러 메시지
 export default function UserName() {
   const navigate = useNavigate();
   const wrapperRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const [isSavingCart, setIsSavingCart] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,8 +19,13 @@ export default function UserName() {
   const { clearCart, items } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
-
   const isLoggedIn = !!accessToken;
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const handleMouseEnter = () => {
     setIsMenuOpen(true);
@@ -40,9 +45,10 @@ export default function UserName() {
   };
 
   const persistCart = async () => {
-    const abortController = new AbortController();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
     const cartService = new CartService(
-      abortController.signal,
+      abortControllerRef.current.signal,
       () => accessToken,
     );
 

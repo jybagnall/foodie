@@ -5,7 +5,7 @@ import UserName from "./user-menu/UserName.jsx";
 export default function Header() {
   return (
     <>
-      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-[#1f2937] flex-nowrap">
+      <header className="flex justify-between items-center py-4 px-4 sm:px-8 bg-gray-800 flex-nowrap">
         <Link className="flex items-center gap-2 sm:gap-4 flex-shrink-0" to="/">
           <img
             src="/logo.jpg"

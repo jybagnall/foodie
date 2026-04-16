@@ -18,6 +18,8 @@ import {
   verifyRefreshToken,
 } from "../utils/auth.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
+import { validateBody } from "../middleware/validateBody.js";
+import { setRefreshTokenCookie } from "../utils/cookie.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -67,18 +69,10 @@ router.get("/user", verifyUserAuth, async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", validateBody("email", "password"), async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return res.status(400).json({ error: "Valid email is required." });
-    }
-    if (!password || typeof password !== "string") {
-      return res.status(400).json({ error: "Password is required." });
-    }
-
-    const loggedInUser = await findUserByEmail(email.trim());
+    const loggedInUser = await findUserByEmail(email);
 
     if (!loggedInUser) {
       return res
@@ -107,13 +101,7 @@ router.post("/login", async (req, res) => {
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 10);
     await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, refreshToken);
 
     res.status(200).json({
       message: "You have successfully logged in! Welcome back.",
@@ -195,12 +183,7 @@ router.post("/refresh-access-token", async (req, res) => {
     await updateUserRefreshToken(dbUser.id, hashedNewRefresh);
 
     // 브라우저 쿠키 저장소에 새 refreshToken 저장
-    res.cookie("refreshToken", newTokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, newTokens.refreshToken);
 
     res.status(200).json({
       message: "Access token refreshed successfully.",
@@ -218,105 +201,75 @@ router.post("/refresh-access-token", async (req, res) => {
   }
 });
 
-router.post("/signup", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+router.post(
+  "/signup",
+  validateBody("name", "email", "password"),
+  async (req, res) => {
+    try {
+      const { name, email, password } = req.body;
 
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Name is required." });
+      const existingUser = await findUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already in use." });
+      }
+
+      const createdUser = await createAccount(name, email, password);
+
+      const stripeCustomer = await stripe.customers.create({
+        name,
+        email,
+        metadata: { userId: createdUser.id },
+      });
+
+      await updateUserStripeId(createdUser.id, stripeCustomer.id);
+
+      const { accessToken, refreshToken } = generateTokens({
+        id: createdUser.id,
+        role: createdUser.role,
+        name: createdUser.name,
+        email: createdUser.email,
+        stripe_customer_id: stripeCustomer.id,
+      });
+
+      const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+      await updateUserRefreshToken(createdUser.id, hashedRefresh);
+
+      // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
+      setRefreshTokenCookie(res, refreshToken);
+
+      res.status(201).json({
+        message: "Account created successfully",
+        accessToken, // Signup 페이지에서 받아야 함
+      });
+    } catch (err) {
+      if (err.code === "23505") {
+        // PostgreSQL unique_violation
+        res.status(400).json({ error: "Email already registered." });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Something went wrong while creating your account." });
+      }
     }
-    const trimmedName = name.trim();
-    if (trimmedName.length < 5 || trimmedName.length > 20) {
-      return res.status(400).json({ error: "Name must be 5–20 characters." });
-    }
+  },
+);
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return res.status(400).json({ error: "Valid email is required." });
-    }
-
-    if (!password || typeof password !== "string") {
-      return res.status(400).json({ error: "Password is required." });
-    }
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 8 characters." });
-    }
-
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: "Email already in use." });
-    }
-
-    const createdUser = await createAccount(name, email, password);
-
-    const stripeCustomer = await stripe.customers.create({
-      name,
-      email,
-      metadata: { userId: createdUser.id },
-    });
-
-    await updateUserStripeId(createdUser.id, stripeCustomer.id);
-
-    const { accessToken, refreshToken } = generateTokens({
-      id: createdUser.id,
-      role: createdUser.role,
-      name: createdUser.name,
-      email: createdUser.email,
-      stripe_customer_id: stripeCustomer.id,
-    });
-
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    await updateUserRefreshToken(createdUser.id, hashedRefresh);
-
-    // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true, // 프론트에서 refreshToken을 직접 못 읽음, JS는 접근 금지
-      secure: process.env.NODE_ENV === "production", // HTTPS(암호화된 통신)에서만 전송
-      sameSite: "Strict", // 다른 사이트에서 요청 오면 쿠키 안 보냄
-      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 DAYS
-    }); // 브라우저 쿠키에 저장, but JS는 접근 못하고 서버 요청 시에만 첨부됨.
-    // 액세스 토큰 재발급시, withCredentials: true (브라우저에게 쿠키 포함 요청) →
-    // 서버는 req.cookies.refreshToken으로 읽음
-
-    res.status(201).json({
-      message: "Account created successfully",
-      accessToken, // Signup 페이지에서 받아야 함
-    });
-  } catch (err) {
-    if (err.code === "23505") {
-      // PostgreSQL unique_violation
-      res.status(400).json({ error: "Email already registered." });
-    } else {
+router.patch(
+  "/update-name",
+  verifyUserAuth,
+  validateBody("name"),
+  async (req, res) => {
+    try {
+      const { name } = req.body;
+      await updateUserName(req.user.id, name);
+      res.status(200).json({ success: true });
+    } catch (err) {
+      console.error("DB update error,", err.message);
       res
         .status(500)
-        .json({ error: "Something went wrong while creating your account." });
+        .json({ error: "Something went wrong while uploading the name." });
     }
-  }
-});
-
-router.patch("/update-name", verifyUserAuth, async (req, res) => {
-  try {
-    const { name } = req.body;
-
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Name is required." });
-    }
-
-    const trimmed = name.trim();
-
-    if (trimmed.length < 5 || trimmed.length > 20) {
-      return res.status(400).json({ error: "Name must be 5–20 characters." });
-    }
-
-    await updateUserName(req.user.id, trimmed);
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("DB update error,", err.message);
-    res
-      .status(500)
-      .json({ error: "Something went wrong while uploading the name." });
-  }
-});
+  },
+);
 
 export default router;

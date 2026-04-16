@@ -57,7 +57,9 @@ export default function AddressSelector({
 
   return (
     <div className="space-y-3 mb-3">
-      <h2 className="font-semibold text-lg">Select a shipping address</h2>
+      <h2 className="font-semibold text-lg text-gray-300">
+        Select a shipping address
+      </h2>
       {sortedAddresses.map((address) => (
         <div
           key={address.id}
@@ -85,7 +87,7 @@ export default function AddressSelector({
       {!showNewAddressForm && (
         <div
           onClick={handleNewAddressClick}
-          className="flex items-center gap-2 text-md text-gray-600 mb-4 cursor-pointer"
+          className="flex items-center gap-2 text-md text-gray-300 mb-4 cursor-pointer"
         >
           <PlusIcon className="w-4 h-4 mr-3" />
           <p>Enter a new address</p>

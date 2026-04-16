@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,6 @@ import AddressSelector from "./userDashboard/address/AddressSelector";
 import useAccessToken from "../../hooks/useAccessToken";
 
 export default function ShippingForm() {
-  const methods = useForm();
   const { items, totalAmount } = useContext(CartContext);
   const accessToken = useAccessToken();
   const { addresses, isFetching, fetchingError, isDeleteError } =
@@ -27,14 +26,18 @@ export default function ShippingForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const methods = useForm();
+  const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    document.title = "Shipping Form | Foodie";
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const onAddressSubmit = async (formData) => {
-    const abortController = new AbortController();
-    const orderService = new OrderService(
-      abortController.signal,
-      () => accessToken,
-    );
-
     if (items.length === 0 || !totalAmount || totalAmount <= 0) {
       setErrorMsg(
         "Your cart is empty. Please add items before placing an order.",
@@ -52,6 +55,13 @@ export default function ShippingForm() {
       setErrorMsg("Please select or enter a shipping address.");
       return;
     }
+
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const orderService = new OrderService(
+      abortControllerRef.current.signal,
+      () => accessToken,
+    );
 
     const orderDetails = {
       address: {
@@ -71,8 +81,8 @@ export default function ShippingForm() {
       },
     };
 
+    setIsOrderProcessing(true);
     try {
-      setIsOrderProcessing(true);
       const { orderId } = await orderService.initializeOrder(orderDetails);
       queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
       queryClient.invalidateQueries({ queryKey: ["addressBook"] });
@@ -91,10 +101,6 @@ export default function ShippingForm() {
   const onCancelSubmit = () => {
     navigate("/");
   };
-
-  useEffect(() => {
-    document.title = "Shipping form | Foodie";
-  }, []);
 
   if (fetchingError) {
     console.error(fetchingError.message);
@@ -120,8 +126,8 @@ export default function ShippingForm() {
   const currentError = errorProps.find(({ condition }) => condition);
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
-      <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+    <main className="min-h-screen flex justify-center items-start py-20 px-4">
+      <section className="w-full max-w-lg shadow-xl rounded-xl p-8">
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert title="There was a problem" message={errorMsg} />
@@ -137,7 +143,7 @@ export default function ShippingForm() {
         )}
 
         <h2
-          className={`text-2xl font-semibold text-gray-800 mb-6 pb-3 ${addresses.length > 0 ? "" : "border-b"}`}
+          className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 ${addresses.length > 0 ? "" : "border-b"}`}
         >
           Shipping Address
         </h2>
@@ -164,7 +170,7 @@ export default function ShippingForm() {
               <Button
                 type="button"
                 textOnly
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-300 hover:text-gray-400"
                 onClick={onCancelSubmit}
               >
                 Cancel

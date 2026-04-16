@@ -13,7 +13,7 @@ import { getUserErrorMessage } from "../../../../utils/getUserErrorMsg";
 
 export default function EditNameForm() {
   const navigate = useNavigate();
-  const abortControllerRef = useRef(null); // 제출 중 컴포넌트 언마운트 대비
+  const abortControllerRef = useRef(null);
   const queryClient = useQueryClient();
   const accessToken = useAccessToken();
   const { user } = useMyProfile();
@@ -26,7 +26,20 @@ export default function EditNameForm() {
     formState: { errors, isDirty },
   } = useForm();
 
+  useEffect(() => {
+    document.title = "Edit Name | Foodie";
+
+    return () => abortControllerRef.current?.abort();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      reset({ name: user.name });
+    }
+  }, [user, reset]);
+
   const onNameSubmit = async ({ name }) => {
+    abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
     const accountService = new AccountService(
       abortControllerRef.current.signal,
@@ -52,16 +65,6 @@ export default function EditNameForm() {
   const onCancelSubmit = () => {
     navigate("/my-account");
   };
-
-  useEffect(() => {
-    if (user) {
-      reset({ name: user.name });
-    }
-  }, [user, reset]);
-
-  useEffect(() => {
-    return () => abortControllerRef.current?.abort();
-  }, []);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">

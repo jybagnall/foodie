@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import AuthContext from "../../contexts/AuthContext";
@@ -12,6 +12,7 @@ export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const authContext = useContext(AuthContext);
+  const abortControllerRef = useRef(null);
 
   const {
     register,
@@ -20,12 +21,22 @@ export default function Signup() {
     formState: { errors },
   } = useForm();
 
+  useEffect(() => {
+    document.title = "Signup | Foodie";
+
+    return () => abortControllerRef.current?.abort();
+  }, []);
+
   const onSignupSubmit = async ({ name, email, password }) => {
-    const abortController = new AbortController();
-    const accountService = new AccountService(abortController.signal);
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const accountService = new AccountService(
+      abortControllerRef.current.signal,
+    );
 
     setIsSignupProcessing(true);
     setErrorMsg("");
+
     try {
       const { accessToken } = await accountService.createUserAccount(
         name,
@@ -43,10 +54,6 @@ export default function Signup() {
       setIsSignupProcessing(false);
     }
   };
-
-  useEffect(() => {
-    document.title = "Signup | Foodie";
-  }, []);
 
   if (isSignupProcessing) {
     return <Spinner />;

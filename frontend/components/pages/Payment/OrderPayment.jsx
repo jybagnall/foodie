@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -21,44 +21,42 @@ export default function OrderPayment() {
   const accessToken = useAccessToken();
   const navigate = useNavigate();
   const location = useLocation();
+  const abortControllerRef = useRef(null);
   const isRetry = location.state?.retry === true;
 
-  // 해당 결제에 대한 준비, race condition을 막는 장치 넣음.
-  // PaymentIntent(금액, 통화, customerId)는 서버에서 고정됨,
-  // 즉 결제 주문서
-  // clientSecret = 그 주문서를 열 수 있는 1회용 코드
-  // ❗렌더링마다 Elements 안의 clientSecret 객체가 새로 만들어짐
   useEffect(() => {
-    const abortController = new AbortController();
+    document.title = "Payment | Foodie";
+  }, []);
+
+  // 해당 결제에 대한 준비
+  // clientSecret = 그 주문서를 열 수 있는 1회용 코드
+  useEffect(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
     const paymentService = new PaymentService(
-      abortController.signal,
+      abortControllerRef.current.signal,
       () => accessToken,
     );
-
-    let isMounted = true;
 
     const createIntent = async () => {
       try {
         const { clientSecret } = await paymentService.createPaymentIntent({
           orderId,
         });
-
-        if (isMounted) {
-          setClientSecret(clientSecret);
-        }
+        setClientSecret(clientSecret);
       } catch (err) {
         const message = getUserErrorMessage(err);
-        if (isMounted && message) setErrorMsg(message);
+        if (message) setErrorMsg(message);
       }
     };
 
     const findExistingPayment = async () => {
       try {
         const { clientSecret } = await paymentService.findPayment(orderId);
-        if (isMounted) setClientSecret(clientSecret);
+        setClientSecret(clientSecret);
       } catch (err) {
         const message = getUserErrorMessage(err);
-        if (isMounted) setErrorMsg(message);
+        setErrorMsg(message);
       }
     };
 
@@ -70,8 +68,7 @@ export default function OrderPayment() {
     }
 
     return () => {
-      abortController.abort();
-      isMounted = false;
+      abortControllerRef.current.abort();
     };
   }, [orderId, isRetry]);
 
@@ -87,7 +84,22 @@ export default function OrderPayment() {
   // <Elements>는 한 번 초기화되면 options가 바뀌는 걸 절대 허용하지 않는다
   // clientSecret이 진짜로 바뀔 때만 새로운 options 객체를 만들어라
   // clientSecret = 비밀번호, { clientSecret } 객체 = 비밀번호가 적힌 봉투
-  const elementsOptions = useMemo(() => ({ clientSecret }), [clientSecret]);
+  const elementsOptions = useMemo(
+    () => ({
+      clientSecret,
+      appearance: {
+        theme: "night", // dark 기반 추천
+        variables: {
+          colorBackground: "#4c586b", // gray-700
+          colorText: "#D1D5DB", // gray-300
+          colorPrimary: "#D1D5DB", // 버튼/포커스 색도 맞춤
+          colorDanger: "#ef4444", // 에러 (Tailwind red-500)
+          colorBorder: "#637081", // gray-600 (경계선 자연스럽게)
+        },
+      },
+    }),
+    [clientSecret],
+  );
 
   useEffect(() => {
     if (redirectStatus === "succeeded" || redirectStatus === "failed") {
@@ -106,15 +118,6 @@ export default function OrderPayment() {
 
   if (!clientSecret) {
     return <Spinner />;
-  }
-
-  if (!orderId) {
-    return (
-      <ErrorAlert
-        title="We couldn't start your payment"
-        message="Invalid order."
-      />
-    );
   }
 
   return (

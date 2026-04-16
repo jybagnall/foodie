@@ -8,6 +8,7 @@ export function useCartSync(accessToken) {
   const cartContext = useContext(CartContext);
   const hasFetchedCartRef = useRef(false);
   const guestItemsRef = useRef([]);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     if (!accessToken) {
@@ -17,12 +18,14 @@ export function useCartSync(accessToken) {
     if (hasFetchedCartRef.current) return;
 
     hasFetchedCartRef.current = true;
-    guestItemsRef.current = cartContext.items;
+    guestItemsRef.current = cartContext.items; // 게스트 아이템 저장
     cartContext.switchToServerMode();
 
-    const abortController = new AbortController();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
     const cartService = new CartService(
-      abortController.signal,
+      abortControllerRef.current.signal,
       () => accessToken,
     );
 
@@ -31,8 +34,8 @@ export function useCartSync(accessToken) {
         const serverCartItems = await cartService.getMyCart();
 
         const finalCart =
-          hasFetchedCartRef.current.length > 0
-            ? mergeCarts(hasFetchedCartRef.current, serverCartItems)
+          guestItemsRef.current.length > 0
+            ? mergeCarts(guestItemsRef.current, serverCartItems)
             : serverCartItems;
 
         cartContext.setItems(finalCart);
@@ -44,6 +47,6 @@ export function useCartSync(accessToken) {
 
     fetchCartAndSync();
 
-    return () => abortController.abort();
+    return () => abortControllerRef.current?.abort();
   }, [accessToken]);
 }

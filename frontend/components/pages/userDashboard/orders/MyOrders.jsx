@@ -5,10 +5,15 @@ import { ShoppingBagIcon } from "@heroicons/react/24/outline";
 import EmptyDataState from "../../../UI/EmptyDataState";
 
 import OrderCard from "./OrderCard";
+import { useEffect } from "react";
 
 // {id, created_at, total_amount, payment_status, item_count, preview_items= {name, image, qty}}
 export default function MyOrders() {
   const { orders, ordersFetchingError, isFetchingOrders } = useMyOrders();
+
+  useEffect(() => {
+    document.title = "Orders | Foodie";
+  }, []);
 
   if (isFetchingOrders) return <Spinner />;
   if (ordersFetchingError) return <PageError />;

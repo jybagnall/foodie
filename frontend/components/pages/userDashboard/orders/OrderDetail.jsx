@@ -6,6 +6,7 @@ import Spinner from "../../../user_feedback/Spinner";
 import { currencyFormatter, formatPhone } from "../../../../utils/format";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderHeader from "./OrderHeader";
+import { useEffect } from "react";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -14,6 +15,10 @@ import OrderHeader from "./OrderHeader";
 export default function OrderDetail() {
   const { orderId } = useParams();
   const { order, orderFetchingError, isFetching } = useOrder(orderId);
+
+  useEffect(() => {
+    document.title = "Order Details | Foodie";
+  }, []);
 
   // "데이터 요청 중인 상태" & "데이터 존재 여부" 확인!
   if (isFetching || !order) return <Spinner />;

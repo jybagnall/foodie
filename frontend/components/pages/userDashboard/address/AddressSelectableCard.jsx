@@ -27,21 +27,21 @@ export default function AddressSelectableCard({
 
         <div className="">
           <div className="flex items-start justify-start">
-            <p className="font-semibold text-gray-900">{address.full_name}</p>
+            <p className="font-semibold text-gray-300">{address.full_name}</p>
             {address.is_default && (
               <span className="ml-2 inline-block text-xs mt-1 px-2 bg-gray-200 text-gray-700 rounded-full">
                 default
               </span>
             )}
           </div>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-300 text-sm">
             {address.street}, {address.city} | {address.postal_code} |{" "}
             {formatPhone(address.phone)}
           </p>
         </div>
       </label>
 
-      <div className="ml-4 mt-1 inline-flex items-center gap-x-2 px-2 py-1 font-medium text-gray-600">
+      <div className="ml-4 mt-1 inline-flex items-center gap-x-2 px-2 py-1 font-medium text-gray-300">
         <button
           className={`w-5 h-5 flex items-center justify-center cursor-pointer`}
         >

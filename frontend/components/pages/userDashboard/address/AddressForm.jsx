@@ -30,6 +30,23 @@ export default function AddressForm() {
     isUpdateError,
   } = useAddressBook();
 
+  useEffect(() => {
+    document.title = "Address Form | Foodie";
+  }, []);
+
+  useEffect(() => {
+    if (address) {
+      reset({
+        full_name: address.full_name,
+        street: address.street,
+        city: address.city,
+        postal_code: String(address.postal_code),
+        phone: address.phone,
+        is_default: address.is_default,
+      });
+    }
+  }, [address, reset]);
+
   const onAddressSubmit = async ({
     full_name,
     street,
@@ -62,19 +79,6 @@ export default function AddressForm() {
   const onCancelSubmit = () => {
     navigate("/my-account/address");
   };
-
-  useEffect(() => {
-    if (address) {
-      reset({
-        full_name: address.full_name,
-        street: address.street,
-        city: address.city,
-        postal_code: String(address.postal_code),
-        phone: address.phone,
-        is_default: address.is_default,
-      });
-    }
-  }, [address, reset]);
 
   const errorProps = isEditMode
     ? {

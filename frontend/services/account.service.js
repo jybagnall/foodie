@@ -6,7 +6,7 @@ class AccountService {
   }
 
   async createUserAccount(name, email, password) {
-    const data = await this.client.post("/api/accounts/signup", {
+    const data = await this.client.rawPost("/api/accounts/signup", {
       name,
       email,
       password,
@@ -29,7 +29,7 @@ class AccountService {
   }
 
   async loginUser(email, password) {
-    const data = await this.client.post("/api/accounts/login", {
+    const data = await this.client.rawPost("/api/accounts/login", {
       email,
       password,
     });

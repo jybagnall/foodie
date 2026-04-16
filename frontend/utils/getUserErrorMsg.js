@@ -4,6 +4,10 @@ export function getUserErrorMessage(err) {
     return err.response.data.error;
   }
 
+  if (err?.response?.data?.errors) {
+    return "Please check your inputs and try again.";
+  }
+
   // Network error
   if (err?.code === "ERR_NETWORK" || err?.code === "ECONNABORTED") {
     return "Please check your network connection and try again.";

@@ -8,10 +8,15 @@ import { Link } from "react-router-dom";
 import PageError from "../../../user_feedback/PageError";
 import Spinner from "../../../user_feedback/Spinner";
 import useMyProfile from "../../../../hooks/useMyProfile";
+import { useEffect } from "react";
 
 // user: id, created_at, name, email
 export default function MyAccount() {
   const { user, isFetching, userFetchingError } = useMyProfile();
+
+  useEffect(() => {
+    document.title = "Profile | Foodie";
+  }, []);
 
   if (isFetching || !user) return <Spinner />;
   if (!user) return <PageError />;

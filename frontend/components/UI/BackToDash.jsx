@@ -6,7 +6,7 @@ export default function BackToDash({ url, dashboardName, title = "" }) {
     <>
       <Link
         to={url}
-        className="flex items-center gap-2 text-indigo-400 hover:text-indigo-500 font-small"
+        className="flex items-center gap-2 text-indigo-200 hover:text-indigo-300 font-small"
       >
         <span>
           <ChevronLeftIcon className="size-5" />

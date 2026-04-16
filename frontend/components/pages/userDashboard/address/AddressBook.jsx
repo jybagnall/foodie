@@ -4,6 +4,7 @@ import useAddressBook from "../../../..//hooks/useAddressBook";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import AddressCard from "../../userDashboard/address/AddressCard";
 import Spinner from "../../../user_feedback/Spinner";
+import { useEffect } from "react";
 
 export default function AddressBook() {
   const {
@@ -17,6 +18,10 @@ export default function AddressBook() {
     isDefaultUpdateError,
     isDeleteError,
   } = useAddressBook();
+
+  useEffect(() => {
+    document.title = "Shipping Addresses | Foodie";
+  }, []);
 
   const errorProps = [
     {

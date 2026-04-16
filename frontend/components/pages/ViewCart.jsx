@@ -34,7 +34,7 @@ export default function ViewCart() {
   }, []);
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
+    <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <div className="w-full max-w-lg">
         {uniqueMenuCount === 0 ? (
           <EmptyCart />
@@ -51,10 +51,10 @@ export default function ViewCart() {
                   id="all"
                   type="checkbox"
                   aria-label="Select all menu"
-                  className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white 
-                     checked:bg-gray-300 checked:border-gray-300 transition-colors"
+                  className="w-5 h-5 cursor-pointer rounded-sm border border-gray-100 bg-white 
+                     checked:bg-gray-400 checked:border-gray-300 transition-colors"
                 />
-                <label htmlFor="all" className="cursor-pointer">
+                <label htmlFor="all" className="cursor-pointer text-gray-200">
                   Select all
                   <span className="ml-2 font-semibold">
                     {numOfCheckedItems}
@@ -68,7 +68,7 @@ export default function ViewCart() {
               {items.map((i) => (
                 <li
                   key={i.id}
-                  className="flex items-start gap-x-3 text-gray-700 mt-4"
+                  className="flex items-start gap-x-3 text-gray-200 mt-4"
                 >
                   <div className="flex flex-col gap-y-2 w-full">
                     {/* 각 메뉴의 체크박스 */}
@@ -79,7 +79,7 @@ export default function ViewCart() {
                         checked={i.checked}
                         onChange={() => toggleCheckedItem(i.id)}
                         aria-label={`Select ${i.name}`}
-                        className="w-5 h-5 cursor-pointer rounded-sm border border-gray-500 bg-white checked:bg-gray-300 checked:border-gray-300 transition-colors"
+                        className="w-5 h-5 cursor-pointer rounded-sm border border-gray-200 bg-white checked:bg-gray-100 checked:border-gray-100 transition-colors"
                       />
                       <label
                         htmlFor={i.name}
@@ -127,7 +127,7 @@ export default function ViewCart() {
                           <div className="h-4 w-px bg-gray-300" />
                           <span
                             onClick={() => deleteItem(i.id)}
-                            className="cursor-pointer text-sm text-blue-600 hover:underline"
+                            className="cursor-pointer text-sm text-gray-300 hover:underline"
                           >
                             Delete
                           </span>
@@ -139,8 +139,8 @@ export default function ViewCart() {
               ))}
             </ul>
 
-            <div className="flex justify-between items-center mt-6 border-t pt-4">
-              <p className="text-lg font-semibold">
+            <div className="flex justify-between items-center mt-6 border-t pt-4 border-gray-300">
+              <p className="text-lg font-semibold text-gray-300">
                 Total: {currencyFormatter.format(totalAmount)}
               </p>
               <div className="flex gap-2">

@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import AuthContext from "../../contexts/AuthContext";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import AccountService from "../../services/account.service";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
@@ -9,8 +9,11 @@ import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 
-// 없는 회원이 로그인을 시도했는데 서버 에러 혹은 유효하지 않은 토큰이라고 나옴.
 export default function Login() {
+  const authContext = useContext(AuthContext);
+  const abortControllerRef = useRef(null);
+  const [isLoginProcessing, setIsLoginProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const {
     register,
     handleSubmit,
@@ -18,17 +21,17 @@ export default function Login() {
   } = useForm();
 
   useEffect(() => {
-    document.title = "Log in - Foodie";
+    document.title = "Log in | Foodie";
+
+    return () => abortControllerRef.current?.abort();
   }, []);
 
-  const authContext = useContext(AuthContext);
-
-  const [isLoginProcessing, setIsLoginProcessing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const handleLogin = async (email, password) => {
-    const abortController = new AbortController();
-    const accountService = new AccountService(abortController.signal);
+  const onLogin = async ({ email, password }) => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const accountService = new AccountService(
+      abortControllerRef.current.signal,
+    );
 
     setIsLoginProcessing(true);
     setErrorMsg("");
@@ -44,10 +47,6 @@ export default function Login() {
     } finally {
       setIsLoginProcessing(false);
     }
-  };
-
-  const onLogin = ({ email, password }) => {
-    handleLogin(email, password);
   };
 
   if (isLoginProcessing) {

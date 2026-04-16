@@ -31,6 +31,10 @@ export default function UploadNewMenu() {
   }, [file]); // 파일이 바뀔 때마다 브라우저에서 임시 URL 생성
 
   useEffect(() => {
+    document.title = "Manage Menu | Foodie";
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
@@ -54,10 +58,6 @@ export default function UploadNewMenu() {
       },
     });
   };
-
-  useEffect(() => {
-    document.title = "Upload new menu | Foodie";
-  }, []);
 
   return (
     <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">

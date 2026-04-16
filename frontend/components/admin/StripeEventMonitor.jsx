@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
@@ -46,6 +46,10 @@ export default function StripeEventMonitor() {
   };
 
   const [draftFilters, setDraftFilters] = useState(initialFilters);
+
+  useEffect(() => {
+    document.title = "Event Monitor | Foodie";
+  }, []);
 
   const updateDraftFilter = (key, value) => {
     setDraftFilters((prev) => ({

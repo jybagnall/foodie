@@ -10,6 +10,7 @@ import {
   setAddressAsDefault,
 } from "../services/address-service.js";
 import pool from "../config/db.js";
+import { validateBody } from "../middleware/validateBody.js";
 
 const router = express.Router();
 
@@ -34,27 +35,41 @@ router.get("/default", verifyUserAuth, async (req, res) => {
   }
 });
 
-router.patch("/edit/:addressId", verifyUserAuth, async (req, res) => {
-  const client = await pool.connect();
-  try {
-    const payload = req.body;
-    const { addressId } = req.params;
-    await client.query("BEGIN");
+router.patch(
+  "/edit/:addressId",
+  verifyUserAuth,
+  validateBody(
+    "full_name",
+    "street",
+    "city",
+    "postal_code",
+    "phone",
+    "is_default",
+  ),
+  async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const payload = req.body;
+      const { addressId } = req.params;
+      await client.query("BEGIN");
 
-    if (payload.is_default) {
-      await clearDefaultAddress(client, req.user.id);
+      if (payload.is_default) {
+        await clearDefaultAddress(client, req.user.id);
+      }
+      await updateUserAddress(client, payload, addressId, req.user.id);
+      await client.query("COMMIT");
+      res
+        .status(200)
+        .json({ message: "User's address is successfully updated" });
+    } catch (err) {
+      console.error("update error,", err.message);
+      await client.query("ROLLBACK").catch(() => {});
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
-    await updateUserAddress(client, payload, addressId, req.user.id);
-    await client.query("COMMIT");
-    res.status(200).json({ message: "User's address is successfully updated" });
-  } catch (err) {
-    console.error("update error,", err.message);
-    await client.query("ROLLBACK").catch(() => {});
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
-  }
-});
+  },
+);
 
 router.patch("/set-default/:addressId", verifyUserAuth, async (req, res) => {
   const client = await pool.connect();
@@ -74,26 +89,38 @@ router.patch("/set-default/:addressId", verifyUserAuth, async (req, res) => {
   }
 });
 
-router.post("/create", verifyUserAuth, async (req, res) => {
-  const client = await pool.connect();
-  try {
-    const payload = req.body;
-    await client.query("BEGIN");
+router.post(
+  "/create",
+  verifyUserAuth,
+  validateBody(
+    "full_name",
+    "street",
+    "city",
+    "postal_code",
+    "phone",
+    "is_default",
+  ),
+  async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const payload = req.body;
+      await client.query("BEGIN");
 
-    if (payload.is_default) {
-      await clearDefaultAddress(client, req.user.id);
+      if (payload.is_default) {
+        await clearDefaultAddress(client, req.user.id);
+      }
+      await createUserAddress(client, payload, req.user.id);
+      await client.query("COMMIT");
+      res.status(201).json({ message: "Address created" });
+    } catch (err) {
+      console.error("create error,", err.message);
+      await client.query("ROLLBACK").catch(() => {});
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
-    await createUserAddress(client, payload, req.user.id);
-    await client.query("COMMIT");
-    res.status(201).json({ message: "Address created" });
-  } catch (err) {
-    console.error("create error,", err.message);
-    await client.query("ROLLBACK").catch(() => {});
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
-  }
-});
+  },
+);
 
 router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
   const { addressId } = req.params;

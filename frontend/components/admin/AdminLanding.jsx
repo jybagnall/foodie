@@ -7,6 +7,7 @@ import {
   HomeIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { useEffect } from "react";
 
 const actions = [
   {
@@ -51,6 +52,10 @@ function classNames(...classes) {
 }
 
 export default function AdminLanding() {
+  useEffect(() => {
+    document.title = "Admin Dashboard | Foodie";
+  }, []);
+
   return (
     <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-gray-200 shadow-sm sm:grid sm:grid-cols-2 sm:divide-y-0">
       {actions.map((action, actionIdx) => (

@@ -23,6 +23,8 @@ export function AuthContextProvider({ children }) {
 
   const hasTriedRestoreRef = useRef(false);
   const refreshTimerRef = useRef(null);
+  const logoutAbortRef = useRef(null);
+  const restoreSessionAbortRef = useRef(null);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -53,36 +55,40 @@ export function AuthContextProvider({ children }) {
     [applyAccessToken],
   );
 
-  // 쿠키 삭제는 서버에서 함
+  const clearSession = useCallback(() => {
+    setAccessToken(null);
+    setDecodedUser(null);
+    queryClient.removeQueries({ queryKey: ["addressBook"] });
+    queryClient.removeQueries({ queryKey: ["defaultAddress"] });
+    queryClient.removeQueries({ queryKey: ["orders"] });
+    queryClient.removeQueries({ queryKey: ["user", "me"] });
+  }, [queryClient]);
 
+  // 쿠키 삭제는 서버에서 함
   const logout = useCallback(async () => {
-    const abortController = new AbortController();
-    const accountService = new AccountService(abortController.signal);
+    logoutAbortRef.current?.abort();
+    logoutAbortRef.current = new AbortController();
+    const accountService = new AccountService(logoutAbortRef.current.signal);
 
     try {
       await accountService.logoutUser(); // 서버에서 refreshToken 쿠키 삭제.
+    } catch (err) {
+      console.error(err);
     } finally {
-      abortController.abort();
-      setAccessToken(null);
-      setDecodedUser(null);
-      queryClient.removeQueries({ queryKey: ["addressBook"] });
-      queryClient.removeQueries({ queryKey: ["defaultAddress"] });
-      queryClient.removeQueries({ queryKey: ["orders"] });
-      queryClient.removeQueries({ queryKey: ["user", "me"] });
-
+      clearSession();
       navigate("/");
     }
-  }, []);
+  }, [clearSession]);
 
   // 액세스 토큰이 있다 = 로그인 상태,
-  // 액세스 토큰이 없는데 + refresh 성공 = 로그인 유지
-  // 액세스 토큰이 없는데 + refresh 실패 = 로그아웃
-  // refresh token 쿠키를 이용해서 새 accessToken 하나만 재발급
+  // 액세스 토큰이 없는데 refresh 성공 = 로그인 유지
+  // 액세스 토큰이 없는데 refresh 실패 = 로그아웃
 
   // ❗앱 시작시 액세스 토큰이 없다면 자동 실행
   const restoreUserSession = useCallback(async () => {
-    const abortController = new AbortController();
-    const client = new Client(abortController.signal, () => accessToken);
+    restoreSessionAbortRef.current?.abort();
+    restoreSessionAbortRef.current = new AbortController();
+    const client = new Client(restoreSessionAbortRef.signal, () => accessToken);
 
     try {
       const newAccessToken = await client.refreshAccessToken();
@@ -95,7 +101,7 @@ export function AuthContextProvider({ children }) {
     } finally {
       setIsAuthLoading(false);
     }
-  }, [accessToken, applyAccessToken]);
+  }, [applyAccessToken]);
 
   useEffect(() => {
     if (hasTriedRestoreRef.current) return;
@@ -106,7 +112,7 @@ export function AuthContextProvider({ children }) {
     if (!accessToken) {
       restoreUserSession();
     }
-  }, []);
+  }, [restoreUserSession]);
 
   // ❗As long as an accessToken exists, a timer is set so that
   // restoreUserSession() is automatically executed right before the token expires.
@@ -114,10 +120,6 @@ export function AuthContextProvider({ children }) {
     // After logout or before login, accessToken doesn't exist.
     // Don't set the timer.
     if (!accessToken) return;
-
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
 
     const decoded = jwtDecode(accessToken);
     const timeout = decoded.exp * 1000 - Date.now() - 30_000;
@@ -135,8 +137,7 @@ export function AuthContextProvider({ children }) {
   useEffect(() => {
     const onTokenRefreshed = (e) => applyAccessToken(e.detail);
     const onSessionExpired = () => {
-      setAccessToken(null);
-      setDecodedUser(null);
+      clearSession();
       navigate("/login");
     };
 
@@ -148,7 +149,14 @@ export function AuthContextProvider({ children }) {
       authEvents.removeEventListener("tokenRefreshed", onTokenRefreshed);
       authEvents.removeEventListener("sessionExpired", onSessionExpired);
     };
-  }, [applyAccessToken]);
+  }, [applyAccessToken, clearSession]);
+
+  useEffect(() => {
+    return () => {
+      logoutAbortRef.current?.abort();
+      restoreSessionAbortRef.current?.abort();
+    };
+  }, []);
 
   return (
     <AuthContext.Provider

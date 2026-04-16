@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import AdminService from "../../services/admin.service";
 import AuthContext from "../../contexts/AuthContext";
@@ -13,9 +13,8 @@ export default function AdminSignup() {
   const [errorMsg, setErrorMsg] = useState("");
   const [inviteToken, setInviteToken] = useState("");
   const [isTokenValid, setIsTokenValid] = useState(true);
-
+  const abortControllerRef = useRef(null);
   const authContext = useContext(AuthContext);
-
   const {
     register,
     watch,
@@ -24,6 +23,8 @@ export default function AdminSignup() {
   } = useForm();
 
   useEffect(() => {
+    document.title = "Admin Signup | Foodie";
+
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get("token");
 
@@ -32,18 +33,22 @@ export default function AdminSignup() {
         "This invitation link is invalid or expired. Please contact your admin for a new one.",
       );
       setIsTokenValid(false);
-      return;
+    } else {
+      setInviteToken(tokenFromUrl);
+      setIsTokenValid(true);
     }
 
-    setInviteToken(tokenFromUrl);
-    setIsTokenValid(true);
+    return () => abortControllerRef.current?.abort();
   }, []);
 
   const onSignupSubmit = async ({ name, email, password }) => {
-    const abortController = new AbortController();
-    const adminService = new AdminService(abortController.signal);
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const adminService = new AdminService(abortControllerRef.current.signal);
 
+    setErrorMsg("");
     setIsSignupProcessing(true);
+
     try {
       const { accessToken } = await adminService.createAdminAccount(
         name,
@@ -62,10 +67,6 @@ export default function AdminSignup() {
       setIsSignupProcessing(false);
     }
   };
-
-  useEffect(() => {
-    document.title = "Admin Signup | Foodie";
-  }, []);
 
   if (isSignupProcessing) {
     return <Spinner />;

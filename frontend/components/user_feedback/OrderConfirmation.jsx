@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import Spinner from "./Spinner";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import PaymentService from "../../services/payment.service";
 import CartContext from "../../contexts/CartContext";
 import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
@@ -19,6 +19,7 @@ export default function OrderConfirmation() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentIntentId = searchParams.get("payment_intent");
+  const abortControllerRef = useRef(null);
   const redirectStatus = location.state?.status; // "succeeded", "failed", undefined
   const { orderId } = useParams();
   const [status, setStatus] = useState(() => {
@@ -30,6 +31,16 @@ export default function OrderConfirmation() {
   const { clearCart } = useContext(CartContext);
 
   useEffect(() => {
+    if (status === "succeeded") {
+      document.title = "Order Confirmed | Foodie";
+    } else if (status === "failed" || status === "requires_payment_method") {
+      document.title = "Payment Failed | Foodie";
+    } else {
+      document.title = "Order Confirmation | Foodie";
+    }
+  }, [status]);
+
+  useEffect(() => {
     if (!paymentIntentId) {
       return;
     }
@@ -39,9 +50,10 @@ export default function OrderConfirmation() {
       return; // 3DS 성공
     }
 
-    const abortController = new AbortController();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
     const paymentService = new PaymentService(
-      abortController.signal,
+      abortControllerRef.current.signal,
       () => accessToken,
     );
 
@@ -59,6 +71,8 @@ export default function OrderConfirmation() {
     };
 
     verifyStatus();
+
+    return () => abortControllerRef.current?.abort();
   }, [paymentIntentId]);
 
   // 결제 페이지가 state: { from: "payment" }을 보냄

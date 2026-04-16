@@ -78,8 +78,8 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   // if (isPayProcessing) return <Spinner />;
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
-      <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+    <main className="min-h-screen flex justify-center items-start py-20 px-4">
+      <section className="w-full max-w-lg bg-gray-700 shadow-xl rounded-xl p-8">
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert
@@ -88,7 +88,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
             />
           </div>
         )}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-gray-200 mb-6 border-b border-gray-300 pb-3">
           Payment
         </h2>
 
@@ -99,7 +99,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
             <Button
               type="button"
               textOnly
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-300 hover:text-gray-400"
               onClick={onCancelSubmit}
             >
               Cancel

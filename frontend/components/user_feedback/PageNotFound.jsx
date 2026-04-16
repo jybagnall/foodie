@@ -5,7 +5,7 @@ export default function PageNotFound() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Page not found | Foodie";
+    document.title = "Page Not Found | Foodie";
   }, []);
 
   return (
