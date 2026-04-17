@@ -51,8 +51,7 @@ export default function ViewCart() {
                   id="all"
                   type="checkbox"
                   aria-label="Select all menu"
-                  className="w-5 h-5 cursor-pointer rounded-sm border border-gray-100 bg-white 
-                     checked:bg-gray-400 checked:border-gray-300 transition-colors"
+                  className="w-5 h-5 cursor-pointer rounded-sm border border-gray-100 checked:bg-gray-400 checked:border-gray-300 transition-colors"
                 />
                 <label htmlFor="all" className="cursor-pointer text-gray-200">
                   Select all

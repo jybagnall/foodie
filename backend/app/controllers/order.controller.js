@@ -1,5 +1,5 @@
-import { getMenuPrices } from "../services/menu-service";
-import { calculateOrderTotal } from "../utils/orderCalculations";
+import { getMenuPrices } from "../services/menu-service.js";
+import { calculateOrderTotal } from "../utils/orderCalculations.js";
 
 // 1. 메뉴 가격 조회 2. 가격 매핑 3. 총액 계산
 export async function buildOrderWithPrices(client, orderPayload) {

@@ -127,7 +127,7 @@ export default function ShippingForm() {
 
   return (
     <main className="min-h-screen flex justify-center items-start py-20 px-4">
-      <section className="w-full max-w-lg shadow-xl rounded-xl p-8">
+      <section className="w-full max-w-lg bg-gray-700 shadow-2xl rounded-xl p-8 border border-gray-700">
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert title="There was a problem" message={errorMsg} />
@@ -166,7 +166,7 @@ export default function ShippingForm() {
               <AddressFields />
             )}
 
-            <div className="flex justify-between items-center mt-8">
+            <div className="flex justify-between items-center mt-3">
               <Button
                 type="button"
                 textOnly

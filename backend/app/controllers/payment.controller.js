@@ -1,21 +1,13 @@
 import Stripe from "stripe";
-import { updateUserStripeId } from "../services/account-service";
-import { getOrderById } from "../services/order-service";
-import { findUniquePayment } from "../services/payment-service";
+import { updateUserStripeId } from "../services/account-service.js";
+import { getOrderById } from "../services/order-service.js";
+import { findUniquePayment } from "../services/payment-service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function getOrCreatePaymentIntent(req, res) {
-  const { orderId } = req.body;
-  const currency = "usd";
-  let customerId = req.user.stripe_customer_id;
-
-  if (!orderId || isNaN(Number(orderId))) {
-    return res.status(400).json({
-      errorCode: "INVALID_ORDER_ID",
-      error: "Something went wrong during payment. Please try again.",
-    });
-  }
+// Stripe 고객 ID 확인/생성
+async function ensureStripeCustomerId(user) {
+  let customerId = user.stripe_customer_id;
 
   if (customerId) {
     try {
@@ -25,41 +17,86 @@ export async function getOrCreatePaymentIntent(req, res) {
         customerId = null;
       } else {
         console.error("Stripe customer retrieve failed", {
-          userId: req.user.id,
+          userId: user.id,
           customerId,
           code: err.code,
         });
-
-        return res.status(502).json({
-          errorCode: "PAYMENT_SERVICE_UNAVAILABLE",
-          error:
-            "Payment service is temporarily unavailable. Please try again later.",
-        });
+        throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
       }
     }
   }
 
   if (!customerId) {
     const newCustomer = await stripe.customers.create({
-      name: req.user.name,
-      email: req.user.email,
-      metadata: { userId: req.user.id },
+      name: user.name,
+      email: user.email,
+      metadata: { userId: user.id },
     });
 
-    await updateUserStripeId(req.user.id, newCustomer.id);
+    await updateUserStripeId(user.id, newCustomer.id);
     customerId = newCustomer.id;
+  }
+
+  return customerId;
+}
+
+// // PaymentIntent 생성 및 DB 저장
+async function createAndStoreStripePaymentIntent(
+  orderId,
+  amount,
+  currency,
+  customerId,
+  userId,
+) {
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount,
+    currency,
+    customer: customerId,
+    payment_method_types: ["card"],
+    metadata: { userId, orderId }, // 주문 & 사용자 연결 (custom data)
+  });
+
+  if (!paymentIntent || !paymentIntent.client_secret) {
+    console.error("Stripe PaymentIntent failed:", paymentIntent);
+    throw new Error("PAYMENT_INTENT_FAILURE");
+  }
+
+  try {
+    await createPaymentRecord(orderId, paymentIntent.id, amount, currency);
+    return paymentIntent.client_secret;
+  } catch (dbErr) {
+    console.error("DB insert failed after PaymentIntent creation", {
+      paymentIntentId: paymentIntent.id,
+      orderId,
+      error: dbErr.message,
+    });
+
+    try {
+      await stripe.paymentIntents.cancel(paymentIntent.id);
+    } catch (cancelErr) {
+      console.error("Failed to cancel orphaned PaymentIntent", {
+        paymentIntentId: paymentIntent.id,
+        error: cancelErr.message,
+      });
+      throw new Error("PAYMENT_INTENT_CANCELLATION_FAILURE");
+    }
+    throw new Error("PAYMENT_INTENT_FAILURE");
+  }
+}
+
+export async function getOrCreateClientSecret(orderId, user) {
+  const currency = "usd";
+
+  if (!orderId || isNaN(Number(orderId))) {
+    throw new Error("INVALID_ORDER_ID");
   }
 
   const order = await getOrderById(orderId); // 금액 가져오기
   if (!order) {
-    console.error("Order not found", { orderId, userId: req.user.id });
-    return res.status(404).json({
-      errorCode: "ORDER_NOT_FOUND",
-      error: "Something went wrong during payment. Please try again.",
-    });
+    console.error("Order not found", { orderId, userId: user.id });
+    throw new Error("ORDER_NOT_FOUND");
   }
-  if (order.user_id !== req.user.id)
-    return res.status(403).json({ error: "Forbidden" });
+  if (order.user_id !== user.id) throw new Error("Forbidden");
 
   const amount = Math.round(order.total_amount * 100);
   const existing = await findUniquePayment(orderId);
@@ -68,24 +105,18 @@ export async function getOrCreatePaymentIntent(req, res) {
     const intent = await stripe.paymentIntents.retrieve(
       existing.stripe_payment_intent_id,
     );
-    return res.json({ clientSecret: intent.client_secret });
+
+    return { clientSecret: intent.client_secret };
   }
 
-  const paymentIntent = await stripe.paymentIntents.create({
+  const customerId = await ensureStripeCustomerId(user);
+  const clientSecret = await createAndStoreStripePaymentIntent(
+    orderId,
     amount,
     currency,
-    customer: customerId,
-    payment_method_types: ["card"],
-    metadata: {
-      userId: req.user.id, // 결제 추적을 위해 유용
-      orderId,
-    }, // 주문 & 사용자 연결 (custom data)
-  });
+    customerId,
+    user.id,
+  );
 
-  if (!paymentIntent || !paymentIntent.client_secret) {
-    console.error("Stripe PaymentIntent failed:", paymentIntent);
-    return res.status(400).json({
-      error: "Something went wrong during payment. Please try again.",
-    });
-  }
+  return { clientSecret };
 }

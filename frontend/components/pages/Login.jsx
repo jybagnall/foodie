@@ -54,7 +54,7 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
+    <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <div className="w-full max-w-lg">
         {errorMsg && (
           <div className="mb-4">
@@ -62,14 +62,14 @@ export default function Login() {
           </div>
         )}
 
-        <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+        <section className="w-full max-w-lg bg-gray-700 shadow-xl rounded-xl p-8">
           <div className="flex justify-between items-center mt-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+            <h2 className="text-2xl font-semibold text-gray-200 mb-6 border-b pb-3">
               Sign in
             </h2>
             <Link
               to="/forgot-password"
-              className="text-blue-700 hover:text-blue-600 text-sm font-medium transition-colors duration-200"
+              className="text-blue-200 hover:text-blue-600 text-sm font-medium transition-colors duration-200"
             >
               Forgot password?
             </Link>
@@ -108,12 +108,12 @@ export default function Login() {
             <div className="mt-4">
               <Button
                 type="submit"
-                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                className="py-1 px-3 bg-blue-200 hover:bg-blue-300 text-gray-600"
               >
                 Sign In
               </Button>
 
-              <div className="flex flex-col items-center text-center mt-6 text-gray-600 text-sm">
+              <div className="flex flex-col items-center text-center mt-6 text-gray-200 text-sm">
                 <p className="flex items-center w-full justify-center gap-2">
                   <span className="h-px w-40 bg-gray-300" />
                   <span className="whitespace-nowrap">New to Foodie?</span>
@@ -122,7 +122,7 @@ export default function Login() {
 
                 <Link
                   to="/signup"
-                  className="mt-4 text-blue-700 hover:text-blue-600 cursor-pointer font-semibold transition-all duration-200"
+                  className="mt-4 text-blue-200 hover:text-blue-300 cursor-pointer font-semibold transition-all duration-200"
                 >
                   Create a new Foodie account
                 </Link>

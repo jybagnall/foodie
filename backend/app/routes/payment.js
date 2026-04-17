@@ -1,11 +1,9 @@
 import express from "express";
 import Stripe from "stripe";
-import {
-  createPaymentRecord,
-  findUniquePayment,
-} from "../services/payment-service.js";
+import { findUniquePayment } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
-import { getOrCreatePaymentIntent } from "../controllers/payment.controller.js";
+import { getOrCreateClientSecret } from "../controllers/payment.controller.js";
+import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -76,36 +74,13 @@ router.get("/verify", verifyUserAuth, async (req, res) => {
 
 router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
   try {
-    const { orderId, paymentIntent, currency } = getOrCreatePaymentIntent(
-      req,
-      res,
-    );
-
-    try {
-      await createPaymentRecord(orderId, paymentIntent.id, amount, currency);
-    } catch (dbErr) {
-      console.error("DB insert failed after PaymentIntent creation", {
-        paymentIntentId: paymentIntent.id,
-        orderId,
-        error: dbErr.message,
-      });
-
-      try {
-        await stripe.paymentIntents.cancel(paymentIntent.id);
-      } catch (cancelErr) {
-        console.error("Failed to cancel orphaned PaymentIntent", {
-          paymentIntentId: paymentIntent.id,
-          error: cancelErr.message,
-        });
-      }
-      return res.status(500).json({
-        error: "Something went wrong during payment. Please try again.",
-      });
-    }
-    res.json({ clientSecret: paymentIntent.client_secret });
+    const { orderId } = req.body;
+    const { clientSecret } = await getOrCreateClientSecret(orderId, req.user);
+    res.json({ clientSecret });
   } catch (err) {
     console.error("Stripe payment session error,", err.message);
-    return res.status(500).json({
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
       error: "Something went wrong during payment. Please try again.",
     });
   }

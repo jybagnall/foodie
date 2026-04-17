@@ -87,7 +87,7 @@ export default function AddressSelector({
       {!showNewAddressForm && (
         <div
           onClick={handleNewAddressClick}
-          className="flex items-center gap-2 text-md text-gray-300 mb-4 cursor-pointer"
+          className="flex items-center gap-2 text-md text-gray-300 cursor-pointer mt-5"
         >
           <PlusIcon className="w-4 h-4 mr-3" />
           <p>Enter a new address</p>

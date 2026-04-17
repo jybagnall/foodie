@@ -15,35 +15,35 @@ const actions = [
     to: "/admin/new-menu",
     icon: CameraIcon,
     iconForeground: "text-purple-700",
-    iconBackground: "bg-purple-50",
+    iconBackground: "bg-purple-200",
   },
   {
     title: "View menu",
     to: "/admin/menu-preview",
     icon: HomeIcon,
     iconForeground: "text-orange-700",
-    iconBackground: "bg-orange-50",
+    iconBackground: "bg-orange-200",
   },
   {
     title: "Manage your admin account",
     to: "/admin/account",
     icon: UserIcon,
     iconForeground: "text-sky-700",
-    iconBackground: "bg-sky-50",
+    iconBackground: "bg-sky-200",
   },
   {
     title: "Invite a new admin",
     to: "/admin/invite",
     icon: EnvelopeIcon,
     iconForeground: "text-green-700",
-    iconBackground: "bg-green-50",
+    iconBackground: "bg-green-200",
   },
   {
     title: "Monitor Errored Stripe Events",
     to: "/admin/events-monitor",
     icon: ExclamationTriangleIcon,
     iconForeground: "text-pink-700",
-    iconBackground: "bg-pink-50",
+    iconBackground: "bg-pink-200",
   },
 ];
 
@@ -57,7 +57,7 @@ export default function AdminLanding() {
   }, []);
 
   return (
-    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-gray-200 shadow-sm sm:grid sm:grid-cols-2 sm:divide-y-0">
+    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-gray-700 shadow-sm sm:grid sm:grid-cols-2 sm:divide-y-0">
       {actions.map((action, actionIdx) => (
         <div
           key={action.title}
@@ -70,7 +70,7 @@ export default function AdminLanding() {
             actionIdx === actions.length - 1
               ? "rounded-br-lg rounded-bl-lg sm:rounded-bl-none"
               : "",
-            "group relative border-gray-200 bg-white p-6 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 sm:odd:not-nth-last-2:border-b sm:even:border-l sm:even:not-last:border-b",
+            "group relative border-gray-700 bg-gray-600 p-6 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 sm:odd:not-nth-last-2:border-b sm:even:border-l sm:even:not-last:border-b",
           )}
         >
           <div>
@@ -85,7 +85,7 @@ export default function AdminLanding() {
             </span>
           </div>
           <div className="mt-8">
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-300">
               <Link to={action.to} className="focus:outline-hidden">
                 <span aria-hidden="true" className="absolute inset-0" />
                 {action.title}
@@ -94,7 +94,7 @@ export default function AdminLanding() {
           </div>
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute top-6 right-6 text-gray-300 group-hover:text-gray-600"
+            className="pointer-events-none absolute top-6 right-6 text-gray-200 group-hover:text-yellow-500"
           >
             <ArrowUpRightIcon className="size-6" />
           </span>
