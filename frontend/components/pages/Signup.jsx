@@ -16,7 +16,7 @@ export default function Signup() {
 
   const {
     register,
-    watch,
+    getValues,
     handleSubmit,
     formState: { errors },
   } = useForm();
@@ -124,7 +124,7 @@ export default function Signup() {
               register={register("confirmPassword", {
                 required: "Please confirm your password.",
                 validate: (value) =>
-                  value === watch("password") || "Passwords do not match.",
+                  value === getValues("password") || "Passwords do not match.",
               })}
               error={errors.confirmPassword}
             />

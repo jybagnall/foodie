@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useContext } from "react";
-import AuthContext from "../contexts/AuthContext";
 import OrderService from "../services/order.service";
+import useAccessToken from "./useAccessToken";
 
 export default function useOrder(orderId) {
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
   const queryClient = useQueryClient(); // 기존 데이터에 접근 가능
 
   const {

@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext } from "react";
-import AuthContext from "../contexts/AuthContext";
 import AccountService from "../services/account.service";
+import useAccessToken from "./useAccessToken";
 
 export default function useMyProfile() {
-  const { accessToken } = useContext(AuthContext);
-
+  const accessToken = useAccessToken();
   const {
     data: user,
     isFetching,

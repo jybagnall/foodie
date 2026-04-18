@@ -1,11 +1,9 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useContext } from "react";
-import AuthContext from "../contexts/AuthContext";
 import AddressService from "../services/address.service";
+import useAccessToken from "./useAccessToken";
 
 export default function useAddressBook() {
-  const { accessToken } = useContext(AuthContext);
-
+  const accessToken = useAccessToken();
   const queryClient = useQueryClient();
 
   const {

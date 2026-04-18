@@ -25,6 +25,16 @@ export async function findMyProfile(id) {
   return result.rows[0];
 }
 
+export async function findPasswordById(userId) {
+  const q = `
+  SELECT password FROM users
+  WHERE id = $1 
+  `;
+
+  const result = await pool.query(q, [userId]);
+  return result.rows[0];
+}
+
 export async function findUserByEmail(email) {
   const q = `
   SELECT id, name, email, role, password, stripe_customer_id FROM users
@@ -45,15 +55,17 @@ export async function findUserById(id) {
   return result.rows[0];
 }
 
-// export async function getHashedPassword(email) {
-//   const q = `
-//   SELECT password FROM users
-//   WHERE email = $1
-//   `;
+export async function updatePassword(hashedPw, userId) {
+  const q = `
+    UPDATE users
+    SET password= $1
+    WHERE id = $2
+    `;
+  const values = [hashedPw, userId];
 
-//   const result = await pool.query(q, [email]);
-//   return result.rows[0]?.password || null;
-// }
+  await pool.query(q, values);
+  return { success: true };
+}
 
 export async function updateUserName(userId, name) {
   const q = `

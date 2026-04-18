@@ -52,29 +52,23 @@ class AccountService {
     return data;
   }
 
-  async updateUsername(name) {
-    const data = await this.client.patch("/api/accounts/update-name", { name });
-    return data;
-  }
-
-  async updatePassword(resetToken, password) {
-    const data = await this.client.patch("/api/accounts/update-password", {
+  async resetPasswordRequest(resetToken, password) {
+    const data = await this.client.patch("/api/accounts/reset-password", {
       resetToken,
       password,
     });
     return data;
   }
 
-  async changePassword(password) {
-    const data = await this.client.patch("/api/accounts/change-password", {
-      password,
-    });
+  async updateUsername(name) {
+    const data = await this.client.patch("/api/accounts/update-name", { name });
     return data;
   }
 
-  async resetPasswordRequest(email) {
-    const data = await this.client.patch("/api/accounts/reset-password", {
-      email,
+  async updatePassword(currentPassword, password) {
+    const data = await this.client.patch("/api/accounts/update-password", {
+      currentPassword,
+      password,
     });
     return data;
   }

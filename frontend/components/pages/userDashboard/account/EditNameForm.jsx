@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import useMyProfile from "../../../../hooks/useMyProfile";
@@ -7,18 +6,14 @@ import Input from "../../../UI/Input";
 import Button from "../../../UI/Button";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
-import AccountService from "../../../../services/account.service";
-import useAccessToken from "../../../../hooks/useAccessToken";
-import { getUserErrorMessage } from "../../../../utils/getUserErrorMsg";
+import useMyProfileMutations from "../../../../hooks/useMyProfileMutations";
 
 export default function EditNameForm() {
   const navigate = useNavigate();
-  const abortControllerRef = useRef(null);
-  const queryClient = useQueryClient();
-  const accessToken = useAccessToken();
   const { user } = useMyProfile();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const { updateName, isUpdatingName, isUpdateNameError } =
+    useMyProfileMutations();
+
   const {
     register,
     handleSubmit,
@@ -28,8 +23,6 @@ export default function EditNameForm() {
 
   useEffect(() => {
     document.title = "Edit Name | Foodie";
-
-    return () => abortControllerRef.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -39,27 +32,11 @@ export default function EditNameForm() {
   }, [user, reset]);
 
   const onNameSubmit = async ({ name }) => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
-    const accountService = new AccountService(
-      abortControllerRef.current.signal,
-      () => accessToken,
-    );
-
-    try {
-      setIsUpdating(true);
-      await accountService.updateUsername(name);
-      queryClient.invalidateQueries({ queryKey: ["user", "me"] }); // 재조회
-      navigate("/my-account");
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsUpdating(false);
-    }
+    updateName(name, {
+      onSuccess: () => {
+        navigate("/my-account", { replace: true });
+      },
+    });
   };
 
   const onCancelSubmit = () => {
@@ -71,11 +48,11 @@ export default function EditNameForm() {
       <div className="mx-auto max-w-3xl">
         {/* Breadcrumb */}
 
-        {errorMsg && (
+        {isUpdateNameError && (
           <div className="mb-4">
             <ErrorAlert
               title="There was a problem with your request"
-              message={errorMsg}
+              message="Something went wrong while saving your name"
             />
           </div>
         )}
@@ -106,10 +83,10 @@ export default function EditNameForm() {
             </Button>
             <Button
               type="submit"
-              disabled={isUpdating || !isDirty}
+              disabled={isUpdatingName || !isDirty}
               className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
             >
-              {isUpdating ? <SpinnerMini /> : "Save"}
+              {isUpdatingName ? <SpinnerMini /> : "Save"}
             </Button>
           </div>
         </form>

@@ -11,15 +11,19 @@ import {
   updateUserRefreshToken,
   findMyProfile,
   updateUserName,
+  findPasswordById,
+  updatePassword,
 } from "../services/account-service.js";
 import {
   generateTokens,
+  hashPassword,
   verifyPassword,
   verifyRefreshToken,
 } from "../utils/auth.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
+import pool from "../config/db.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -268,6 +272,49 @@ router.patch(
       res
         .status(500)
         .json({ error: "Something went wrong while uploading the name." });
+    }
+  },
+);
+
+router.patch(
+  "/update-password",
+  verifyUserAuth,
+  validateBody("password"),
+  async (req, res) => {
+    try {
+      const { currentPassword, password } = req.body;
+
+      if (currentPassword === password) {
+        return res.status(400).json({
+          error: "New password must be different from the current password.",
+        });
+      }
+
+      const pwInDb = await findPasswordById(req.user.id);
+
+      if (!pwInDb) {
+        return res.status(404).json({
+          error: "User information is not available",
+        });
+      }
+
+      const passwordMatches = await verifyPassword(
+        currentPassword,
+        pwInDb.password,
+      );
+
+      if (!passwordMatches) {
+        return res.status(401).json({ error: "Current password is incorrect" });
+      }
+
+      const hashedPw = await hashPassword(password);
+      await updatePassword(hashedPw, req.user.id);
+      res.status(200).json({ success: true });
+    } catch (err) {
+      console.error("DB update error,", err.message);
+      res
+        .status(500)
+        .json({ error: "Something went wrong while uploading the password." });
     }
   },
 );

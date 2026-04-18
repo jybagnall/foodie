@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext } from "react";
-import AuthContext from "../contexts/AuthContext";
 import AddressService from "../services/address.service";
+import useAccessToken from "./useAccessToken";
 
 export default function useDefaultAddress() {
-  const { accessToken } = useContext(AuthContext);
+  const accessToken = useAccessToken();
 
   const { data: defaultAddress = null, error: addressFetchingError } = useQuery(
     {
