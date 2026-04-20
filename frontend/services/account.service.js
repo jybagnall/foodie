@@ -18,6 +18,13 @@ class AccountService {
     await this.client.delete("/api/accounts/delete-account");
   }
 
+  async forgotPassword(email) {
+    const data = await this.client.rawPost("/api/accounts/forgot-password", {
+      email,
+    });
+    return data;
+  }
+
   async getMyProfile() {
     const data = await this.client.get(`/api/accounts/my-profile`);
     return data;
@@ -53,7 +60,7 @@ class AccountService {
   }
 
   async resetPasswordRequest(resetToken, password) {
-    const data = await this.client.patch("/api/accounts/reset-password", {
+    const data = await this.client.rawPost("/api/accounts/reset-password", {
       resetToken,
       password,
     });

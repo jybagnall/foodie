@@ -22,6 +22,7 @@ router.get("/get-menu", async (req, res) => {
 
 // req.file.path: Cloudinary의 최종 URL
 // req.file.filename 혹은 req.file.public_id 삭제시 필요
+
 router.post(
   "/create-menu",
   verifyAdminAuth,
@@ -29,6 +30,10 @@ router.post(
   validateMenuBody,
   async (req, res) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Image is required" });
+      }
+
       const { name, price, description } = req.body;
       const imgSrc = req.file.path;
       await createMenu({ name, price, description, imgSrc });

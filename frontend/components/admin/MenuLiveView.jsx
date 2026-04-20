@@ -3,7 +3,7 @@ import BackToDash from "../UI/BackToDash";
 
 export default function MenuLiveView() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="flex p-6">
         <div className="mb-4">
           <BackToDash

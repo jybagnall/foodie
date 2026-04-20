@@ -13,6 +13,8 @@ import {
   updateUserName,
   findPasswordById,
   updatePassword,
+  createPasswordResetToken,
+  findUserByPasswordResetToken,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -23,7 +25,7 @@ import {
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
-import pool from "../config/db.js";
+import { sendPasswordResetEmail } from "../utils/email.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -70,6 +72,23 @@ router.get("/user", verifyUserAuth, async (req, res) => {
     res.status(500).json({
       error: "We're having trouble verifying your account right now.",
     });
+  }
+});
+
+router.post("/forgot-password", validateBody("email"), async (req, res) => {
+  try {
+    const { email } = req.body;
+    const rawToken = await createPasswordResetToken(email);
+
+    if (rawToken) {
+      const FRONTEND_URL = "http://127.0.0.1:5173";
+      const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+      await sendPasswordResetEmail(email, resetLink);
+    }
+
+    res.status(200).json({ message: "A reset link has been sent." });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
@@ -202,6 +221,43 @@ router.post("/refresh-access-token", async (req, res) => {
     res.status(401).json({
       error: "For your security, you’ve been logged out. Please sign in again.",
     });
+  }
+});
+
+// 1. hashedPw 를 여기서 보내는게 나아, 아니면 updatePassword 안에서 하는게 나아?
+// 2. 유저의 비번 리셋 토큰을 null로 만들어야 하는데 updatePassword 함수 안에서 같이 하면
+// 좋겠지만 유저가 비밀번호를 바꾸는 페이지에서도 함수가 쓰이고 있어. 그땐  비밀번호 리셋 토큰이
+// 안 쓰이고 있는데 비번 리셋 토큰을 null로 만드는 함수를 또 만들어야 하나?
+// 3. client가 쓰이는게 나을까?
+router.post("/reset-password", validateBody("password"), async (req, res) => {
+  try {
+    const { resetToken, password } = req.body;
+    const hashedPwResetToken = await bcrypt.hash(resetToken, 10);
+    const user = await findUserByPasswordResetToken(hashedPwResetToken);
+    const hashedPw = await hashPassword(password);
+    await updatePassword(hashedPw, user.id);
+    const { accessToken, refreshToken } = generateTokens({
+      id: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      stripe_customer_id: stripeCustomer.id,
+    });
+
+    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+    await updateUserRefreshToken(user.id, hashedRefresh);
+
+    // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
+    setRefreshTokenCookie(res, refreshToken);
+
+    res.status(201).json({
+      message: "Password changed successfully",
+      accessToken,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Something went wrong while updating the password." });
   }
 });
 

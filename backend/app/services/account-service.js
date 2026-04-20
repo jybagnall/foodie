@@ -1,18 +1,35 @@
 import pool from "../config/db.js";
-import Account from "../models/account.js";
+import { generateHashedToken, hashPassword } from "../utils/auth.js";
 
 export async function createAccount(name, email, password, role = "user") {
-  const account = await Account.createAccount({ name, email, password });
-
+  const hashedPw = await hashPassword(password);
   const q = `
     INSERT INTO users (name, email, password, role)
     VALUES ($1, $2, $3, $4)
     RETURNING id, name, email, role
     `;
 
-  const values = [account.name, account.email, account.passwordHash, role];
+  const values = [name, email, hashedPw, role];
   const result = await pool.query(q, values);
   return result.rows[0];
+}
+
+export async function createPasswordResetToken(email) {
+  const { rawToken, hashedToken, expiresAt } = await generateHashedToken();
+
+  const q = `
+    UPDATE users
+    SET 
+      password_reset_token = $1,
+      password_reset_expires_at = $2
+    WHERE email = $3
+    RETURNING id
+  `;
+
+  const result = await pool.query(q, [hashedToken, expiresAt, email]);
+  if (result.rowCount === 0) return null; // 이메일 없음
+
+  return rawToken;
 }
 
 export async function findMyProfile(id) {
@@ -37,7 +54,8 @@ export async function findPasswordById(userId) {
 
 export async function findUserByEmail(email) {
   const q = `
-  SELECT id, name, email, role, password, stripe_customer_id FROM users
+  SELECT id, name, email, role, password, stripe_customer_id 
+  FROM users
   WHERE email = $1 
   `;
 
@@ -47,12 +65,24 @@ export async function findUserByEmail(email) {
 
 export async function findUserById(id) {
   const q = `
-  SELECT id, name, email, role, stripe_customer_id, current_refresh_token FROM users
+  SELECT id, name, email, role, stripe_customer_id, current_refresh_token 
+  FROM users
   WHERE id = $1 
   `;
 
   const result = await pool.query(q, [id]);
   return result.rows[0];
+}
+
+export async function findUserByPasswordResetToken(hashedPwResetToken) {
+  const q = `
+  SELECT id, name, email, role, password, stripe_customer_id 
+  FROM users
+  WHERE password_reset_token = $1        
+  AND password_reset_expires_at > NOW() 
+  `;
+  await pool.query(q, [hashedPwResetToken]);
+  return { success: true };
 }
 
 export async function updatePassword(hashedPw, userId) {
@@ -101,3 +131,25 @@ export async function updateUserStripeId(userId, newStripeCustomerId) {
   await pool.query(q, values);
   return { success: true };
 }
+
+// export async function verifyPwResetToken(token, email) {
+//   const q = `
+//     SELECT * FROM users
+//     WHERE email = $1
+//     AND used = FALSE
+//     AND expires_at > NOW()
+//   `;
+
+//   const result = await pool.query(q, [email]);
+//   const inviteRecord = result.rows[0];
+
+//   if (!inviteRecord) {
+//     console.error("Invalid or expired invite token");
+//     return null;
+//   }
+
+//   const isMatching = await bcrypt.compare(token, inviteRecord.token);
+//   if (!isMatching) return null;
+
+//   return inviteRecord;
+// }

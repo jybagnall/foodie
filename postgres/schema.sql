@@ -17,7 +17,7 @@ CREATE TABLE users (
   role role_enum NOT NULL,
   stripe_customer_id VARCHAR(100),
   password_reset_token TEXT,
-  password_reset_requested_at TIMESTAMP,
+  password_reset_expires_at TIMESTAMP,
   current_refresh_token TEXT
 );
 

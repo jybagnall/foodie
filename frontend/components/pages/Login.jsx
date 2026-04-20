@@ -69,7 +69,7 @@ export default function Login() {
             </h2>
             <Link
               to="/forgot-password"
-              className="text-blue-200 hover:text-blue-600 text-sm font-medium transition-colors duration-200"
+              className="text-blue-200 hover:text-blue-300 text-sm font-medium transition-colors duration-200"
             >
               Forgot password?
             </Link>

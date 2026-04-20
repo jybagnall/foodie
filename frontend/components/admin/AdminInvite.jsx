@@ -63,7 +63,7 @@ export default function AdminInvite() {
   }
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
+    <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <div className="w-full max-w-lg">
         {errorMsg && (
           <div className="mb-4">
@@ -77,7 +77,7 @@ export default function AdminInvite() {
           </div>
         )}
 
-        <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
+        <section className="w-full max-w-lg bg-gray-700 shadow-xl rounded-xl p-8">
           <div className="flex flex p-3 -ml-4">
             <div className="mb-4">
               <BackToDash

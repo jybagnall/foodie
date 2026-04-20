@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   verifyAdminInvitation,
   invalidateAdminInvitation,
@@ -8,7 +7,7 @@ import {
 import { createAccount, findUserByEmail } from "../services/account-service.js";
 import { generateTokens } from "../utils/auth.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
-import { sendAdminInvitationEmail } from "../utils/email-admin.js";
+import { sendAdminInvitationEmail } from "../utils/email.js";
 import { validateBody } from "../middleware/validateBody.js";
 
 const router = express.Router();
@@ -74,7 +73,6 @@ router.post(
 
       // 초대 토큰 생성
       const rawToken = await createAdminInvitation(email);
-      // const inviteLink = `${process.env.FRONTEND_URL}/create-admin-account?token=${rawToken}`;
       const FRONTEND_URL = "http://127.0.0.1:5173";
       const inviteLink = `${FRONTEND_URL}/create-admin-account?token=${rawToken}`;
       await sendAdminInvitationEmail(email, inviteLink);

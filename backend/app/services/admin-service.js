@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import pool from "../config/db.js";
+import { generateHashedToken } from "../utils/auth.js";
 
 export async function verifyAdminInvitation(token, email) {
   const q = `
@@ -24,11 +24,10 @@ export async function verifyAdminInvitation(token, email) {
   return inviteRecord;
 }
 
-//🤔
 export async function createAdminInvitation(email) {
-  const rawToken = crypto.randomBytes(32).toString("hex"); // 사용자에게 보내는 원본
-  const hashedToken = await bcrypt.hash(rawToken, 10); // DB에 저장할 버전
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1일
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const { rawToken, hashedToken, expiresAt } =
+    await generateHashedToken(ONE_DAY_MS);
 
   const q = `
     INSERT INTO admin_invites (email, token, expires_at)

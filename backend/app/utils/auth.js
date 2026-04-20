@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
+import crypto from "crypto";
 
 export async function hashPassword(password) {
   const saltRounds = 10;
@@ -11,6 +12,15 @@ export async function hashPassword(password) {
 
 export async function verifyPassword(password, hashedPassword) {
   return await bcrypt.compare(password, hashedPassword);
+}
+
+// 기본 10분
+export async function generateHashedToken(expiresInMs = 10 * 60 * 1000) {
+  const rawToken = crypto.randomBytes(32).toString("hex"); // 사용자에게 보내는 원본
+  const hashedToken = await bcrypt.hash(rawToken, 10); // DB에 저장할 버전
+  const expiresAt = new Date(Date.now() + expiresInMs);
+
+  return { rawToken, hashedToken, expiresAt };
 }
 
 export function generateTokens(account) {

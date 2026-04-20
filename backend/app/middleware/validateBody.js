@@ -49,6 +49,7 @@ export function validateBody(...fields) {
 
         if (typeof value === "string") {
           value = value.trim();
+          if (field === "email") value = value.toLowerCase();
           req.body[field] = value; // req.body 값을 수정
         }
 

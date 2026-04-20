@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import AdminService from "../../services/admin.service";
 import AuthContext from "../../contexts/AuthContext";
 import Button from "../UI/Button";
@@ -17,7 +18,7 @@ export default function AdminSignup() {
   const authContext = useContext(AuthContext);
   const {
     register,
-    watch,
+    getValues,
     handleSubmit,
     formState: { errors },
   } = useForm();
@@ -29,9 +30,6 @@ export default function AdminSignup() {
     const tokenFromUrl = urlParams.get("token");
 
     if (!tokenFromUrl) {
-      setErrorMsg(
-        "This invitation link is invalid or expired. Please contact your admin for a new one.",
-      );
       setIsTokenValid(false);
     } else {
       setInviteToken(tokenFromUrl);
@@ -74,9 +72,22 @@ export default function AdminSignup() {
 
   if (!isTokenValid) {
     return (
-      <main className="flex justify-center items-center h-screen">
-        <ErrorAlert title="Invalid Invitation" message={errorMsg} />
-      </main>
+      <div className="flex items-start justify-center min-h-screen bg-gray-800 pt-24 px-4">
+        <div className="bg-gray-700 text-white rounded-2xl shadow-lg p-8 max-w-lg w-full text-center border border-red-500/30">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+
+            <p className="text-lg font-semibold text-red-400">
+              Invalid invitation
+            </p>
+          </div>
+
+          <p className="text-md text-gray-300 mb-6 leading-relaxed">
+            This invitation link is invalid or expired. Please contact your
+            admin for a new one.
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -147,7 +158,7 @@ export default function AdminSignup() {
               register={register("confirmPassword", {
                 required: "Please confirm your password.",
                 validate: (value) =>
-                  value === watch("password") || "Passwords do not match.",
+                  value === getValues("password") || "Passwords do not match.",
               })}
               error={errors.confirmPassword}
             />

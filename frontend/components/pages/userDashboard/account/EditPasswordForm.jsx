@@ -6,7 +6,7 @@ import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import Input from "../../../UI/Input";
 import Button from "../../../UI/Button";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
-import getUserErrorMessage from "../../../../utils/getUserErrorMsg";
+import { getUserErrorMessage } from "../../../../utils/getUserErrorMsg";
 
 export default function EditPasswordForm() {
   const navigate = useNavigate();
@@ -66,7 +66,6 @@ export default function EditPasswordForm() {
             })}
             error={errors.currentPassword}
           />
-
           <Input
             label="New Password"
             type="password"
@@ -83,7 +82,6 @@ export default function EditPasswordForm() {
             })}
             error={errors.password}
           />
-
           <Input
             label="Confirm new password"
             type="password"
