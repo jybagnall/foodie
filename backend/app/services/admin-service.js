@@ -40,11 +40,11 @@ export async function createAdminInvitation(email) {
   return rawToken;
 }
 
-export async function invalidateAdminInvitation(inviteToken) {
+export async function invalidateAdminInvitation(inviteToken, client) {
   const q = `
     UPDATE admin_invites
     SET used = TRUE
     WHERE token = $1
   `;
-  await pool.query(q, [inviteToken]);
+  await client.query(q, [inviteToken]);
 }

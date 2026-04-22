@@ -16,9 +16,15 @@ export async function createPaymentRecord(
   return { success: true };
 }
 
-export async function findUniquePayment(orderId) {
+export async function findUniquePaymentByOrderId(orderId) {
   const q = `
-  SELECT stripe_payment_intent_id
+  SELECT 
+    stripe_payment_intent_id,
+    stripe_charge_id,
+    payment_status,
+    amount,
+    paid_at,
+    currency,
   FROM payments
   WHERE order_id = $1
   `;

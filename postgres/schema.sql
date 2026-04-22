@@ -98,6 +98,25 @@ CREATE TABLE payments (
   failure_reason TEXT
 )
 
+CREATE TABLE payment_methods (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL,
+  brand VARCHAR(20) NOT NULL,  
+  last4 VARCHAR(4) NOT NULL,
+  exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
+  exp_year SMALLINT NOT NULL,
+  is_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE order_payments (
+  order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  payment_method_id INT NOT NULL REFERENCES payment_methods(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (order_id)
+);
+
 -- 이벤트 저장
 -- 나중에 worker가 여러개라면 'processing_by TEXT' 도 넣으면 좋음.
 -- pending | processing | dead | ignored | success (이벤트 수신 상태)
@@ -137,21 +156,3 @@ CREATE UNIQUE INDEX one_default_per_user
 ON addresses(user_id)  
 WHERE is_default = TRUE;
 
--- 생성 전
-CREATE TABLE payment_methods (
-  id SERIAL PRIMARY KEY,
-  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL,
-  brand VARCHAR(20) NOT NULL,          -- visa, mastercard, amex 등
-  last4 VARCHAR(4) NOT NULL,
-  exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
-  exp_year SMALLINT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- 생성 전
-CREATE TABLE order_payments (
-  order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  payment_method_id INT NOT NULL REFERENCES payment_methods(id),
-  created_at TIMESTAMP DEFAULT NOW(),
-  PRIMARY KEY (order_id)
-);

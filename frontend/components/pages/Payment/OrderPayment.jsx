@@ -92,7 +92,7 @@ export default function OrderPayment() {
         variables: {
           colorBackground: "#4c586b", // gray-700
           colorText: "#D1D5DB", // gray-300
-          colorPrimary: "#D1D5DB", // 버튼/포커스 색도 맞춤
+          colorPrimary: "#babec5", // 버튼/포커스 색도 맞춤
           colorDanger: "#ef4444", // 에러 (Tailwind red-500)
           colorBorder: "#637081", // gray-600 (경계선 자연스럽게)
         },

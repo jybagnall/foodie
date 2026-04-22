@@ -58,10 +58,7 @@ export function AuthContextProvider({ children }) {
   const clearSession = useCallback(() => {
     setAccessToken(null);
     setDecodedUser(null);
-    queryClient.removeQueries({ queryKey: ["addressBook"] });
-    queryClient.removeQueries({ queryKey: ["defaultAddress"] });
-    queryClient.removeQueries({ queryKey: ["orders"] });
-    queryClient.removeQueries({ queryKey: ["user", "me"] });
+    queryClient.clear();
   }, [queryClient]);
 
   // 쿠키 삭제는 서버에서 함

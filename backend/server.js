@@ -14,6 +14,7 @@ import adminRoutes from "./app/routes/admin.js";
 import menuRoutes from "./app/routes/menu.js";
 import orderRoutes from "./app/routes/order.js";
 import paymentRoutes from "./app/routes/payment.js";
+import paymentMethodsRoutes from "./app/routes/paymentMethods.js";
 import cartRoutes from "./app/routes/cart.js";
 import stripeRoutes from "./app/routes/stripe.js";
 import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js";
@@ -47,6 +48,7 @@ app.use("/api/admins", adminRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/payment-methods", paymentMethodsRoutes);
 app.use("/api/carts", cartRoutes);
 app.use("/api/stripe", stripeRoutes);
 

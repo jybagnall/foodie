@@ -1,7 +1,24 @@
 import pool from "../config/db.js";
 import { generateHashedToken, hashPassword } from "../utils/auth.js";
 
-export async function createAccount(name, email, password, role = "user") {
+export async function clearPasswordResetToken(userId, client) {
+  const q = `
+    UPDATE users
+    SET password_reset_token = NULL,
+        password_reset_expires_at = NULL
+    WHERE id = $1
+  `;
+  await client.query(q, [userId]);
+  return { success: true };
+}
+
+export async function createAccount(
+  name,
+  email,
+  password,
+  client,
+  role = "user",
+) {
   const hashedPw = await hashPassword(password);
   const q = `
     INSERT INTO users (name, email, password, role)
@@ -10,7 +27,7 @@ export async function createAccount(name, email, password, role = "user") {
     `;
 
   const values = [name, email, hashedPw, role];
-  const result = await pool.query(q, values);
+  const result = await client.query(q, values);
   return result.rows[0];
 }
 
@@ -76,16 +93,17 @@ export async function findUserById(id) {
 
 export async function findUserByPasswordResetToken(hashedPwResetToken) {
   const q = `
-  SELECT id, name, email, role, password, stripe_customer_id 
+  SELECT id, name, email, role, stripe_customer_id 
   FROM users
   WHERE password_reset_token = $1        
   AND password_reset_expires_at > NOW() 
   `;
-  await pool.query(q, [hashedPwResetToken]);
-  return { success: true };
+  const result = await pool.query(q, [hashedPwResetToken]);
+  return result.rows[0];
 }
 
-export async function updatePassword(hashedPw, userId) {
+export async function updatePassword(password, userId, db = pool) {
+  const hashedPw = await hashPassword(password);
   const q = `
     UPDATE users
     SET password= $1
@@ -93,7 +111,7 @@ export async function updatePassword(hashedPw, userId) {
     `;
   const values = [hashedPw, userId];
 
-  await pool.query(q, values);
+  await db.query(q, values);
   return { success: true };
 }
 
@@ -109,18 +127,26 @@ export async function updateUserName(userId, name) {
   return { success: true };
 }
 
-export async function updateUserRefreshToken(userId, hashedNewRefresh) {
+export async function updateUserRefreshToken(
+  userId,
+  hashedNewRefresh,
+  db = pool,
+) {
   const q = `
     UPDATE users
     SET current_refresh_token = $1
     WHERE id = $2
     `;
   const values = [hashedNewRefresh, userId];
-  await pool.query(q, values);
+  await db.query(q, values);
   return { success: true };
 }
 
-export async function updateUserStripeId(userId, newStripeCustomerId) {
+export async function updateUserStripeId(
+  userId,
+  newStripeCustomerId,
+  db = pool,
+) {
   const q = `
     UPDATE users
     SET stripe_customer_id = $1
@@ -128,28 +154,6 @@ export async function updateUserStripeId(userId, newStripeCustomerId) {
     `;
   const values = [newStripeCustomerId, userId];
 
-  await pool.query(q, values);
+  await db.query(q, values);
   return { success: true };
 }
-
-// export async function verifyPwResetToken(token, email) {
-//   const q = `
-//     SELECT * FROM users
-//     WHERE email = $1
-//     AND used = FALSE
-//     AND expires_at > NOW()
-//   `;
-
-//   const result = await pool.query(q, [email]);
-//   const inviteRecord = result.rows[0];
-
-//   if (!inviteRecord) {
-//     console.error("Invalid or expired invite token");
-//     return null;
-//   }
-
-//   const isMatching = await bcrypt.compare(token, inviteRecord.token);
-//   if (!isMatching) return null;
-
-//   return inviteRecord;
-// }

@@ -9,6 +9,7 @@ import { generateTokens } from "../utils/auth.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { sendAdminInvitationEmail } from "../utils/email.js";
 import { validateBody } from "../middleware/validateBody.js";
+import pool from "../config/db.js";
 
 const router = express.Router();
 
@@ -16,9 +17,9 @@ router.post(
   "/admin-signup",
   validateBody("name", "email", "password"),
   async (req, res) => {
+    const client = await pool.connect();
     try {
       const { name, email, password, inviteToken } = req.body;
-
       const invitedRecord = await verifyAdminInvitation(inviteToken, email);
 
       if (!invitedRecord) {
@@ -32,20 +33,28 @@ router.post(
         return res.status(400).json({ error: "Email already in use." });
       }
 
-      const newAdmin = await createAccount(name, email, password, "admin");
+      await client.query("BEGIN");
+      const newAdmin = await createAccount(
+        name,
+        email,
+        password,
+        client,
+        "admin",
+      );
       const { accessToken } = generateTokens({
         id: newAdmin.id,
         name: newAdmin.name,
         email: newAdmin.email,
         role: newAdmin.role,
       });
-      await invalidateAdminInvitation(inviteToken); // 토큰 무효화
-
+      await invalidateAdminInvitation(inviteToken, client); // 토큰 무효화
+      await client.query("COMMIT");
       res.status(201).json({
         message: "Admin account created successfully",
         accessToken,
       });
     } catch (err) {
+      await client.query("ROLLBACK");
       if (err.code === "23505") {
         // PostgreSQL unique_violation
         return res.status(400).json({ error: "Email already registered." });
@@ -54,6 +63,8 @@ router.post(
           .status(500)
           .json({ error: "Something went wrong while creating your account." });
       }
+    } finally {
+      client.release();
     }
   },
 );

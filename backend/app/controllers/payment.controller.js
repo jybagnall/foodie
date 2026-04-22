@@ -1,7 +1,10 @@
 import Stripe from "stripe";
 import { updateUserStripeId } from "../services/account-service.js";
 import { getOrderById } from "../services/order-service.js";
-import { findUniquePayment } from "../services/payment-service.js";
+import {
+  createPaymentRecord,
+  findUniquePaymentByOrderId,
+} from "../services/payment-service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -40,7 +43,7 @@ async function ensureStripeCustomerId(user) {
   return customerId;
 }
 
-// // PaymentIntent 생성 및 DB 저장
+// PaymentIntent 생성 및 DB 저장
 async function createAndStoreStripePaymentIntent(
   orderId,
   amount,
@@ -52,8 +55,9 @@ async function createAndStoreStripePaymentIntent(
     amount,
     currency,
     customer: customerId,
-    payment_method_types: ["card"],
-    metadata: { userId, orderId }, // 주문 & 사용자 연결 (custom data)
+    // payment_method_types: ["card"],
+    automatic_payment_methods: { enabled: true },
+    metadata: { userId: String(userId), orderId: String(orderId) }, // 주문 & 사용자 연결 (custom data)
   });
 
   if (!paymentIntent || !paymentIntent.client_secret) {
@@ -97,14 +101,20 @@ export async function getOrCreateClientSecret(orderId, user) {
     throw new Error("ORDER_NOT_FOUND");
   }
   if (order.user_id !== user.id) throw new Error("Forbidden");
-
+  if (order.total_amount <= 0) {
+    throw new Error("INVALID_AMOUNT");
+  }
   const amount = Math.round(order.total_amount * 100);
-  const existing = await findUniquePayment(orderId);
+  const existing = await findUniquePaymentByOrderId(orderId);
 
   if (existing?.stripe_payment_intent_id) {
     const intent = await stripe.paymentIntents.retrieve(
       existing.stripe_payment_intent_id,
     );
+
+    if (intent.amount !== amount) {
+      throw new Error("AMOUNT_MISMATCH_WITH_INTENT");
+    }
 
     return { clientSecret: intent.client_secret };
   }

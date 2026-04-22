@@ -1,9 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import OrderService from "../services/order.service";
 import useAccessToken from "./useAccessToken";
+import useUserId from "./useUserId";
 
 export default function useOrder(orderId) {
   const accessToken = useAccessToken();
+  const userId = useUserId();
   const queryClient = useQueryClient(); // 기존 데이터에 접근 가능
 
   const {
@@ -14,11 +16,11 @@ export default function useOrder(orderId) {
     queryKey: ["order", orderId], // 주문별 캐시 분리
     queryFn: ({ signal }) =>
       new OrderService(signal, () => accessToken).getMyOrder(orderId),
-    enabled: !!accessToken && !!orderId,
+    enabled: !!userId && !!orderId,
   });
 
   const listData = queryClient
-    .getQueryData(["orders"])
+    .getQueryData(["orders", userId])
     ?.find((o) => o.id === Number(orderId));
 
   // 세부 정보 fetch 완료 후 → 합친 데이터

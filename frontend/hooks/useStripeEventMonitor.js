@@ -10,12 +10,14 @@ import StripeService from "../services/stripe.service";
 import { getTimeRangeStart } from "../utils/format";
 import { stripeKeys } from "../react-query/queryKeys";
 import { POLLING_30S, adaptivePolling } from "../react-query/queryConfig";
-import useAccessToken from "../hooks/useAccessToken"
+import useAccessToken from "../hooks/useAccessToken";
+import useUserId from "./useUserId";
 
 // polling이 있으면 stale 여부가 중요하지 않음 (staleTime: 0)
 
 export default function useStripeEventMonitor() {
-const accessToken = useAccessToken();
+  const accessToken = useAccessToken();
+  const userId = useUserId();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const pageParam = searchParams.get("page");
@@ -69,7 +71,7 @@ const accessToken = useAccessToken();
         page: currentPage,
       }),
     placeholderData: keepPreviousData, // 새 데이터가 도착하면 그때 바꿈
-    enabled: !!accessToken,
+    enabled: !!userId,
     ...POLLING_30S,
   });
 
@@ -86,7 +88,7 @@ const accessToken = useAccessToken();
     queryFn: ({ signal }) =>
       new StripeService(signal, () => accessToken).getEventTypes(),
     staleTime: 1000 * 60 * 10,
-    enabled: !!accessToken,
+    enabled: !!userId,
   });
 
   const {
@@ -109,7 +111,7 @@ const accessToken = useAccessToken();
     refetchInterval: adaptivePolling,
     refetchIntervalInBackground: false, // 사용자가 안 보고 있으면 API 요청?
     refetchOnWindowFocus: true, // 탭에 다시 돌아왔을 때 refetch?
-    enabled: !!accessToken,
+    enabled: !!userId,
   });
 
   const {
@@ -120,7 +122,7 @@ const accessToken = useAccessToken();
     queryKey: stripeKeys.deadCounts(),
     queryFn: ({ signal }) =>
       new StripeService(signal, () => accessToken).getStripeDeadEventsCount(),
-    enabled: !!accessToken,
+    enabled: !!userId,
     ...POLLING_30S,
   });
 

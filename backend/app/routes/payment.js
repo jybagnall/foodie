@@ -1,6 +1,6 @@
 import express from "express";
 import Stripe from "stripe";
-import { findUniquePayment } from "../services/payment-service.js";
+import { findUniquePaymentByOrderId } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { getOrCreateClientSecret } from "../controllers/payment.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
@@ -40,7 +40,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 router.get("/client-secret", verifyUserAuth, async (req, res) => {
   try {
     const orderId = req.query.order_id;
-    const existing = await findUniquePayment(orderId);
+    const existing = await findUniquePaymentByOrderId(orderId);
     if (!existing) return res.status(404).json({ error: "Payment not found." });
 
     const intent = await stripe.paymentIntents.retrieve(

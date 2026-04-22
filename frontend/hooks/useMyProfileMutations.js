@@ -1,9 +1,11 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import useAccessToken from "./useAccessToken";
 import AccountService from "../services/account.service";
+import useUserId from "./useUserId";
 
 export default function useMyProfileMutations() {
   const accessToken = useAccessToken();
+  const userId = useUserId();
   const queryClient = useQueryClient();
 
   const {
@@ -28,7 +30,7 @@ export default function useMyProfileMutations() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });
 

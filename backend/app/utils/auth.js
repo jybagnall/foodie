@@ -6,8 +6,12 @@ import crypto from "crypto";
 export async function hashPassword(password) {
   const saltRounds = 10;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
-
   return hashedPassword;
+}
+
+export async function hashRawPasswordToken(token) {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  return hashedToken;
 }
 
 export async function verifyPassword(password, hashedPassword) {
@@ -17,7 +21,10 @@ export async function verifyPassword(password, hashedPassword) {
 // 기본 10분
 export async function generateHashedToken(expiresInMs = 10 * 60 * 1000) {
   const rawToken = crypto.randomBytes(32).toString("hex"); // 사용자에게 보내는 원본
-  const hashedToken = await bcrypt.hash(rawToken, 10); // DB에 저장할 버전
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex"); // DB에 저장할 버전
   const expiresAt = new Date(Date.now() + expiresInMs);
 
   return { rawToken, hashedToken, expiresAt };

@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js";
-
 import Button from "../../UI/Button";
+import Checkbox from "../../UI/Checkbox";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { markAsFromPayment } from "../../../storage/paymentStorage";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
-
-// 🤔결제 실패/재시도 로직
-// 🤔새로고침/뒤로가기 대응
-// 🤔중복 결제 방지
-// 🤔Save this card for future payments
-// (linkOrderPaymentMethod, upsertPaymentMethod)
 
 export default function PaymentForm({ orderId, stripe, elements }) {
   const navigate = useNavigate();
@@ -41,9 +35,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   };
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
-
+  const handlePaymentSubmit = async ({ saveCard }) => {
     if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
@@ -95,6 +87,13 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         <form onSubmit={handlePaymentSubmit}>
           <PaymentElement />
 
+          <div className="mt-4">
+            {/* <Checkbox
+              id="saveCard"
+              label="Save this card for future payments"
+              register={register("saveCard")}
+            /> */}
+          </div>
           <div className="flex justify-between items-center mt-8">
             <Button
               type="button"

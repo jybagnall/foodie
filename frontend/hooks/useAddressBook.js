@@ -1,9 +1,11 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import AddressService from "../services/address.service";
 import useAccessToken from "./useAccessToken";
+import useUserId from "./useUserId";
 
 export default function useAddressBook() {
   const accessToken = useAccessToken();
+  const userId = useUserId();
   const queryClient = useQueryClient();
 
   const {
@@ -11,10 +13,10 @@ export default function useAddressBook() {
     isFetching,
     error: fetchingError,
   } = useQuery({
-    queryKey: ["addressBook"],
+    queryKey: ["addressBook", userId],
     queryFn: ({ signal }) =>
       new AddressService(signal, () => accessToken).getAllAddresses(),
-    enabled: !!accessToken,
+    enabled: !!userId,
   });
 
   const {
@@ -25,8 +27,8 @@ export default function useAddressBook() {
     mutationFn: (formData) =>
       new AddressService(null, () => accessToken).createAddress(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addressBook"] });
-      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
+      queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
     },
   });
 
@@ -42,8 +44,8 @@ export default function useAddressBook() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addressBook"] });
-      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
+      queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
     },
   });
 
@@ -58,8 +60,8 @@ export default function useAddressBook() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addressBook"] });
-      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
+      queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
     },
   });
 
@@ -71,8 +73,8 @@ export default function useAddressBook() {
     mutationFn: (id) =>
       new AddressService(null, () => accessToken).deleteAddress(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addressBook"] });
-      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
+      queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
     },
   });
 
