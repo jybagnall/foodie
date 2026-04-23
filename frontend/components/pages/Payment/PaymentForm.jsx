@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js";
 import Button from "../../UI/Button";
-import Checkbox from "../../UI/Checkbox";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { markAsFromPayment } from "../../../storage/paymentStorage";
 
@@ -35,7 +34,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   };
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
-  const handlePaymentSubmit = async ({ saveCard }) => {
+  const handlePaymentSubmit = async () => {
     if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
@@ -87,13 +86,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         <form onSubmit={handlePaymentSubmit}>
           <PaymentElement />
 
-          <div className="mt-4">
-            {/* <Checkbox
-              id="saveCard"
-              label="Save this card for future payments"
-              register={register("saveCard")}
-            /> */}
-          </div>
+          <div className="mt-4"></div>
           <div className="flex justify-between items-center mt-8">
             <Button
               type="button"

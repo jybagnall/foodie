@@ -5,6 +5,14 @@ class PaymentService {
     this.client = new Client(signal, getAccessToken);
   }
 
+  async chargeSavedCard(orderId, cardId) {
+    const data = await this.client.post("/api/payments/charge-saved-card", {
+      orderId,
+      cardId,
+    });
+    return data;
+  }
+
   async createPaymentIntent(paymentIntent) {
     const data = await this.client.post(
       "/api/payments/create-payment-intent",

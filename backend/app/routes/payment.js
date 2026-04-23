@@ -2,7 +2,10 @@ import express from "express";
 import Stripe from "stripe";
 import { findUniquePaymentByOrderId } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
-import { getOrCreateClientSecret } from "../controllers/payment.controller.js";
+import {
+  getOrCreateClientSecret,
+  processSavedCardPayment,
+} from "../controllers/payment.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
 const router = express.Router();
@@ -69,9 +72,22 @@ router.get("/verify", verifyUserAuth, async (req, res) => {
   }
 });
 
+router.post("/charge-saved-card", verifyUserAuth, async (req, res) => {
+  try {
+    const { orderId, cardId } = req.body;
+    await processSavedCardPayment(orderId, cardId, req.user.id);
+    res.status(200).json({ success: true });
+  } catch {
+    console.error("Saved card charge failed:", err);
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error: "Something went wrong during payment. Please try again.",
+    });
+  }
+});
+
 // 유저가 결제 페이지에서 새로고침을 하면
 // 같은 주문에 대한 PaymentIntent 가 중복 생성될 수 있음.
-
 router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
   try {
     const { orderId } = req.body;

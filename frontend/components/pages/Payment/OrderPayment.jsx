@@ -8,6 +8,7 @@ import PaymentFormWrapper from "./PaymentFormWrapper";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import useAccessToken from "../../../hooks/useAccessToken";
+import PaymentMethodSelector from "./PaymentMethodSelector";
 
 // 🤔 컴포넌트의 목적:
 // 해당 주문에 대한 Stripe 결제 준비 * 결제 UI의 컨테이너 컴포넌트
@@ -17,6 +18,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 export default function OrderPayment() {
   const { orderId } = useParams();
   const [clientSecret, setClientSecret] = useState("");
+  const [useNewCard, setUseNewCard] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const accessToken = useAccessToken();
   const navigate = useNavigate();
@@ -24,12 +26,18 @@ export default function OrderPayment() {
   const abortControllerRef = useRef(null);
   const isRetry = location.state?.retry === true;
 
+  const redirectStatus = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("redirect_status");
+  }, []);
+
   useEffect(() => {
     document.title = "Payment | Foodie";
   }, []);
 
   // 해당 결제에 대한 준비
   // clientSecret = 그 주문서를 열 수 있는 1회용 코드
+  // 🤔🤔 clientSecret은 새 카드일 때만 필요
   useEffect(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
@@ -60,6 +68,7 @@ export default function OrderPayment() {
       }
     };
 
+    if (!useNewCard) return; // 저장된 카드 선택 시 PaymentIntent 불필요
     if (isRetry) {
       findExistingPayment();
     } else {
@@ -70,15 +79,19 @@ export default function OrderPayment() {
     return () => {
       abortControllerRef.current.abort();
     };
-  }, [orderId, isRetry]);
+  }, [orderId, isRetry, useNewCard]);
 
   // 3D Secure 인증 후 URL에 ?redirect_status=succeeded 혹은 failed가 붙어서 돌아옴,
   // redirectStatus === "failed" (결제 실패) clientSecret을 새로 만들 필요 없음.
 
-  const redirectStatus = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("redirect_status");
-  }, []);
+  useEffect(() => {
+    if (redirectStatus === "succeeded" || redirectStatus === "failed") {
+      navigate(`/order/completed/${orderId}`, {
+        replace: true,
+        state: { status: redirectStatus },
+      });
+    }
+  }, [redirectStatus, orderId, navigate]);
 
   // 결제 안정성 보장을 위한 useMemo, 왜?
   // <Elements>는 한 번 초기화되면 options가 바뀌는 걸 절대 허용하지 않는다
@@ -90,7 +103,7 @@ export default function OrderPayment() {
       appearance: {
         theme: "night", // dark 기반 추천
         variables: {
-          colorBackground: "#4c586b", // gray-700
+          colorBackground: "#6c9cf6", // gray-700
           colorText: "#D1D5DB", // gray-300
           colorPrimary: "#babec5", // 버튼/포커스 색도 맞춤
           colorDanger: "#ef4444", // 에러 (Tailwind red-500)
@@ -101,28 +114,28 @@ export default function OrderPayment() {
     [clientSecret],
   );
 
-  useEffect(() => {
-    if (redirectStatus === "succeeded" || redirectStatus === "failed") {
-      navigate(`/order/completed/${orderId}`, {
-        replace: true,
-        state: { status: redirectStatus },
-      });
-    }
-  }, [redirectStatus, orderId, navigate]);
-
   if (errorMsg) {
     return (
       <ErrorAlert title="We couldn’t start your payment" message={errorMsg} />
     ); // paymentIntent 생성 실패, 컴포넌트의 종료
   }
 
-  if (!clientSecret) {
+  // 🤔🤔 useNewCard일 때만 clientSecret 기다림
+  // 왜 !useNewCard 인지 이해를 못하겠음
+  if (useNewCard && !clientSecret) {
     return <Spinner />;
   }
 
   return (
-    <Elements stripe={stripePromise} options={elementsOptions}>
-      <PaymentFormWrapper orderId={orderId} />
-    </Elements>
+    <PaymentMethodSelector
+      orderId={orderId}
+      onUseNewCard={() => setUseNewCard(true)}
+    >
+      {useNewCard && clientSecret && (
+        <Elements stripe={stripePromise} options={elementsOptions}>
+          <PaymentFormWrapper orderId={orderId} />
+        </Elements>
+      )}
+    </PaymentMethodSelector>
   );
 }

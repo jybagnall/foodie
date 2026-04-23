@@ -5,42 +5,31 @@ import {
   createPaymentRecord,
   findUniquePaymentByOrderId,
 } from "../services/payment-service.js";
+import { identifyCardByUserId } from "../services/payment.methods-service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Stripe 고객 ID 확인/생성
-async function ensureStripeCustomerId(user) {
-  let customerId = user.stripe_customer_id;
-
-  if (customerId) {
-    try {
-      await stripe.customers.retrieve(customerId); // Stripe에 존재하는지 검증
-    } catch (err) {
-      if (err.code === "resource_missing") {
-        customerId = null;
-      } else {
-        console.error("Stripe customer retrieve failed", {
-          userId: user.id,
-          customerId,
-          code: err.code,
-        });
-        throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
-      }
-    }
+export async function processSavedCardPayment(orderId, cardId, userId) {
+  const order = await getOrderById(orderId); // 주문 검증
+  if (!order) {
+    console.error("Order not found", { orderId, userId: user.id });
+    throw new Error("ORDER_NOT_FOUND");
   }
+  if (order.user_id !== user.id) throw new Error("Forbidden");
 
-  if (!customerId) {
-    const newCustomer = await stripe.customers.create({
-      name: user.name,
-      email: user.email,
-      metadata: { userId: user.id },
-    });
+  const card = await identifyCardByUserId(cardId, userId);
+  if (!card) {
+    throw new Error("FORBIDDEN");
+  } // 카드 검증
 
-    await updateUserStripeId(user.id, newCustomer.id);
-    customerId = newCustomer.id;
-  }
+  const payment = await findUniquePaymentByOrderId(orderId);
+  if (!payment) {
+    throw new Error("PAYMENT_NOT_FOUND");
+  } // payment intent 조회
 
-  return customerId;
+  await stripe.paymentIntents.confirm(payment.stripe_payment_intent_id, {
+    payment_method: card.stripe_payment_method_id,
+  });
 }
 
 // PaymentIntent 생성 및 DB 저장
@@ -86,6 +75,41 @@ async function createAndStoreStripePaymentIntent(
     }
     throw new Error("PAYMENT_INTENT_FAILURE");
   }
+}
+
+// Stripe 고객 ID 확인/생성
+async function ensureStripeCustomerId(user) {
+  let customerId = user.stripe_customer_id;
+
+  if (customerId) {
+    try {
+      await stripe.customers.retrieve(customerId); // Stripe에 존재하는지 검증
+    } catch (err) {
+      if (err.code === "resource_missing") {
+        customerId = null;
+      } else {
+        console.error("Stripe customer retrieve failed", {
+          userId: user.id,
+          customerId,
+          code: err.code,
+        });
+        throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
+      }
+    }
+  }
+
+  if (!customerId) {
+    const newCustomer = await stripe.customers.create({
+      name: user.name,
+      email: user.email,
+      metadata: { userId: user.id },
+    });
+
+    await updateUserStripeId(user.id, newCustomer.id);
+    customerId = newCustomer.id;
+  }
+
+  return customerId;
 }
 
 export async function getOrCreateClientSecret(orderId, user) {

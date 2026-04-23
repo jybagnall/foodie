@@ -5,22 +5,21 @@
 
 import express from "express";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
+import { getCardsInfo } from "../services/payment.methods-service.js";
 
 const router = express.Router();
 
-// router.get("/verify", verifyUserAuth, async (req, res) => {
-//   try {
-//     const paymentIntentId = req.query.payment_intent;
-//     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-//     return res.status(200).json({ status: paymentIntent.status });
-//   } catch (err) {
-//     console.error("Stripe verification error:", err);
-//     return res.status(500).json({
-//       error: "Something went wrong during payment. Please try again.",
-//     });
-//   }
-// });
+router.get("/", verifyUserAuth, async (req, res) => {
+  try {
+    const cards = await getCardsInfo(req.user.id);
+    return res.status(200).json(cards);
+  } catch (err) {
+    console.error("fetching error,", err.message);
+    res
+      .status(500)
+      .json({ error: "Something went wrong while loading the cards data." });
+  }
+});
 
 // router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
 //   try {

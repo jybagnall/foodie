@@ -24,7 +24,7 @@ export async function findUniquePaymentByOrderId(orderId) {
     payment_status,
     amount,
     paid_at,
-    currency,
+    currency
   FROM payments
   WHERE order_id = $1
   `;
