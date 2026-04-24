@@ -13,10 +13,12 @@ import AddressFields from "../UI/AddressFields";
 import useAddressBook from "../../hooks/useAddressBook";
 import AddressSelector from "./userDashboard/address/AddressSelector";
 import useAccessToken from "../../hooks/useAccessToken";
+import useUserId from "../../hooks/useUserId";
 
 export default function ShippingForm() {
   const { items, totalAmount } = useContext(CartContext);
   const accessToken = useAccessToken();
+  const userId = useUserId();
   const { addresses, isFetching, fetchingError, isDeleteError } =
     useAddressBook();
 
@@ -84,8 +86,8 @@ export default function ShippingForm() {
     setIsOrderProcessing(true);
     try {
       const { orderId } = await orderService.initializeOrder(orderDetails);
-      queryClient.invalidateQueries({ queryKey: ["defaultAddress"] });
-      queryClient.invalidateQueries({ queryKey: ["addressBook"] });
+      queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
+      queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
       navigate(`/order/payment/${orderId}`);
     } catch (err) {
       console.error(err);

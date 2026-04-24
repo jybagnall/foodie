@@ -12,10 +12,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function processSavedCardPayment(orderId, cardId, userId) {
   const order = await getOrderById(orderId); // 주문 검증
   if (!order) {
-    console.error("Order not found", { orderId, userId: user.id });
+    console.error("Order not found", { orderId, userId });
     throw new Error("ORDER_NOT_FOUND");
   }
-  if (order.user_id !== user.id) throw new Error("Forbidden");
+  if (order.user_id !== userId) throw new Error("FORBIDDEN");
 
   const card = await identifyCardByUserId(cardId, userId);
   if (!card) {
@@ -25,11 +25,11 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   const payment = await findUniquePaymentByOrderId(orderId);
   if (!payment) {
     throw new Error("PAYMENT_NOT_FOUND");
-  } // payment intent 조회
+  } // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
   await stripe.paymentIntents.confirm(payment.stripe_payment_intent_id, {
     payment_method: card.stripe_payment_method_id,
-  });
+  }); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
 }
 
 // PaymentIntent 생성 및 DB 저장
@@ -44,7 +44,6 @@ async function createAndStoreStripePaymentIntent(
     amount,
     currency,
     customer: customerId,
-    // payment_method_types: ["card"],
     automatic_payment_methods: { enabled: true },
     metadata: { userId: String(userId), orderId: String(orderId) }, // 주문 & 사용자 연결 (custom data)
   });
@@ -124,7 +123,7 @@ export async function getOrCreateClientSecret(orderId, user) {
     console.error("Order not found", { orderId, userId: user.id });
     throw new Error("ORDER_NOT_FOUND");
   }
-  if (order.user_id !== user.id) throw new Error("Forbidden");
+  if (order.user_id !== user.id) throw new Error("FORBIDDEN");
   if (order.total_amount <= 0) {
     throw new Error("INVALID_AMOUNT");
   }

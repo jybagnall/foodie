@@ -37,7 +37,6 @@ export default function OrderPayment() {
 
   // 해당 결제에 대한 준비
   // clientSecret = 그 주문서를 열 수 있는 1회용 코드
-  // 🤔🤔 clientSecret은 새 카드일 때만 필요
   useEffect(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
@@ -47,6 +46,7 @@ export default function OrderPayment() {
     );
 
     const createIntent = async () => {
+      if (clientSecret) return;
       try {
         const { clientSecret } = await paymentService.createPaymentIntent({
           orderId,
@@ -68,7 +68,6 @@ export default function OrderPayment() {
       }
     };
 
-    if (!useNewCard) return; // 저장된 카드 선택 시 PaymentIntent 불필요
     if (isRetry) {
       findExistingPayment();
     } else {
@@ -79,7 +78,7 @@ export default function OrderPayment() {
     return () => {
       abortControllerRef.current.abort();
     };
-  }, [orderId, isRetry, useNewCard]);
+  }, [orderId, isRetry]);
 
   // 3D Secure 인증 후 URL에 ?redirect_status=succeeded 혹은 failed가 붙어서 돌아옴,
   // redirectStatus === "failed" (결제 실패) clientSecret을 새로 만들 필요 없음.
@@ -103,7 +102,7 @@ export default function OrderPayment() {
       appearance: {
         theme: "night", // dark 기반 추천
         variables: {
-          colorBackground: "#6c9cf6", // gray-700
+          colorBackground: "#4b5563", // gray-700
           colorText: "#D1D5DB", // gray-300
           colorPrimary: "#babec5", // 버튼/포커스 색도 맞춤
           colorDanger: "#ef4444", // 에러 (Tailwind red-500)
@@ -129,13 +128,20 @@ export default function OrderPayment() {
   return (
     <PaymentMethodSelector
       orderId={orderId}
-      onUseNewCard={() => setUseNewCard(true)}
-    >
-      {useNewCard && clientSecret && (
-        <Elements stripe={stripePromise} options={elementsOptions}>
-          <PaymentFormWrapper orderId={orderId} />
-        </Elements>
-      )}
-    </PaymentMethodSelector>
+      useNewCard={useNewCard}
+      setUseNewCard={setUseNewCard}
+      clientSecret={clientSecret}
+      elementsOptions={elementsOptions}
+    />
+    // <PaymentMethodSelector
+    //   orderId={orderId}
+    //   onUseNewCard={() => setUseNewCard(true)}
+    // >
+    //   {useNewCard && clientSecret && (
+    //     <Elements stripe={stripePromise} options={elementsOptions}>
+    //       <PaymentFormWrapper orderId={orderId} />
+    //     </Elements>
+    //   )}
+    // </PaymentMethodSelector>
   );
 }
