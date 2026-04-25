@@ -27,9 +27,14 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
     throw new Error("PAYMENT_NOT_FOUND");
   } // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
-  await stripe.paymentIntents.confirm(payment.stripe_payment_intent_id, {
-    payment_method: card.stripe_payment_method_id,
-  }); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
+  const paymentIntent = await stripe.paymentIntents.confirm(
+    payment.stripe_payment_intent_id,
+    {
+      payment_method: card.stripe_payment_method_id,
+    },
+  ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
+
+  return { paymentIntent };
 }
 
 // PaymentIntent 생성 및 DB 저장

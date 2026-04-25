@@ -34,7 +34,8 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   };
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
-  const handlePaymentSubmit = async () => {
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
     if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
@@ -86,7 +87,35 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         <form onSubmit={handlePaymentSubmit}>
           <PaymentElement />
 
-          <div className="mt-4"></div>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                // checked={saveCard}
+                // onChange={(e) => {
+                //   const checked = e.target.checked;
+                //   setSaveCard(checked);
+
+                //   // 🔥 저장 안 하면 default도 해제
+                //   if (!checked) setSetAsDefault(false);
+                // }}
+                className="accent-yellow-400"
+              />
+              Save this card for future payments
+            </label>
+
+            {/* 기본 카드 설정 */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                // checked={setAsDefault}
+                // disabled={!saveCard}
+                // onChange={(e) => setSetAsDefault(e.target.checked)}
+                className="accent-yellow-400 disabled:opacity-50"
+              />
+              Set as default payment method
+            </label>
+          </div>
           <div className="flex justify-between items-center mt-8">
             <Button
               type="button"

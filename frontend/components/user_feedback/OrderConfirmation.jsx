@@ -174,8 +174,8 @@ export default function OrderConfirmation() {
 
   return (
     <div className="text-center p-20">
-      <h1 className="text-2xl font-bold mb-5">{title}</h1>
-      <p className="text-xl font-semibold mb-5">{message}</p>
+      <h1 className="text-2xl font-bold mb-5 text-blue-400">{title}</h1>
+      <p className="text-xl font-semibold mb-5 text-gray-300">{message}</p>
       {action}
     </div>
   );
