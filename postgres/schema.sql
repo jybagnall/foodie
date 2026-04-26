@@ -89,12 +89,16 @@ CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,
   stripe_payment_intent_id VARCHAR(100) UNIQUE NOT NULL, 
+  stripe_charge_id VARCHAR(100) UNIQUE, --환불할 때 필요
+  payment_method_id INT REFERENCES payment_methods(id), -- 카드 저장 안 할 때 null
+  stripe_payment_method_id VARCHAR(100),      
   amount NUMERIC(10,2) NOT NULL,
+  refunded_amount NUMERIC(10,2) DEFAULT 0,
   currency VARCHAR(10) DEFAULT 'usd',
   payment_status VARCHAR(20) DEFAULT 'requires_payment',
   updated_at TIMESTAMP DEFAULT NOW(), --웹훅 재시도나 상태 변경 때 기록
   paid_at TIMESTAMP, --실제 결제 완료 시점
-  stripe_charge_id VARCHAR(100) UNIQUE, --환불할 때 필요
+  created_at TIMESTAMP DEFAULT NOW(),
   failure_reason TEXT
 )
 
@@ -107,14 +111,7 @@ CREATE TABLE payment_methods (
   exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
   exp_year SMALLINT NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE order_payments (
-  order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  payment_method_id INT NOT NULL REFERENCES payment_methods(id),
   created_at TIMESTAMP DEFAULT NOW(),
-  PRIMARY KEY (order_id)
 );
 
 -- 이벤트 저장

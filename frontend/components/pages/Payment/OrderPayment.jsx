@@ -46,11 +46,9 @@ export default function OrderPayment() {
     const createIntent = async () => {
       if (clientSecret) return;
       try {
-        const { clientSecret: newClientSecret } =
-          await paymentService.createPaymentIntent({
-            orderId,
-          });
-        setClientSecret(newClientSecret);
+        const { clientSecret: secret } =
+          await paymentService.createPaymentIntent({ orderId });
+        setClientSecret(secret);
       } catch (err) {
         const message = getUserErrorMessage(err);
         if (message) setErrorMsg(message);
@@ -59,8 +57,9 @@ export default function OrderPayment() {
 
     const findExistingPayment = async () => {
       try {
-        const { clientSecret } = await paymentService.findPayment(orderId);
-        setClientSecret(clientSecret);
+        const { clientSecret: secret } =
+          await paymentService.findPayment(orderId);
+        setClientSecret(secret);
       } catch (err) {
         const message = getUserErrorMessage(err);
         setErrorMsg(message);

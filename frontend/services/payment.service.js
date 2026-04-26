@@ -28,6 +28,15 @@ class PaymentService {
     return data;
   }
 
+  async updatePaymentIntent(orderId, saveCard, setAsDefault) {
+    const data = await this.client.post("/api/payments/update-payment-intent", {
+      orderId,
+      saveCard,
+      setAsDefault,
+    });
+    return data;
+  }
+
   async verifyPayment(paymentIntentId) {
     const data = await this.client.get(
       `/api/payments/verify?payment_intent=${paymentIntentId}`,

@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PaymentElement } from "@stripe/react-stripe-js";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { markAsFromPayment } from "../../../storage/paymentStorage";
+import PaymentService from "../../../services/payment.service";
+import useAccessToken from "../../../hooks/useAccessToken";
+import SaveCardPreferences from "./SaveCardPreferences";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
 
 export default function PaymentForm({ orderId, stripe, elements }) {
   const navigate = useNavigate();
+  const [saveCard, setSaveCard] = useState(false);
+  const [setAsDefault, setSetAsDefault] = useState(false);
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const abortControllerRef = useRef(null);
+  const accessToken = useAccessToken();
 
   // 결제 트리거 함수.
   // paymentIntent: 결제 상태 (성공 여부, 금액 등)
@@ -35,12 +42,20 @@ export default function PaymentForm({ orderId, stripe, elements }) {
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
   const handlePaymentSubmit = async (e) => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    const paymentService = new PaymentService(
+      abortControllerRef.current.signal,
+      () => accessToken,
+    );
+
     e.preventDefault();
     if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
 
     try {
+      await paymentService.updatePaymentIntent(orderId, saveCard, setAsDefault);
       const result = await confirmStripePayment();
 
       if (result?.status === "validation_error") return; // 이동 안함
@@ -87,35 +102,13 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         <form onSubmit={handlePaymentSubmit}>
           <PaymentElement />
 
-          <div className="mt-4 flex flex-col gap-3 text-sm text-gray-200">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                // checked={saveCard}
-                // onChange={(e) => {
-                //   const checked = e.target.checked;
-                //   setSaveCard(checked);
+          <SaveCardPreferences
+            saveCard={saveCard}
+            setSaveCard={setSaveCard}
+            setAsDefault={setAsDefault}
+            setSetAsDefault={setSetAsDefault}
+          />
 
-                //   // 🔥 저장 안 하면 default도 해제
-                //   if (!checked) setSetAsDefault(false);
-                // }}
-                className="accent-yellow-400"
-              />
-              Save this card for future payments
-            </label>
-
-            {/* 기본 카드 설정 */}
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                // checked={setAsDefault}
-                // disabled={!saveCard}
-                // onChange={(e) => setSetAsDefault(e.target.checked)}
-                className="accent-yellow-400 disabled:opacity-50"
-              />
-              Set as default payment method
-            </label>
-          </div>
           <div className="flex justify-between items-center mt-8">
             <Button
               type="button"

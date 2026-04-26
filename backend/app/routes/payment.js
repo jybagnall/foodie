@@ -102,4 +102,26 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
   }
 });
 
+router.post("/update-payment-intent", verifyUserAuth, async (req, res) => {
+  try {
+    const { orderId, saveCard, setAsDefault } = req.body;
+    const payment = await findUniquePaymentByOrderId(orderId);
+    if (!payment) return res.status(404).json({ error: "Payment not found." });
+
+    await stripe.paymentIntents.update(payment.stripe_payment_intent_id, {
+      metadata: {
+        saveCard: String(saveCard),
+        setAsDefault: String(setAsDefault),
+      },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Stripe payment session error,", err.message);
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error: "Something went wrong during payment. Please try again.",
+    });
+  }
+});
+
 export default router;
