@@ -158,8 +158,6 @@ export async function sendOrderConfirmationEmail(
       subject: "Payment Processed for Your Foodie Order",
       html,
     });
-
-    console.log("✅ Order confirmation email sent!");
   } catch (err) {
     console.error("❌ Failed to send email:", err.message);
   }

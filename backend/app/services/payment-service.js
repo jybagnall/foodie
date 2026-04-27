@@ -81,6 +81,7 @@ export async function upsertPaymentFromIntent(client, paymentDetails) {
     SET 
       payment_status = EXCLUDED.payment_status,
       stripe_charge_id = EXCLUDED.stripe_charge_id,
+      stripe_payment_method_id = EXCLUDED.stripe_payment_method_id,
       updated_at = NOW(),
       paid_at = NOW()
     WHERE payments.payment_status <> 'succeeded'

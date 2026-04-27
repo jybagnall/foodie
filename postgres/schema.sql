@@ -105,7 +105,7 @@ CREATE TABLE payments (
 CREATE TABLE payment_methods (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL,
+  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL, -- Stripe가 준 카드 ID
   brand VARCHAR(20) NOT NULL,  
   last4 VARCHAR(4) NOT NULL,
   exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),

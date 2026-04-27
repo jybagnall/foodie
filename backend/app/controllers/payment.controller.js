@@ -27,10 +27,12 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
     throw new Error("PAYMENT_NOT_FOUND");
   } // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
+  //❗에러의 원인: return_url 이 필요함
   const paymentIntent = await stripe.paymentIntents.confirm(
     payment.stripe_payment_intent_id,
     {
       payment_method: card.stripe_payment_method_id,
+      return_url: `http://127.0.0.1:5173/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
     },
   ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
 
@@ -49,7 +51,7 @@ async function createAndStoreStripePaymentIntent(
     amount,
     currency,
     customer: customerId,
-    automatic_payment_methods: { enabled: true },
+    automatic_payment_methods: { enabled: true }, // 사용 가능한 결제 수단을 자동으로 활성화
     metadata: { userId: String(userId), orderId: String(orderId) }, // 주문 & 사용자 연결 (custom data)
   });
 

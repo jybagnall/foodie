@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "worker": "node --inspect=0.0.0.0:9230 workers/stripeWorker.js",
+    "worker": "nodemon --legacy-watch --inspect=0.0.0.0:9230 workers/stripeWorker.js",
     "dev": "nodemon --legacy-watch --inspect=0.0.0.0:9229 server.js"
   },
   "keywords": [],

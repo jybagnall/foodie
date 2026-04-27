@@ -31,11 +31,6 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
       `Missing orderId. intentId: ${paymentIntent.id}, metadata: ${JSON.stringify(paymentIntent.metadata)}`,
     );
 
-  // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
-  const stripePaymentMethod = saveCard
-    ? await stripe.paymentMethods.retrieve(paymentIntent.payment_method)
-    : null;
-
   await upsertPaymentFromIntent(client, {
     order_id: orderId,
     stripe_payment_intent_id: paymentIntent.id,
@@ -48,7 +43,16 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
 
   await updateOrderStatus(client, orderId, "paid");
 
+  // ❗에러의 원인: Stripe에 등록된 특정 카드와 유저를 연결시켜야 함
   if (saveCard) {
+    const stripePaymentMethod = await stripe.paymentMethods.attach(
+      paymentIntent.payment_method,
+      {
+        customer: paymentIntent.customer,
+      },
+    );
+    // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
+
     if (setAsDefault) {
       await clearDefaultCard(client, userId);
     }

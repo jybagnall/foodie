@@ -4,6 +4,7 @@ import { PaymentElement } from "@stripe/react-stripe-js";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { markAsFromPayment } from "../../../storage/paymentStorage";
+import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";
 import useAccessToken from "../../../hooks/useAccessToken";
 import SaveCardPreferences from "./SaveCardPreferences";
@@ -26,7 +27,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/order/payment/${orderId}`,
+        return_url: `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
       }, // 3D Secure (은행 인증 페이지) 완료 후 리디렉팅되는 페이지
       redirect: "if_required",
     });
@@ -68,6 +69,9 @@ export default function PaymentForm({ orderId, stripe, elements }) {
           state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
         },
       ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
+    } catch (err) {
+      const message = getUserErrorMessage(err);
+      if (message) setErrorMsg(message);
     } finally {
       setIsPayProcessing(false);
     }

@@ -51,7 +51,7 @@ export async function saveCardToDb(
       exp_year = EXCLUDED.exp_year
     RETURNING id
   `;
-  values = [
+  const values = [
     userId,
     stripePaymentMethod.id,
     stripePaymentMethod.card.brand,
@@ -60,6 +60,6 @@ export async function saveCardToDb(
     stripePaymentMethod.card.exp_year,
     setAsDefault,
   ];
-  await client.query(q, values);
+  const { rows } = await client.query(q, values);
   return rows[0]?.id ?? null;
 }
