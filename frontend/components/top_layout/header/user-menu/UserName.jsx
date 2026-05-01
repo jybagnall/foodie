@@ -45,7 +45,8 @@ export default function UserName() {
   };
 
   const persistCart = async () => {
-    abortControllerRef.current?.abort();
+    if (isSavingCart) return;
+
     abortControllerRef.current = new AbortController();
     const cartService = new CartService(
       abortControllerRef.current.signal,

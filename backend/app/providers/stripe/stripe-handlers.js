@@ -43,13 +43,9 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
 
   await updateOrderStatus(client, orderId, "paid");
 
-  // ❗에러의 원인: Stripe에 등록된 특정 카드와 유저를 연결시켜야 함
   if (saveCard) {
-    const stripePaymentMethod = await stripe.paymentMethods.attach(
+    const stripePaymentMethod = await stripe.paymentMethods.retrieve(
       paymentIntent.payment_method,
-      {
-        customer: paymentIntent.customer,
-      },
     );
     // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
 

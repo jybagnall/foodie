@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import PaymentService from "../../../services/payment.service";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
@@ -16,8 +10,7 @@ import PaymentMethodSelector from "./PaymentMethodSelector";
 // 해당 주문에 대한 Stripe 결제 준비 * 결제 UI의 컨테이너 컴포넌트
 // Fallback path의 역할: 3DS 인증 후
 
-export default function OrderPayment() {
-  const { orderId } = useParams();
+export default function StripePaymentSetup({ order, orderId }) {
   const [clientSecret, setClientSecret] = useState("");
   const [useNewCard, setUseNewCard] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,11 +25,6 @@ export default function OrderPayment() {
   const redirectPaymentIntentId = searchParams.get("payment_intent");
 
   useEffect(() => {
-    document.title = "Payment | Foodie";
-  }, []);
-
-  useEffect(() => {
-    abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
     const paymentService = new PaymentService(
       abortControllerRef.current.signal,
@@ -99,11 +87,14 @@ export default function OrderPayment() {
   }
 
   return (
-    <PaymentMethodSelector
-      orderId={orderId}
-      useNewCard={useNewCard}
-      setUseNewCard={setUseNewCard}
-      clientSecret={clientSecret}
-    />
+    <>
+      <PaymentMethodSelector
+        order={order}
+        orderId={orderId}
+        useNewCard={useNewCard}
+        setUseNewCard={setUseNewCard}
+        clientSecret={clientSecret}
+      />
+    </>
   );
 }

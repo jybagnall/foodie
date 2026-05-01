@@ -41,7 +41,8 @@ export default function ResetPassword() {
   }, []);
 
   const onPasswordSubmit = async ({ password }) => {
-    abortControllerRef.current?.abort();
+    if (isProcessing) return;
+
     abortControllerRef.current = new AbortController();
     const accountService = new AccountService(
       abortControllerRef.current.signal,

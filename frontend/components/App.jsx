@@ -22,9 +22,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Header from "./top_layout/header/Header";
 import Login from "./pages/Login";
 import MenuLiveView from "./admin/MenuLiveView";
-import OrderConfirmation from "./user_feedback/OrderConfirmation";
+import OrderConfirmation from "./pages/Payment/OrderConfirmation";
 import OrderDetail from "../components/pages/userDashboard/orders/OrderDetail";
-import OrderPayment from "./pages/Payment/OrderPayment";
+import OrderPaymentPage from "./pages/Payment/OrderPaymentPage ";
 import PageNotFound from "./user_feedback/PageNotFound";
 import PaymentMethod from "../components/pages/userDashboard/payment/PaymentMethod";
 import Signup from "./pages/Signup";
@@ -81,7 +81,7 @@ export default function App() {
                 }
               >
                 <Route path="shipping" element={<ShippingForm />} />
-                <Route path="payment/:orderId" element={<OrderPayment />} />
+                <Route path="payment/:orderId" element={<OrderPaymentPage />} />
                 <Route
                   path="completed/:orderId"
                   element={<OrderConfirmation />}

@@ -28,7 +28,8 @@ export default function Signup() {
   }, []);
 
   const onSignupSubmit = async ({ name, email, password }) => {
-    abortControllerRef.current?.abort();
+    if (isSignupProcessing) return;
+
     abortControllerRef.current = new AbortController();
     const accountService = new AccountService(
       abortControllerRef.current.signal,

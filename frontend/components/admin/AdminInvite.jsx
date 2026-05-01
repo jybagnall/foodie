@@ -32,9 +32,9 @@ export default function AdminInvite() {
   }, []);
 
   const onInvitation = async ({ email }) => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+    if (isInviteProcessing) return;
 
+    abortControllerRef.current = new AbortController();
     const adminService = new AdminService(
       abortControllerRef.current.signal,
       () => accessToken,

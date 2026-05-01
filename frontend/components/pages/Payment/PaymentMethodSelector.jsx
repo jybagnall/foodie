@@ -1,16 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { useNavigate } from "react-router-dom";
 import useSavedCards from "../../../hooks/useSavedCards";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import SavedCard from "./SavedCard";
 import PaymentFormWrapper from "./PaymentFormWrapper";
 import Spinner from "../../user_feedback/Spinner";
+import useAccessToken from "../../../hooks/useAccessToken";
+import useUserId from "../../../hooks/useUserId";
+import SpinnerMini from "../../user_feedback/SpinnerMini";
+import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
+import { markAsFromPayment } from "../../../storage/paymentStorage";
+import PaymentService from "../../../services/payment.service";
+import DeliverySummary from "../../OrderUI/DeliverySummary";
+import OrderSummary from "../../OrderUI/OrderSummary";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export default function PaymentMethodSelector({
+  order,
   orderId,
   useNewCard,
   setUseNewCard,
@@ -19,6 +30,12 @@ export default function PaymentMethodSelector({
   const { savedCards, isFetching, isFetchingError } = useSavedCards();
   const [selectedCardId, setSelectedCardId] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isPayProcessing, setIsPayProcessing] = useState(false);
+  const accessToken = useAccessToken();
+  const userId = useUserId();
+  const queryClient = useQueryClient();
+  const abortControllerRef = useRef(null);
+  const navigate = useNavigate();
 
   // 카드 없으면 자동으로 새 카드 모드
   useEffect(() => {
@@ -28,6 +45,10 @@ export default function PaymentMethodSelector({
       setUseNewCard(true);
     }
   }, [isFetching]);
+
+  useEffect(() => {
+    return () => abortControllerRef.current?.abort();
+  }, []);
 
   const elementsOptions = useMemo(
     () => ({
@@ -42,9 +63,48 @@ export default function PaymentMethodSelector({
           colorBorder: "#637081", // gray-600 (경계선 자연스럽게)
         },
       },
+      paymentMethodOrder: ["card"], // 카드 사용만 허용
     }),
     [clientSecret],
   );
+
+  const placeOrderWithSavedCard = async () => {
+    if (isPayProcessing) return;
+
+    abortControllerRef.current = new AbortController();
+    const paymentService = new PaymentService(
+      abortControllerRef.current.signal,
+      () => accessToken,
+    );
+
+    setIsPayProcessing(true);
+    setErrorMsg("");
+
+    try {
+      const { paymentIntent } = await paymentService.chargeSavedCard(
+        orderId,
+        selectedCardId,
+      );
+      markAsFromPayment();
+      navigate(
+        `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
+        {
+          replace: true, // 뒤로가기에 이 페이지 삭제
+          state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
+        },
+      ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
+
+      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
+    } catch (err) {
+      console.error(err);
+      const message = getUserErrorMessage(err);
+      if (message) {
+        setErrorMsg(message);
+      }
+    } finally {
+      setIsPayProcessing(false);
+    }
+  };
 
   if (isFetching) return <Spinner />;
 
@@ -71,15 +131,15 @@ export default function PaymentMethodSelector({
         >
           Payment method
         </h2>
+        <DeliverySummary order={order} />
+
         <div className="flex flex-col gap-5">
           {savedCards.map((card) => (
             <SavedCard
               key={card.id}
               card={card}
-              orderId={orderId}
               selectedCardId={selectedCardId}
               setSelectedCardId={setSelectedCardId}
-              setErrorMsg={setErrorMsg}
             />
           ))}
           <Button
@@ -89,13 +149,19 @@ export default function PaymentMethodSelector({
             Add a credit / debit card
           </Button>
         </div>
+        <div>
+          <OrderSummary order={order} />
+          {selectedCardId && (
+            <Button
+              onClick={placeOrderWithSavedCard}
+              disabled={isPayProcessing}
+              className="text-yellow-300 hover:text-yellow-400 bg-gray-500 mt-5"
+            >
+              {isPayProcessing ? <SpinnerMini /> : "Place an order"}
+            </Button>
+          )}
+        </div>
       </section>
     </main>
   );
 }
-
-// {
-//   useNewCard && savedCards.length > 0 && (
-//     <Button onClick={() => setUseNewCard(false)}>Use saved card instead</Button>
-//   );
-// }

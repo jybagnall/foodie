@@ -14,6 +14,7 @@ import useAddressBook from "../../hooks/useAddressBook";
 import AddressSelector from "./userDashboard/address/AddressSelector";
 import useAccessToken from "../../hooks/useAccessToken";
 import useUserId from "../../hooks/useUserId";
+import { buildOrderDetails } from "../../utils/orderHelpers";
 
 export default function ShippingForm() {
   const { items, totalAmount } = useContext(CartContext);
@@ -40,6 +41,7 @@ export default function ShippingForm() {
   }, []);
 
   const onAddressSubmit = async (formData) => {
+    if (isOrderProcessing) return;
     if (items.length === 0 || !totalAmount || totalAmount <= 0) {
       setErrorMsg(
         "Your cart is empty. Please add items before placing an order.",
@@ -58,32 +60,15 @@ export default function ShippingForm() {
       return;
     }
 
-    abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
     const orderService = new OrderService(
       abortControllerRef.current.signal,
       () => accessToken,
     );
 
-    const orderDetails = {
-      address: {
-        full_name: shippingInfo.full_name.trim(),
-        street: shippingInfo.street.trim(),
-        city: shippingInfo.city.trim(),
-        postal_code: String(shippingInfo.postal_code).trim(),
-        phone: shippingInfo.phone.trim(),
-        is_default: shippingInfo.is_default,
-      },
-      orderPayload: {
-        items: items.map((i) => ({
-          menu_name: i.name,
-          menu_id: i.id,
-          qty: i.qty,
-        })),
-      },
-    };
-
+    const orderDetails = buildOrderDetails(shippingInfo, items);
     setIsOrderProcessing(true);
+
     try {
       const { orderId } = await orderService.initializeOrder(orderDetails);
       queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
@@ -100,19 +85,7 @@ export default function ShippingForm() {
     }
   };
 
-  const onCancelSubmit = () => {
-    navigate("/");
-  };
-
-  if (fetchingError) {
-    console.error(fetchingError.message);
-  }
-
-  if (isFetching) {
-    return <Spinner />;
-  }
-
-  const errorProps = [
+  const errorConfigs = [
     {
       condition: fetchingError,
       errorMsg: "We couldn't load your saved address.",
@@ -125,7 +98,13 @@ export default function ShippingForm() {
     },
   ];
 
-  const currentError = errorProps.find(({ condition }) => condition);
+  const currentError = errorConfigs.find(({ condition }) => condition);
+
+  if (fetchingError) console.error(fetchingError.message);
+
+  if (isFetching) {
+    return <Spinner />;
+  }
 
   return (
     <main className="min-h-screen flex justify-center items-start py-20 px-4">
@@ -173,7 +152,7 @@ export default function ShippingForm() {
                 type="button"
                 textOnly
                 className="text-gray-300 hover:text-gray-400"
-                onClick={onCancelSubmit}
+                onClick={() => navigate("/")}
               >
                 Cancel
               </Button>

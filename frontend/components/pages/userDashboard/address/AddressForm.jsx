@@ -80,7 +80,7 @@ export default function AddressForm() {
     navigate("/my-account/address");
   };
 
-  const errorProps = isEditMode
+  const errorConfigs = isEditMode
     ? {
         condition: isUpdateError,
         title: "Couldn't update address",
@@ -97,9 +97,12 @@ export default function AddressForm() {
   return (
     <main className="min-h-screen flex justify-center items-start py-10 px-4">
       <section className="w-full max-w-lg bg-gray-400 border-2 border-gray-400 shadow-xl rounded-xl p-8">
-        {errorProps.condition && (
+        {errorConfigs.condition && (
           <div className="mb-4">
-            <ErrorAlert title={errorProps.title} message={errorProps.message} />
+            <ErrorAlert
+              title={errorConfigs.title}
+              message={errorConfigs.message}
+            />
           </div>
         )}
 

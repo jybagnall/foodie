@@ -27,7 +27,8 @@ export default function Login() {
   }, []);
 
   const onLogin = async ({ email, password }) => {
-    abortControllerRef.current?.abort();
+    if (isLoginProcessing) return;
+
     abortControllerRef.current = new AbortController();
     const accountService = new AccountService(
       abortControllerRef.current.signal,

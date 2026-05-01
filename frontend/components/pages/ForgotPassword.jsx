@@ -28,7 +28,7 @@ export default function ForgotPassword() {
   }, []);
 
   const onEmailSubmit = async ({ email }) => {
-    abortControllerRef.current?.abort();
+    if (isProcessing) return;
     abortControllerRef.current = new AbortController();
 
     const accountService = new AccountService(

@@ -8,6 +8,7 @@ import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";
 import useAccessToken from "../../../hooks/useAccessToken";
 import SaveCardPreferences from "./SaveCardPreferences";
+import { confirmStripePayment } from "../../../utils/stripeHelpers";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
@@ -21,49 +22,45 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const abortControllerRef = useRef(null);
   const accessToken = useAccessToken();
 
-  // 결제 트리거 함수.
-  // paymentIntent: 결제 상태 (성공 여부, 금액 등)
-  const confirmStripePayment = async () => {
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
-      }, // 3D Secure (은행 인증 페이지) 완료 후 리디렉팅되는 페이지
-      redirect: "if_required",
-    });
+  useEffect(() => {
+    document.title = "Payment | Foodie";
 
-    // 카드 번호 혹은 CVC 오류 (결제 시도조차 안 됨)
-    if (error?.type === "validation_error") {
-      setErrorMsg(error.message);
-      return { status: "validation_error" };
-    }
-
-    return { paymentIntent };
-  };
+    return () => abortControllerRef.current?.abort();
+  }, []);
 
   // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
   const handlePaymentSubmit = async (e) => {
-    abortControllerRef.current?.abort();
+    e.preventDefault();
+    if (isPayProcessing) return; // 중복 요청의 차단
+
     abortControllerRef.current = new AbortController();
+
     const paymentService = new PaymentService(
       abortControllerRef.current.signal,
       () => accessToken,
     );
 
-    e.preventDefault();
-    if (isPayProcessing) return; // 중복 요청의 차단
     setIsPayProcessing(true);
     setErrorMsg("");
 
     try {
       await paymentService.updatePaymentIntent(orderId, saveCard, setAsDefault);
-      const result = await confirmStripePayment();
+      const result = await confirmStripePayment({ stripe, elements, orderId });
+      if (result.status !== "success") {
+        setErrorMsg(result.message);
+        return; // 이동 안함
+      }
 
-      if (result?.status === "validation_error") return; // 이동 안함
+      const paymentIntentId = result?.paymentIntent?.id;
+
+      if (!paymentIntentId) {
+        setErrorMsg("Please try again shortly.");
+        return;
+      }
 
       markAsFromPayment();
       navigate(
-        `/order/completed/${orderId}?payment_intent=${result.paymentIntent.id}`,
+        `/order/completed/${orderId}?payment_intent=${paymentIntentId}`,
         {
           replace: true, // 뒤로가기에 이 페이지 삭제
           state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
@@ -80,10 +77,6 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const onCancelSubmit = () => {
     navigate("/cart");
   };
-
-  useEffect(() => {
-    document.title = "Payment | Foodie";
-  }, []);
 
   // ❌오류가 뜬 이유: Stripe Elements가 결제 중 DOM에서 제거됨.
   // if (isPayProcessing) return <Spinner />;
@@ -104,7 +97,11 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         </h2>
 
         <form onSubmit={handlePaymentSubmit}>
-          <PaymentElement />
+          <PaymentElement
+            options={{
+              wallets: { link: "never" },
+            }}
+          />
 
           <SaveCardPreferences
             saveCard={saveCard}

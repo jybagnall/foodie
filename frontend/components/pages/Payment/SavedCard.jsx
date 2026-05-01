@@ -1,69 +1,8 @@
-import { useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import Button from "../../UI/Button";
-import SpinnerMini from "../../user_feedback/SpinnerMini";
-import useAccessToken from "../../../hooks/useAccessToken";
-import useUserId from "../../../hooks/useUserId";
-import PaymentService from "../../../services/payment.service";
-import { markAsFromPayment } from "../../../storage/paymentStorage";
-import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
-
-export default function SavedCard({
-  card,
-  orderId,
-  selectedCardId,
-  setSelectedCardId,
-  setErrorMsg,
-}) {
-  const [isPayProcessing, setIsPayProcessing] = useState(false);
-  const accessToken = useAccessToken();
-  const userId = useUserId();
-  const queryClient = useQueryClient();
-  const abortControllerRef = useRef(null);
-  const navigate = useNavigate();
-
+export default function SavedCard({ card, selectedCardId, setSelectedCardId }) {
   const isSelected = card.id === selectedCardId;
 
   const handleSelect = () => {
     setSelectedCardId(card.id);
-  };
-
-  const placeOrderWithSavedCard = async () => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
-    const paymentService = new PaymentService(
-      abortControllerRef.current.signal,
-      () => accessToken,
-    );
-
-    setIsPayProcessing(true);
-    setErrorMsg("");
-
-    try {
-      const { paymentIntent } = await paymentService.chargeSavedCard(
-        orderId,
-        selectedCardId,
-      );
-      markAsFromPayment();
-      navigate(
-        `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
-        {
-          replace: true, // 뒤로가기에 이 페이지 삭제
-          state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
-        },
-      ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
-
-      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
-    } catch (err) {
-      console.error(err);
-      const message = getUserErrorMessage(err);
-      if (message) {
-        setErrorMsg(message);
-      }
-    } finally {
-      setIsPayProcessing(false);
-    }
   };
 
   return (
@@ -123,15 +62,6 @@ export default function SavedCard({
           </div>
         </div>
       </div>
-      {isSelected && (
-        <Button
-          onClick={placeOrderWithSavedCard}
-          disabled={isPayProcessing}
-          className="text-yellow-300 hover:text-yellow-400 bg-gray-500 mt-5"
-        >
-          {isPayProcessing ? <SpinnerMini /> : "Place an order"}
-        </Button> // 기존 카드로 결제
-      )}
     </div>
   );
 }

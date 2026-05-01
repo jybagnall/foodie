@@ -32,7 +32,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
     payment.stripe_payment_intent_id,
     {
       payment_method: card.stripe_payment_method_id,
-      return_url: `http://127.0.0.1:5173/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
+      return_url: `http://127.0.0.1:5173/order/completed/${orderId}?payment_intent=${payment.stripe_payment_intent_id}`,
     },
   ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
 
@@ -51,7 +51,9 @@ async function createAndStoreStripePaymentIntent(
     amount,
     currency,
     customer: customerId,
-    automatic_payment_methods: { enabled: true }, // 사용 가능한 결제 수단을 자동으로 활성화
+    payment_method_types: ["card"],
+    setup_future_usage: "on_session", // 유저가 직접 결제할 때 재사용
+    // automatic_payment_methods: { enabled: true }, // 사용 가능한 결제 수단을 자동으로 활성화
     metadata: { userId: String(userId), orderId: String(orderId) }, // 주문 & 사용자 연결 (custom data)
   });
 

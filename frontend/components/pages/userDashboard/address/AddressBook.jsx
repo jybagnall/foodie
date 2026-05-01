@@ -23,7 +23,7 @@ export default function AddressBook() {
     document.title = "Shipping Addresses | Foodie";
   }, []);
 
-  const errorProps = [
+  const errorConfigs = [
     {
       condition: isDefaultUpdateError,
       errorMsg:
@@ -43,7 +43,7 @@ export default function AddressBook() {
     },
   ];
 
-  const currentError = errorProps.find(({ condition }) => condition);
+  const currentError = errorConfigs.find(({ condition }) => condition);
 
   if (isFetching || isUpdatingDefaultAddress) return <Spinner />;
 

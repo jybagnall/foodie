@@ -37,7 +37,7 @@ export default function OrderDetail() {
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* LEFT SIDE */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Shipping Info */}
+                {/* Shipping Info ⭐DeliverySummary 컴포넌트 존재함*/}
                 <div className="border rounded-lg p-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -74,7 +74,7 @@ export default function OrderDetail() {
                   Reorder
                 </button>
 
-                {/* Order Summary */}
+                {/* OrderSummary 컴포넌트 존재함 */}
                 <div className="border rounded-lg p-5">
                   <p className="font-semibold mb-4">Order summary</p>
 

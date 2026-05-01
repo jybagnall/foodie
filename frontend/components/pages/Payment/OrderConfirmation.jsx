@@ -1,16 +1,18 @@
 import {
-  Link,
   useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import Spinner from "./Spinner";
 import { useContext, useEffect, useRef, useState } from "react";
-import PaymentService from "../../services/payment.service";
-import CartContext from "../../contexts/CartContext";
-import { clearFromPayment, getFromPayment } from "../../storage/paymentStorage";
-import useAccessToken from "../../hooks/useAccessToken";
+import PaymentService from "../../../services/payment.service";
+import CartContext from "../../../contexts/CartContext";
+import {
+  clearFromPayment,
+  getFromPayment,
+} from "../../../storage/paymentStorage";
+import useAccessToken from "../../../hooks/useAccessToken";
+import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
 
 // GET /order/completed/orderId?payment_intent=
 
@@ -50,7 +52,6 @@ export default function OrderConfirmation() {
       return; // 3DS 성공
     }
 
-    abortControllerRef.current?.abort();
     abortControllerRef.current = new AbortController();
     const paymentService = new PaymentService(
       abortControllerRef.current.signal,
@@ -102,75 +103,8 @@ export default function OrderConfirmation() {
     };
   }, []);
 
-  const getContent = () => {
-    switch (status) {
-      case "loading":
-        return {
-          title: "Checking payment...",
-          message: "Please wait while we verify your payment.",
-          action: <Spinner />,
-        };
-      case "processing":
-        return {
-          title: "Processing your payment...",
-          message:
-            "Please do not leave this page. Your payment is being confirmed.",
-          action: <Spinner />,
-        };
-      case "succeeded":
-        return {
-          title: "Payment successful!",
-          message: `Your order #${orderId} has been confirmed.`,
-          action: (
-            <Link to="/" className="text-orange-400 underline">
-              Back to home
-            </Link>
-          ),
-        };
-      case "requires_payment_method":
-        return {
-          title: "Payment failed",
-          message: "Please try another payment method.",
-          action: (
-            <Link
-              to={`/order/payment/${orderId}`}
-              state={{ retry: true }}
-              className="text-orange-400 underline"
-            >
-              Try again
-            </Link>
-          ),
-        };
-      case "failed":
-        return {
-          title: "Payment failed",
-          message:
-            "We couldn't process your payment. Please try again or use a different method.",
-          action: (
-            <Link
-              to={`/order/payment/${orderId}`}
-              state={{ retry: true }}
-              className="text-orange-400 underline"
-            >
-              Try again
-            </Link>
-          ),
-        };
-      default:
-        return {
-          title: "Something went wrong",
-          message: "We couldn't complete your payment. Please try again.",
-          action: (
-            <Link to="/cart" className="text-orange-400 underline">
-              Return to cart
-            </Link>
-          ),
-        };
-    }
-  };
-
   // status에 따른 객체가 반환됨.
-  const { title, message, action } = getContent();
+  const { title, message, action } = mapPaymentStatusToContent(status, orderId);
 
   return (
     <div className="text-center p-20">

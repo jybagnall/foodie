@@ -102,6 +102,7 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
   }
 });
 
+// Webhook이 실행될 때 paymentIntent.metadata.saveCard를 읽어서 카드를 저장할지 결정
 router.post("/update-payment-intent", verifyUserAuth, async (req, res) => {
   try {
     const { orderId, saveCard, setAsDefault } = req.body;
