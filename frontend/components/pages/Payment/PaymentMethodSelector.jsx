@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
+import { useStripe } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
 import useSavedCards from "../../../hooks/useSavedCards";
 import Button from "../../UI/Button";
@@ -18,22 +17,16 @@ import PaymentService from "../../../services/payment.service";
 import DeliverySummary from "../../OrderUI/DeliverySummary";
 import OrderSummary from "../../OrderUI/OrderSummary";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
-export default function PaymentMethodSelector({
-  order,
-  orderId,
-  useNewCard,
-  setUseNewCard,
-  clientSecret,
-}) {
-  const { savedCards, isFetching, isFetchingError } = useSavedCards();
+export default function PaymentMethodSelector({ order, orderId }) {
+  const [useNewCard, setUseNewCard] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const accessToken = useAccessToken();
+  const { savedCards, isFetching, isFetchingError } = useSavedCards();
   const userId = useUserId();
   const queryClient = useQueryClient();
+  const stripe = useStripe();
   const abortControllerRef = useRef(null);
   const navigate = useNavigate();
 
@@ -50,24 +43,6 @@ export default function PaymentMethodSelector({
     return () => abortControllerRef.current?.abort();
   }, []);
 
-  const elementsOptions = useMemo(
-    () => ({
-      clientSecret,
-      appearance: {
-        theme: "night", // dark 기반 추천
-        variables: {
-          colorBackground: "#4b5563", // gray-700
-          colorText: "#D1D5DB", // gray-300
-          colorPrimary: "#babec5", // 버튼/포커스 색도 맞춤
-          colorDanger: "#ef4444", // 에러 (Tailwind red-500)
-          colorBorder: "#637081", // gray-600 (경계선 자연스럽게)
-        },
-      },
-      paymentMethodOrder: ["card"], // 카드 사용만 허용
-    }),
-    [clientSecret],
-  );
-
   const placeOrderWithSavedCard = async () => {
     if (isPayProcessing) return;
 
@@ -81,11 +56,16 @@ export default function PaymentMethodSelector({
     setErrorMsg("");
 
     try {
-      const { paymentIntent } = await paymentService.chargeSavedCard(
-        orderId,
-        selectedCardId,
-      );
+      const { paymentIntent, requiresAction, clientSecret } =
+        await paymentService.chargeSavedCard(orderId, selectedCardId);
+
+      if (requiresAction) {
+        await stripe.handleNextAction({ clientSecret });
+        return; // 유저가 이미 페이지를 벗어남. 인증 후 Stripe가 return_url로 리디렉트
+      } // 대부분 3DS. 유저의 추가 인증이 필요
+
       markAsFromPayment();
+      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
       navigate(
         `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
         {
@@ -93,8 +73,6 @@ export default function PaymentMethodSelector({
           state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
         },
       ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
-
-      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);
@@ -109,59 +87,64 @@ export default function PaymentMethodSelector({
   if (isFetching) return <Spinner />;
 
   if (useNewCard) {
-    if (!clientSecret) return <Spinner />;
-    return (
-      <Elements stripe={stripePromise} options={elementsOptions}>
-        <PaymentFormWrapper orderId={orderId} />
-      </Elements>
-    );
+    return <PaymentFormWrapper orderId={orderId} />;
   }
 
   return (
-    <main className="min-h-screen flex justify-center items-start py-20 px-4">
-      <section className="w-full max-w-lg bg-gray-600 shadow-2xl rounded-xl p-8 border border-gray-700">
+    <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl">
         {errorMsg && (
           <div className="mb-4">
             <ErrorAlert title="There was a problem" message={errorMsg} />
           </div>
         )}
 
-        <h2
-          className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 border-b`}
-        >
-          Payment method
-        </h2>
-        <DeliverySummary order={order} />
-
-        <div className="flex flex-col gap-5">
-          {savedCards.map((card) => (
-            <SavedCard
-              key={card.id}
-              card={card}
-              selectedCardId={selectedCardId}
-              setSelectedCardId={setSelectedCardId}
-            />
-          ))}
-          <Button
-            onClick={() => setUseNewCard(true)}
-            className="text-yellow-300 hover:text-yellow-400 bg-gray-500"
+        <div className="w-full rounded-lg border-2 border-yellow-600 p-6 text-left mt-5">
+          <h2
+            className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 border-b`}
           >
-            Add a credit / debit card
-          </Button>
+            Payment method
+          </h2>
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* LEFT SIDE */}
+            <div className="lg:col-span-2 space-y-6">
+              <DeliverySummary order={order} />
+
+              <div className="border rounded-lg p-5 border-gray-200">
+                <div className="flex flex-col gap-5">
+                  {savedCards.map((card) => (
+                    <SavedCard
+                      key={card.id}
+                      card={card}
+                      selectedCardId={selectedCardId}
+                      setSelectedCardId={setSelectedCardId}
+                    />
+                  ))}
+                  <Button
+                    onClick={() => setUseNewCard(true)}
+                    className="text-yellow-300 hover:text-yellow-400 bg-gray-500"
+                  >
+                    Add a credit / debit card
+                  </Button>
+                </div>
+              </div>
+
+              <div className="lg:col-span-1 space-y-6">
+                <OrderSummary order={order} />
+                {selectedCardId && (
+                  <Button
+                    onClick={placeOrderWithSavedCard}
+                    disabled={isPayProcessing}
+                    className="text-yellow-300 hover:text-yellow-400 bg-gray-500 mt-5"
+                  >
+                    {isPayProcessing ? <SpinnerMini /> : "Place an order"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <OrderSummary order={order} />
-          {selectedCardId && (
-            <Button
-              onClick={placeOrderWithSavedCard}
-              disabled={isPayProcessing}
-              className="text-yellow-300 hover:text-yellow-400 bg-gray-500 mt-5"
-            >
-              {isPayProcessing ? <SpinnerMini /> : "Place an order"}
-            </Button>
-          )}
-        </div>
-      </section>
+      </div>
     </main>
   );
 }

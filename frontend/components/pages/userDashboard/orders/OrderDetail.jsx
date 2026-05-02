@@ -3,10 +3,11 @@ import useOrder from "../../../../hooks/useOrder";
 import PageError from "../../../user_feedback/PageError";
 import BackToDash from "../../../UI/BackToDash";
 import Spinner from "../../../user_feedback/Spinner";
-import { currencyFormatter, formatPhone } from "../../../../utils/format";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderHeader from "./OrderHeader";
 import { useEffect } from "react";
+import OrderSummary from "../../../OrderUI/OrderSummary";
+import DeliverySummary from "../../../OrderUI/DeliverySummary";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -37,27 +38,7 @@ export default function OrderDetail() {
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* LEFT SIDE */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Shipping Info ⭐DeliverySummary 컴포넌트 존재함*/}
-                <div className="border rounded-lg p-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="font-semibold">Shipping method</p>
-                      <p className="text-sm text-gray-400">CJ Korea Express</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Shipping address</p>
-                      <p className="text-sm text-gray-400">
-                        {order.shipping_street}, {order.shipping_city}
-                        <br />
-                        {order.shipping_postal_code}
-                        <br />
-                        {order.shipping_full_name}
-                        <br />
-                        {formatPhone(order.shipping_phone)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <DeliverySummary order={order} />
 
                 {/* Delivered Section */}
                 <div className="border rounded-lg p-5">
@@ -74,34 +55,7 @@ export default function OrderDetail() {
                   Reorder
                 </button>
 
-                {/* OrderSummary 컴포넌트 존재함 */}
-                <div className="border rounded-lg p-5">
-                  <p className="font-semibold mb-4">Order summary</p>
-
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Subtotal</span>
-                    <span>{currencyFormatter.format(order.total_amount)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Shipping</span>
-                    <span>Free</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm mb-4">
-                    <span>Tax</span>
-                    <span>₩0</span>
-                  </div>
-
-                  <div className="border-t pt-3 flex justify-between font-semibold">
-                    <span>Order total</span>
-                    <span>{currencyFormatter.format(order.total_amount)}</span>
-                  </div>
-
-                  <div className="mt-3 text-green-500 text-sm">
-                    You saved ₩21,210
-                  </div>
-                </div>
+                <OrderSummary order={order} />
 
                 {/* Payment */}
                 <div className="border rounded-lg p-5">

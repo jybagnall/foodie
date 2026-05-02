@@ -2,8 +2,9 @@ import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import useOrder from "../../../hooks/useOrder";
 import StripePaymentSetup from "./StripePaymentSetup";
+import Spinner from "../../user_feedback/Spinner";
 
-// 라우터 진입점, 데이터 fetch
+// 라우터 진입점, 주문 관련 데이터 fetch
 export default function OrderPaymentPage() {
   const { orderId } = useParams();
   const { order, isFetching } = useOrder(orderId);

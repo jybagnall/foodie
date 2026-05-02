@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Spinner from "../../user_feedback/Spinner";
 
+// UI 데이터 생성기
 export function mapPaymentStatusToContent(status, orderId) {
   const retryLink = (
     <Link

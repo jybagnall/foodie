@@ -114,7 +114,7 @@ export async function getOrderDetails(orderId, userId) {
       ) AS items
 
       FROM orders o
-      JOIN payments p ON p.order_id = o.id
+      LEFT JOIN payments p ON p.order_id = o.id
       JOIN order_items oi ON oi.order_id = o.id
       JOIN menus m ON m.id = oi.menu_id
       WHERE o.id = $1 AND o.user_id = $2

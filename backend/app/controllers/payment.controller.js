@@ -28,13 +28,19 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   } // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
   //❗에러의 원인: return_url 이 필요함
+  // stripe.paymentIntents.confirm:
+  // 서버에서 결제 실행만 함. 카드 정보, 결제 방법, 3DS는 처리는 개발자가 정의함.
   const paymentIntent = await stripe.paymentIntents.confirm(
     payment.stripe_payment_intent_id,
     {
       payment_method: card.stripe_payment_method_id,
-      return_url: `http://127.0.0.1:5173/order/completed/${orderId}?payment_intent=${payment.stripe_payment_intent_id}`,
+      return_url: `http://127.0.0.1:5173/order/payment/${orderId}`,
     },
   ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
+
+  if (paymentIntent.status === "requires_action") {
+    return { requiresAction: true, clientSecret: paymentIntent.client_secret };
+  }
 
   return { paymentIntent };
 }

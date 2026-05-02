@@ -1,10 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import PaymentService from "../../../services/payment.service";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import useAccessToken from "../../../hooks/useAccessToken";
 import PaymentMethodSelector from "./PaymentMethodSelector";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import Spinner from "../../user_feedback/Spinner";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // 🤔 컴포넌트의 목적:
 // 해당 주문에 대한 Stripe 결제 준비 * 결제 UI의 컨테이너 컴포넌트
@@ -12,7 +17,6 @@ import PaymentMethodSelector from "./PaymentMethodSelector";
 
 export default function StripePaymentSetup({ order, orderId }) {
   const [clientSecret, setClientSecret] = useState("");
-  const [useNewCard, setUseNewCard] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const accessToken = useAccessToken();
   const navigate = useNavigate();
@@ -50,7 +54,7 @@ export default function StripePaymentSetup({ order, orderId }) {
         setClientSecret(secret);
       } catch (err) {
         const message = getUserErrorMessage(err);
-        setErrorMsg(message);
+        if (message) setErrorMsg(message);
       }
     };
 
@@ -80,21 +84,34 @@ export default function StripePaymentSetup({ order, orderId }) {
     }
   }, [redirectStatus, redirectPaymentIntentId, orderId, navigate]);
 
+  const elementsOptions = useMemo(
+    () => ({
+      clientSecret,
+      appearance: {
+        theme: "night", // dark 기반 추천
+        variables: {
+          colorBackground: "#4b5563", // gray-700
+          colorText: "#D1D5DB", // gray-300
+          colorPrimary: "#babec5", // 버튼/포커스 색도 맞춤
+          colorDanger: "#ef4444", // 에러 (Tailwind red-500)
+          colorBorder: "#637081", // gray-600 (경계선 자연스럽게)
+        },
+      },
+      paymentMethodOrder: ["card"], // 카드 사용만 허용
+    }),
+    [clientSecret],
+  );
+
   if (errorMsg) {
     return (
       <ErrorAlert title="We couldn’t start your payment" message={errorMsg} />
     ); // paymentIntent 생성 실패, 컴포넌트의 종료
   }
+  if (!clientSecret) return <Spinner />; // clientSecret 준비 후에만 Elements 렌더
 
   return (
-    <>
-      <PaymentMethodSelector
-        order={order}
-        orderId={orderId}
-        useNewCard={useNewCard}
-        setUseNewCard={setUseNewCard}
-        clientSecret={clientSecret}
-      />
-    </>
+    <Elements stripe={stripePromise} options={elementsOptions}>
+      <PaymentMethodSelector order={order} orderId={orderId} />
+    </Elements>
   );
 }

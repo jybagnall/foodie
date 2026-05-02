@@ -75,8 +75,9 @@ router.get("/verify", verifyUserAuth, async (req, res) => {
 router.post("/charge-saved-card", verifyUserAuth, async (req, res) => {
   try {
     const { orderId, cardId } = req.body;
-    await processSavedCardPayment(orderId, cardId, req.user.id);
-    res.status(200).json({ paymentIntent });
+    const { paymentIntent, requiresAction, clientSecret } =
+      await processSavedCardPayment(orderId, cardId, req.user.id);
+    res.status(200).json({ paymentIntent, requiresAction, clientSecret });
   } catch (err) {
     console.error("Saved card charge failed:", err);
     const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;

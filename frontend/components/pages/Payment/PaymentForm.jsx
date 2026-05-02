@@ -23,8 +23,6 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const accessToken = useAccessToken();
 
   useEffect(() => {
-    document.title = "Payment | Foodie";
-
     return () => abortControllerRef.current?.abort();
   }, []);
 
