@@ -54,7 +54,7 @@ app.use("/api/stripe", stripeRoutes);
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_INTERNAL_URL,
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE"],
   }),

@@ -162,10 +162,3 @@ export async function sendOrderConfirmationEmail(
     console.error("❌ Failed to send email:", err.message);
   }
 }
-
-// <div style="margin: 30px 0; text-align: center;">
-//   <a href="${process.env.FRONTEND_URL}/order/my_order"
-//      style="background-color: #f97316; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-//     View Your Order
-//   </a>
-// </div>

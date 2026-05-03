@@ -2,7 +2,7 @@ import { currencyFormatter } from "../../../../utils/format";
 
 export default function OrderPreviewItem({ item, showPrice = false }) {
   return (
-    <div className="flex gap-4 mb-6">
+    <div className="flex gap-4 mb-1">
       <img src={item.image} className="w-30 h-30 object-cover" />
       <div className="flex-1">
         <p>{item.name}</p>
@@ -13,7 +13,7 @@ export default function OrderPreviewItem({ item, showPrice = false }) {
         )}
         <p className="text-sm">Qty: {item.qty}</p>
 
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <button className="border px-3 py-1 rounded whitespace-nowrap">
             Buy again
           </button>

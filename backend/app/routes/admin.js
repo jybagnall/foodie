@@ -84,8 +84,7 @@ router.post(
 
       // 초대 토큰 생성
       const rawToken = await createAdminInvitation(email);
-      const FRONTEND_URL = "http://127.0.0.1:5173";
-      const inviteLink = `${FRONTEND_URL}/create-admin-account?token=${rawToken}`;
+      const inviteLink = `${process.env.FRONTEND_PUBLIC_URL}/create-admin-account?token=${rawToken}`;
       await sendAdminInvitationEmail(email, inviteLink);
 
       res

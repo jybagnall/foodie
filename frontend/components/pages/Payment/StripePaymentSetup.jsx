@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import PaymentService from "../../../services/payment.service";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import useAccessToken from "../../../hooks/useAccessToken";
 import PaymentMethodSelector from "./PaymentMethodSelector";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import Spinner from "../../user_feedback/Spinner";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -107,6 +107,7 @@ export default function StripePaymentSetup({ order, orderId }) {
       <ErrorAlert title="We couldn’t start your payment" message={errorMsg} />
     ); // paymentIntent 생성 실패, 컴포넌트의 종료
   }
+
   if (!clientSecret) return <Spinner />; // clientSecret 준비 후에만 Elements 렌더
 
   return (

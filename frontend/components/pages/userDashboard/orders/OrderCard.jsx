@@ -14,7 +14,7 @@ export default function OrderCard({ order }) {
   return (
     <div className="w-full rounded-lg border-2 border-gray-400 p-6 text-left mt-5">
       <OrderHeader order={order} />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <div className="flex-1 p-4 sm:p-6 flex flex-col gap-3 shadow-lg rounded-lg">
           {visibleItems.map((item) => (
             <OrderPreviewItem key={item.name} item={item} />

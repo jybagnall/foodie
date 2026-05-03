@@ -34,7 +34,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
     payment.stripe_payment_intent_id,
     {
       payment_method: card.stripe_payment_method_id,
-      return_url: `http://127.0.0.1:5173/order/payment/${orderId}`,
+      return_url: `${process.env.FRONTEND_PUBLIC_URL}/order/payment/${orderId}`,
     },
   ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
 

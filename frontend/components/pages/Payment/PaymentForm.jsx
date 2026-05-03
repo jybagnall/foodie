@@ -49,7 +49,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         return; // 이동 안함
       }
 
-      const paymentIntentId = result?.paymentIntent?.id;
+      const paymentIntentId = result?.paymentIntent?.id; // 결제 아이디
 
       if (!paymentIntentId) {
         setErrorMsg("Please try again shortly.");

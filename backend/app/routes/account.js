@@ -80,8 +80,7 @@ router.post("/forgot-password", validateBody("email"), async (req, res) => {
     const rawToken = await createPasswordResetToken(email);
 
     if (rawToken) {
-      const FRONTEND_URL = "http://127.0.0.1:5173";
-      const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+      const resetLink = `${process.env.FRONTEND_PUBLIC_URL}/reset-password?token=${rawToken}`;
       await sendPasswordResetEmail(email, resetLink);
     }
 

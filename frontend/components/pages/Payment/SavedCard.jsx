@@ -11,51 +11,60 @@ export default function SavedCard({ card, selectedCardId, setSelectedCardId }) {
         onClick={handleSelect}
         className={`
           relative cursor-pointer rounded-2xl p-5 text-white
-          transition-all duration-300 transform
-          ${isSelected ? "scale-105 ring-2 ring-blue-400" : "hover:scale-[1.02]"}
+          transition-all duration-300
+          ${isSelected ? "ring-2 ring-blue-400" : "hover:scale-[1.02]"}
         `}
       >
+        {/* Background */}
         <div
           className={`
             absolute inset-0 rounded-2xl
             ${
               isSelected
                 ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600"
-                : "bg-gradient-to-br from-gray-800 to-gray-900"
+                : "bg-gradient-to-br from-gray-600 to-gray-700"
             }
           `}
         />
 
+        {/* Glass effects */}
         <div className="absolute inset-0 rounded-2xl backdrop-blur-xl bg-white/5" />
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/10 via-transparent to-transparent" />
-        <div className="relative z-10 flex flex-col justify-between h-18">
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between min-h-[120px]">
+          {/* Top */}
           <div className="flex justify-between items-center">
-            <span className="uppercase text-sm tracking-widest opacity-80">
+            <span className="uppercase text-sm tracking-widest opacity-80 truncate">
               {card.brand}
             </span>
 
             {card.is_default && (
-              <span className="text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur">
+              <span className="text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur shrink-0">
                 Default
               </span>
             )}
           </div>
 
-          <div className="text-xl font-mono tracking-[0.2em]">
+          {/* Card Number */}
+          <div className="text-lg sm:text-xl font-mono tracking-[0.2em] whitespace-nowrap">
             •••• •••• •••• {card.last4}
           </div>
 
-          <div className="flex justify-between items-end text-sm">
-            <div>
+          {/* Bottom */}
+          <div className="flex justify-between items-center text-sm gap-2">
+            {/* EXP */}
+            <div className="min-w-0">
               <div className="opacity-70 text-[10px] leading-none">EXP</div>
-              <div>
+              <div className="whitespace-nowrap">
                 {String(card.exp_month).padStart(2, "0")}/
                 {String(card.exp_year).slice(-2)}
               </div>
             </div>
 
+            {/* Selected */}
             {isSelected && (
-              <div className="text-xs font-semibold text-blue-200">
+              <div className="text-xs font-semibold text-blue-200 shrink-0 whitespace-nowrap">
                 Selected
               </div>
             )}
