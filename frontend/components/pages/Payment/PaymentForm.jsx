@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { PaymentElement } from "@stripe/react-stripe-js";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
@@ -9,6 +10,7 @@ import PaymentService from "../../../services/payment.service";
 import useAccessToken from "../../../hooks/useAccessToken";
 import SaveCardPreferences from "./SaveCardPreferences";
 import { confirmStripePayment } from "../../../utils/stripeHelpers";
+import useUserId from "../../../hooks/useUserId";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
@@ -19,6 +21,8 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const [setAsDefault, setSetAsDefault] = useState(false);
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const userId = useUserId();
+  const queryClient = useQueryClient();
   const abortControllerRef = useRef(null);
   const accessToken = useAccessToken();
 
@@ -57,6 +61,10 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       }
 
       markAsFromPayment();
+
+      if (saveCard) {
+        queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
+      }
       navigate(
         `/order/completed/${orderId}?payment_intent=${paymentIntentId}`,
         {

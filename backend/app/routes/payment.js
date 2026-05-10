@@ -4,6 +4,7 @@ import { findUniquePaymentByOrderId } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import {
   getOrCreateClientSecret,
+  getExistingClientSecret,
   processSavedCardPayment,
 } from "../controllers/payment.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
@@ -11,48 +12,15 @@ import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 에러 메시지들을 다듬을 것.
-// router.post("/cancel-order/:orderId", verifyUserAuth, async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const payment = await findUniquePayment(orderId);
-
-//     if (!payment) {
-//       return res.status(404).json({
-//         error: "Order not found. Please try again.",
-//       });
-//     }
-
-//     if (payment?.payment_status === "succeeded") {
-//       await stripe.refunds.create({
-//         payment_intent: payment.stripe_payment_intent_id,
-//       });
-//       // await updatePaymentStatus(payment.id, "refunded"); 함수 존재하지 않음
-//       // await updateOrderStatus("cancelled", orderId);
-//     }
-
-//     res.status(200).json({ message: "Order cancelled and refunded." });
-//   } catch (err) {
-//     console.error("Refund failed:", err.message);
-//     return res.status(500).json({
-//       error: "We failed to cancel order. Please try again.",
-//     });
-//   }
-// });
-
 router.get("/client-secret", verifyUserAuth, async (req, res) => {
   try {
     const orderId = req.query.order_id;
-    const existing = await findUniquePaymentByOrderId(orderId);
-    if (!existing) return res.status(404).json({ error: "Payment not found." });
-
-    const intent = await stripe.paymentIntents.retrieve(
-      existing.stripe_payment_intent_id,
-    );
-    res.json({ clientSecret: intent.client_secret });
+    const { clientSecret } = await getExistingClientSecret(orderId, req.user);
+    res.json({ clientSecret });
   } catch (err) {
     console.error("Stripe verification error:", err);
-    return res.status(500).json({
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
       error: "Something went wrong during payment. Please try again.",
     });
   }
@@ -104,18 +72,24 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
 });
 
 // Webhook이 실행될 때 paymentIntent.metadata.saveCard를 읽어서 카드를 저장할지 결정
-router.post("/update-payment-intent", verifyUserAuth, async (req, res) => {
+
+router.patch("/update-payment-intent", verifyUserAuth, async (req, res) => {
   try {
     const { orderId, saveCard, setAsDefault } = req.body;
     const payment = await findUniquePaymentByOrderId(orderId);
-    if (!payment) return res.status(404).json({ error: "Payment not found." });
+    if (!payment)
+      return res
+        .status(404)
+        .json({ error: "Order not found. Please try again." });
 
     await stripe.paymentIntents.update(payment.stripe_payment_intent_id, {
       metadata: {
         saveCard: String(saveCard),
         setAsDefault: String(setAsDefault),
       },
+      ...(saveCard && { setup_future_usage: "on_session" }),
     });
+
     res.json({ success: true });
   } catch (err) {
     console.error("Stripe payment session error,", err.message);

@@ -45,7 +45,6 @@ export default function MyAccount() {
             >
               {/* Left side */}
               <div className="flex items-center gap-3 mb-1">
-                {/* Field Icon */}
                 <f.icon className="w-7 h-7 text-gray-400" />
 
                 {/* Text */}

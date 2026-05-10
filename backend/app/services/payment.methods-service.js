@@ -10,6 +10,25 @@ export async function clearDefaultCard(client, userId) {
   await client.query(q, [userId]);
 }
 
+export async function findUniqueStripeMethodId(cardId, userId) {
+  const q = `
+    SELECT stripe_payment_method_id 
+    FROM payment_methods 
+    WHERE id = $1 AND user_id = $2
+    `;
+  const result = await pool.query(q, [cardId, userId]);
+  return result.rows[0]?.stripe_payment_method_id ?? null;
+}
+
+export async function deleteCard(cardId, userId) {
+  const q = `
+    DELETE FROM payment_methods
+    WHERE (id = $1 AND user_id = $2)
+  `;
+
+  await pool.query(q, [cardId, userId]);
+}
+
 export async function getCardsInfo(userId) {
   const q = `
   SELECT 

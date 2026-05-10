@@ -10,7 +10,6 @@ export default function AddressCard({
   isDeleting,
 }) {
   const { id, full_name, street, city, postal_code, phone, is_default } = info;
-
   const [showAlert, setShowAlert] = useState(false);
 
   return (

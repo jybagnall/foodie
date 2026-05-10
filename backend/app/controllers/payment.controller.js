@@ -9,42 +9,6 @@ import { identifyCardByUserId } from "../services/payment.methods-service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function processSavedCardPayment(orderId, cardId, userId) {
-  const order = await getOrderById(orderId); // 주문 검증
-  if (!order) {
-    console.error("Order not found", { orderId, userId });
-    throw new Error("ORDER_NOT_FOUND");
-  }
-  if (order.user_id !== userId) throw new Error("FORBIDDEN");
-
-  const card = await identifyCardByUserId(cardId, userId);
-  if (!card) {
-    throw new Error("FORBIDDEN");
-  } // 카드 검증
-
-  const payment = await findUniquePaymentByOrderId(orderId);
-  if (!payment) {
-    throw new Error("PAYMENT_NOT_FOUND");
-  } // payment intent 조회 (결제 요청서가 생성된 상태인가)
-
-  //❗에러의 원인: return_url 이 필요함
-  // stripe.paymentIntents.confirm:
-  // 서버에서 결제 실행만 함. 카드 정보, 결제 방법, 3DS는 처리는 개발자가 정의함.
-  const paymentIntent = await stripe.paymentIntents.confirm(
-    payment.stripe_payment_intent_id,
-    {
-      payment_method: card.stripe_payment_method_id,
-      return_url: `${process.env.FRONTEND_PUBLIC_URL}/order/payment/${orderId}`,
-    },
-  ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
-
-  if (paymentIntent.status === "requires_action") {
-    return { requiresAction: true, clientSecret: paymentIntent.client_secret };
-  }
-
-  return { paymentIntent };
-}
-
 // PaymentIntent 생성 및 DB 저장
 async function createAndStoreStripePaymentIntent(
   orderId,
@@ -58,9 +22,9 @@ async function createAndStoreStripePaymentIntent(
     currency,
     customer: customerId,
     payment_method_types: ["card"],
-    setup_future_usage: "on_session", // 유저가 직접 결제할 때 재사용
-    // automatic_payment_methods: { enabled: true }, // 사용 가능한 결제 수단을 자동으로 활성화
-    metadata: { userId: String(userId), orderId: String(orderId) }, // 주문 & 사용자 연결 (custom data)
+    // automatic_payment_methods: { enabled: true }, 사용 가능한 결제 수단을 자동으로 활성화
+    metadata: { userId: String(userId), orderId: String(orderId) },
+    // 주문 & 사용자 연결 (custom data)
   });
 
   if (!paymentIntent || !paymentIntent.client_secret) {
@@ -97,7 +61,8 @@ async function ensureStripeCustomerId(user) {
 
   if (customerId) {
     try {
-      await stripe.customers.retrieve(customerId); // Stripe에 존재하는지 검증
+      // Stripe에 존재하는지 검증
+      await stripe.customers.retrieve(customerId);
     } catch (err) {
       if (err.code === "resource_missing") {
         customerId = null;
@@ -126,6 +91,36 @@ async function ensureStripeCustomerId(user) {
   return customerId;
 }
 
+export async function getExistingClientSecret(orderId, user) {
+  if (!orderId || isNaN(Number(orderId))) {
+    throw new Error("INVALID_ORDER_ID");
+  }
+
+  const order = await getOrderById(orderId); // 금액 가져오기
+  if (!order) {
+    console.error("Order not found", { orderId, userId: user.id });
+    throw new Error("ORDER_NOT_FOUND");
+  }
+  if (order.user_id !== user.id) throw new Error("FORBIDDEN");
+  if (order.total_amount <= 0) {
+    throw new Error("INVALID_AMOUNT");
+  }
+
+  const existing = await findUniquePaymentByOrderId(orderId);
+  if (!existing) throw new Error("PAYMENT_NOT_FOUND");
+
+  const intent = await stripe.paymentIntents.retrieve(
+    existing.stripe_payment_intent_id,
+  );
+
+  const amount = Math.round(order.total_amount * 100);
+  if (intent.amount !== amount) {
+    throw new Error("AMOUNT_MISMATCH_WITH_INTENT");
+  }
+
+  return { clientSecret: intent.client_secret };
+}
+
 export async function getOrCreateClientSecret(orderId, user) {
   const currency = "usd";
 
@@ -143,6 +138,7 @@ export async function getOrCreateClientSecret(orderId, user) {
     throw new Error("INVALID_AMOUNT");
   }
   const amount = Math.round(order.total_amount * 100);
+
   const existing = await findUniquePaymentByOrderId(orderId);
 
   if (existing?.stripe_payment_intent_id) {
@@ -167,4 +163,41 @@ export async function getOrCreateClientSecret(orderId, user) {
   );
 
   return { clientSecret };
+}
+
+export async function processSavedCardPayment(orderId, cardId, userId) {
+  const order = await getOrderById(orderId); // 주문 검증
+  if (!order) {
+    console.error("Order not found", { orderId, userId });
+    throw new Error("ORDER_NOT_FOUND");
+  }
+  if (order.user_id !== userId) throw new Error("FORBIDDEN");
+
+  const card = await identifyCardByUserId(cardId, userId);
+  if (!card) {
+    throw new Error("FORBIDDEN");
+  } // 카드 검증
+
+  const payment = await findUniquePaymentByOrderId(orderId);
+  if (!payment) {
+    throw new Error("PAYMENT_NOT_FOUND");
+  } // payment intent 조회 (결제 요청서가 생성된 상태인가)
+
+  //❗에러의 원인: return_url 이 필요함
+  // stripe.paymentIntents.confirm:
+  // 서버에서 결제 실행만 함. 카드 정보, 결제 방법, 3DS는 처리는 개발자가 정의함.
+
+  const paymentIntent = await stripe.paymentIntents.confirm(
+    payment.stripe_payment_intent_id,
+    {
+      payment_method: card.stripe_payment_method_id,
+      return_url: `${process.env.FRONTEND_PUBLIC_URL}/order/payment/${orderId}`,
+    },
+  ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
+
+  if (paymentIntent.status === "requires_action") {
+    return { requiresAction: true, clientSecret: paymentIntent.client_secret };
+  }
+
+  return { paymentIntent };
 }

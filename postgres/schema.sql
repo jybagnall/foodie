@@ -90,7 +90,7 @@ CREATE TABLE payments (
   order_id INT REFERENCES orders(id) UNIQUE,
   stripe_payment_intent_id VARCHAR(100) UNIQUE NOT NULL, 
   stripe_charge_id VARCHAR(100) UNIQUE, --환불할 때 필요
-  payment_method_id INT REFERENCES payment_methods(id), -- 카드 저장 안 할 때 null
+  payment_method_id INT REFERENCES payment_methods(id) ON DELETE SET NULL, -- 카드 저장 안 할 때 null
   stripe_payment_method_id VARCHAR(100),      
   amount NUMERIC(10,2) NOT NULL,
   refunded_amount NUMERIC(10,2) DEFAULT 0,

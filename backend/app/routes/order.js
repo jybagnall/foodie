@@ -9,7 +9,10 @@ import { saveShippingInfo } from "../services/address-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import pool from "../config/db.js";
 import { validateOrderBody } from "../middleware/validateOrderBody.js";
-import { buildOrderWithPrices } from "../controllers/order.controller.js";
+import {
+  buildOrderWithPrices,
+  cancelOrderAndRefund,
+} from "../controllers/order.controller.js";
 
 const router = express.Router();
 
@@ -31,6 +34,20 @@ router.get("/:orderId", verifyUserAuth, async (req, res) => {
   } catch (err) {
     console.error("fetching error,", err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    await cancelOrderAndRefund(orderId, req.user);
+    res.status(200).json({ message: "Order cancelled and refunded." });
+  } catch (err) {
+    console.error("Refund failed:", err.message);
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error: "We failed to cancel order. Please try again.",
+    });
   }
 });
 
@@ -58,7 +75,8 @@ router.post(
         totalAmount,
         address,
       );
-      await insertOrderItems(client, orderId, completeOrder); // [{ menu_name, menu_id, qty, price }, {}]
+      await insertOrderItems(client, orderId, completeOrder);
+      // [{ menu_name, menu_id, qty, price }, {}]
       await client.query("COMMIT");
       res.status(201).json({ message: "Order info is saved.", orderId });
     } catch (err) {

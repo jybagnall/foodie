@@ -49,7 +49,7 @@ export default function AddressBook() {
 
   return (
     <main className="min-h-screen flex flex-col items-center py-10 px-4 space-y-6">
-      <p className="font-bold text-xl">Address Book</p>
+      <p className="self-start font-bold text-xl">Address Book</p>
       {currentError && (
         <div className="w-full max-w-2xl">
           <ErrorAlert

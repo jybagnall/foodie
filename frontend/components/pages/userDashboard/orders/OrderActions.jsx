@@ -1,6 +1,18 @@
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import useAccessToken from "../../../../hooks/useAccessToken";
+import useUserId from "../../../../hooks/useUserId";
+import { useEffect } from "react";
+import { useState } from "react";
 
 export default function OrderActions({ order }) {
+  const accessToken = useAccessToken();
+  const userId = useUserId();
+  const queryClient = useQueryClient();
+
+  // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
+  const cancelOrder = async () => {};
+
   return (
     <div className="flex flex-row gap-2 sm:flex-col sm:gap-3 sm:min-w-[140px] mt-0 sm:mt-5">
       <Link
@@ -15,3 +27,6 @@ export default function OrderActions({ order }) {
     </div>
   );
 }
+
+// ["order", orderId]
+// import { useQuery, useQueryClient } from "@tanstack/react-query";

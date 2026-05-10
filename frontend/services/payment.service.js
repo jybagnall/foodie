@@ -5,6 +5,8 @@ class PaymentService {
     this.client = new Client(signal, getAccessToken);
   }
 
+ 
+
   async chargeSavedCard(orderId, cardId) {
     const data = await this.client.post("/api/payments/charge-saved-card", {
       orderId,
@@ -29,11 +31,14 @@ class PaymentService {
   }
 
   async updatePaymentIntent(orderId, saveCard, setAsDefault) {
-    const data = await this.client.post("/api/payments/update-payment-intent", {
-      orderId,
-      saveCard,
-      setAsDefault,
-    });
+    const data = await this.client.patch(
+      "/api/payments/update-payment-intent",
+      {
+        orderId,
+        saveCard,
+        setAsDefault,
+      },
+    );
     return data;
   }
 

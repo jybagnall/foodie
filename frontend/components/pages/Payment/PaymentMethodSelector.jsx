@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useStripe } from "@stripe/react-stripe-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import useSavedCards from "../../../hooks/useSavedCards";
 import Button from "../../UI/Button";
@@ -9,13 +9,13 @@ import SavedCard from "./SavedCard";
 import PaymentFormWrapper from "./PaymentFormWrapper";
 import Spinner from "../../user_feedback/Spinner";
 import useAccessToken from "../../../hooks/useAccessToken";
-import useUserId from "../../../hooks/useUserId";
 import SpinnerMini from "../../user_feedback/SpinnerMini";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
-import { markAsFromPayment } from "../../../storage/paymentStorage";
 import PaymentService from "../../../services/payment.service";
 import DeliverySummary from "../../OrderUI/DeliverySummary";
 import OrderSummary from "../../OrderUI/OrderSummary";
+import { markAsFromPayment } from "../../../storage/paymentStorage";
+import useUserId from "../../../hooks/useUserId";
 
 export default function PaymentMethodSelector({ order, orderId }) {
   const [useNewCard, setUseNewCard] = useState(false);
@@ -98,7 +98,6 @@ export default function PaymentMethodSelector({ order, orderId }) {
             <ErrorAlert title="There was a problem" message={errorMsg} />
           </div>
         )}
-
         <div className="w-full rounded-lg border-2 border-yellow-600 p-6 text-left mt-5">
           <h2
             className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 border-b`}

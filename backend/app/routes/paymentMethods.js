@@ -1,13 +1,14 @@
-// GET    /payment-methods        // 카드 목록 조회
-// POST   /payment-methods        // 카드 저장 (optional)
-// DELETE /payment-methods/:id    // 카드 삭제
-// PATCH  /payment-methods/:id/default // 기본 카드 설정
-
 import express from "express";
+import Stripe from "stripe";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
-import { getCardsInfo } from "../services/payment.methods-service.js";
+import {
+  deleteCard,
+  findUniqueStripeMethodId,
+  getCardsInfo,
+} from "../services/payment.methods-service.js";
 
 const router = express.Router();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.get("/", verifyUserAuth, async (req, res) => {
   try {
@@ -21,18 +22,21 @@ router.get("/", verifyUserAuth, async (req, res) => {
   }
 });
 
-// router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
-//   try {
-//     const { orderId } = req.body;
-//     const { clientSecret } = await getOrCreateClientSecret(orderId, req.user);
-//     res.json({ clientSecret });
-//   } catch (err) {
-//     console.error("Stripe payment session error,", err.message);
-//     const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
-//     return res.status(status).json({
-//       error: "Something went wrong during payment. Please try again.",
-//     });
-//   }
-// });
+router.delete("/delete/:cardId", verifyUserAuth, async (req, res) => {
+  const { cardId } = req.params;
+  try {
+    const methodId = await findUniqueStripeMethodId(cardId, req.user.id);
+    if (!methodId) return res.status(404).json({ error: "FORBIDDEN" });
+
+    try {
+      await stripe.paymentMethods.detach(methodId); // 결제 완료된 카드만 삭제됨
+    } catch {}
+    await deleteCard(cardId, req.user.id);
+    res.status(200).json({ message: "Requested card deleted" });
+  } catch (err) {
+    console.error("update error,", err.message);
+    res.status(500).json({ error: "Failed to delete payment method." });
+  }
+});
 
 export default router;

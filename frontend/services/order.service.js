@@ -5,6 +5,11 @@ class OrderService {
     this.client = new Client(signal, getAccessToken);
   }
 
+  async cancelOrder(orderId) {
+    const data = await this.client.post(`/api/orders/${orderId}/cancel-order`);
+    return data;
+  }
+
   async initializeOrder(orderDetails) {
     const data = await this.client.post(
       "/api/orders/initialize-order",

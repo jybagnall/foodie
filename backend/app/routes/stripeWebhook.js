@@ -18,6 +18,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const HANDLED_EVENTS = [
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
+  "charge.refunded",
 ];
 
 // Stripe가 카드사와 통신 후 결제를 처리하고 나면, 서버에 결과를 알림

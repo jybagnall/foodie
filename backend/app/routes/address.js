@@ -128,8 +128,8 @@ router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
     await deleteAddress(req.user.id, addressId);
     res.status(200).json({ message: "Address deleted" });
   } catch (err) {
-    console.error("update error,", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("delete error,", err.message);
+    res.status(500).json({ error: "Failed to delete requested method." });
   }
 });
 

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import PaymentMethodsService from "../services/payment-methods.service";
 import useAccessToken from "./useAccessToken";
 import useUserId from "./useUserId";
@@ -6,6 +6,7 @@ import useUserId from "./useUserId";
 export default function useSavedCards() {
   const accessToken = useAccessToken();
   const userId = useUserId();
+  const queryClient = useQueryClient();
 
   const {
     data: savedCards = [],
@@ -19,5 +20,26 @@ export default function useSavedCards() {
     enabled: !!userId,
   });
 
-  return { savedCards, isFetching, isFetchingError };
+  const {
+    mutate: deleteCard,
+    isPending: isDeleting,
+    isError: isDeleteError,
+  } = useMutation({
+    mutationFn: (id) =>
+      new PaymentMethodsService(null, () => accessToken).deletePaymentMethod(
+        id,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
+    },
+  });
+
+  return {
+    savedCards,
+    isFetching,
+    isFetchingError,
+    deleteCard,
+    isDeleting,
+    isDeleteError,
+  };
 }

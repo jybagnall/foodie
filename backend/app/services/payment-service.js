@@ -57,6 +57,24 @@ export async function updatePaymentMethod(client, paymentMethodId, orderId) {
   return { success: true };
 }
 
+export async function updatePaymentStatus(
+  client,
+  newStatus,
+  refundedAmount,
+  stripeChargeId,
+) {
+  const q = `
+    UPDATE payments 
+    SET payment_status = $1,
+        refunded_amount = $2,
+        updated_at = NOW()
+    WHERE stripe_charge_id = $3
+  `;
+  const values = [newStatus, refundedAmount, stripeChargeId];
+  await client.query(q, values);
+  return { success: true };
+}
+
 // 📍webhook 상태 저장
 // INSERT → 첫 webhook일 때 (status = 'processing')
 // Stripe 재시도로 같은 이벤트가 들어왔다면 시간과 상태 업데이트 필수

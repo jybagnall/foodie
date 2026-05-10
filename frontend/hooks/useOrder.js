@@ -28,6 +28,20 @@ export default function useOrder(orderId) {
     ? { ...listData, ...orderDetail }
     : (listData ?? null);
 
+  //     const {
+  //   mutate: deleteCard,
+  //   isPending: isDeleting,
+  //   isError: isDeleteError,
+  // } = useMutation({
+  //   mutationFn: (id) =>
+  //     new PaymentMethodsService(null, () => accessToken).deletePaymentMethod(
+  //       id,
+  //     ),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
+  //   },
+  // });
+
   return {
     order,
     isFetching,

@@ -149,22 +149,40 @@ export async function insertOrderItems(client, orderId, order) {
   await client.query(q, [orderId, ...values]);
 }
 
-export async function updateOrderStatus(client, orderId, status) {
+export async function updateOrderStatus(client, orderId, newStatus) {
+  const ALLOWED_TRANSITIONS = {
+    pending: ["paid"],
+    paid: ["cancelled"],
+  };
+
+  // 현재 상태 조회
+  const { rows } = await client.query(
+    `SELECT status FROM orders WHERE id = $1 FOR UPDATE`,
+    [orderId],
+  );
+
+  if (rows.length === 0) {
+    throw new Error("ORDER_NOT_FOUND");
+  }
+
+  const currentStatus = rows[0].status; // 'pending', 'paid'
+  const allowed = ALLOWED_TRANSITIONS[currentStatus] ?? [];
+  if (!allowed.includes(newStatus)) {
+    throw new Error("ORDER_STATUS_CONFLICT");
+  }
+
   const q = `
     UPDATE orders
     SET status = $1
     WHERE id = $2
-    AND status = 'pending'
+    AND status = $3
     `;
 
-  const values = [status, orderId];
-
+  const values = [newStatus, orderId, currentStatus];
   const result = await client.query(q, values);
 
   if (result.rowCount === 0) {
-    console.warn(
-      `Order ${orderId} not updated - already ${status} or not found`,
-    ); // 이미 paid였거나, orderId가 잘못됐거나
+    throw new Error("ORDER_STATUS_CONFLICT"); // 이미 paid였거나, orderId가 잘못됐거나
   }
 
   return { success: true };
