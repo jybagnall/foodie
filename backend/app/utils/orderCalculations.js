@@ -12,3 +12,14 @@ export function formatCurrency(currency, amount_received) {
     currency: currency.toUpperCase(),
   }).format(amount_received / 100);
 }
+
+export function isWithinCancellationWindow(orderCreatedAt, days) {
+  const orderDate = new Date(orderCreatedAt);
+
+  if (isNaN(orderDate.getTime())) return false;
+
+  const daysSinceOrder =
+    (Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
+
+  return daysSinceOrder <= days;
+}

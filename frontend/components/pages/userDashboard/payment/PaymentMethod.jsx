@@ -58,6 +58,7 @@ export default function PaymentMethods() {
           {selectedCardId && (
             <button
               onClick={() => setShowAlert(true)}
+              disabled={isDeleting}
               className="px-3 py-1 border rounded cursor-pointer hover:bg-gray-800"
             >
               Remove
@@ -76,7 +77,7 @@ export default function PaymentMethods() {
             isActivating={isDeleting}
             modalIsOpen={showAlert}
             onCancel={() => setShowAlert(false)}
-            alertText="Are you sure to delete this card?"
+            title="Are you sure to delete this card?"
             userIntentionText="Delete"
           />
         )}

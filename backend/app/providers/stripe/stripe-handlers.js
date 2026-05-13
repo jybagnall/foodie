@@ -3,6 +3,8 @@ import {
   upsertPaymentFromIntent,
   markPaymentFailed,
   updatePaymentMethod,
+  findPaymentByStripeChargeId,
+  updatePaymentStatus,
 } from "../../services/payment-service.js";
 import { updateOrderStatus } from "../../services/order-service.js";
 import { sendOrderConfirmationEmail } from "../../utils/email-orderConfirm.js";
@@ -10,6 +12,11 @@ import {
   clearDefaultCard,
   saveCardToDb,
 } from "../../services/payment.methods-service.js";
+import {
+  createRefundRecord,
+  markRefundAsCompleted,
+  refundRecordExists,
+} from "../../services/refund-service.js";
 
 // 여기서의 실패: DB 저장 실패, 주문 상태 업데이트 실패, 트랜잭션 롤백, 서버 장애
 // 이 실패들은 유저에게 실시간으로 보여줄 수 없음.
@@ -78,4 +85,35 @@ export async function handlePaymentIntentFailed(client, paymentIntent) {
   }
 
   await markPaymentFailed(client, paymentIntent.id, failureMsg);
+}
+
+export async function handleRefundUpdated(client, refundObj) {
+  if (refundObj.status !== "succeeded") return; // 완료된 것만 처리
+
+  const payment = await findPaymentByStripeChargeId(client, refundObj.charge);
+
+  if (!payment) {
+    console.error("Payment not found for charge", {
+      chargeId: refundObj.charge,
+    });
+    return;
+  }
+
+  const { id: paymentId, order_id: orderId } = payment;
+  const alreadyProcessed = await refundRecordExists(client, refundObj.id);
+
+  // 환불 요청 데이터가 없음
+  if (!alreadyProcessed) {
+    await createRefundRecord(client, {
+      paymentId: paymentId,
+      stripeRefundId: refundObj.id,
+      amount: refundObj.amount / 100,
+      refundStatus: "succeeded",
+      reason: refundObj.reason,
+    });
+    await updatePaymentStatus(client, "refund_pending", refundObj.charge);
+    await updateOrderStatus(client, orderId, "cancelled");
+  } else {
+    await markRefundAsCompleted(client, "succeeded", refundObj.id);
+  }
 }

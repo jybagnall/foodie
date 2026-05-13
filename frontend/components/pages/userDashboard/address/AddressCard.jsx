@@ -39,6 +39,7 @@ export default function AddressCard({
 
         <button
           onClick={() => setShowAlert(true)}
+          disabled={isDeleting}
           className="px-3 py-1 border rounded cursor-pointer"
         >
           Remove
@@ -65,7 +66,7 @@ export default function AddressCard({
           isActivating={isDeleting}
           modalIsOpen={showAlert}
           onCancel={() => setShowAlert(false)}
-          alertText={`Are you sure to delete this address? ${street} ${city}?`}
+          title={`Are you sure to delete this address? ${street} ${city}?`}
           userIntentionText="Delete"
         />
       )}

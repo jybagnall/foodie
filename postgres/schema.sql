@@ -84,7 +84,7 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, refunded, succeeded
+-- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, refunded, succeeded, refund_pending
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,
@@ -93,7 +93,6 @@ CREATE TABLE payments (
   payment_method_id INT REFERENCES payment_methods(id) ON DELETE SET NULL, -- 카드 저장 안 할 때 null
   stripe_payment_method_id VARCHAR(100),      
   amount NUMERIC(10,2) NOT NULL,
-  refunded_amount NUMERIC(10,2) DEFAULT 0,
   currency VARCHAR(10) DEFAULT 'usd',
   payment_status VARCHAR(20) DEFAULT 'requires_payment',
   updated_at TIMESTAMP DEFAULT NOW(), --웹훅 재시도나 상태 변경 때 기록
@@ -101,6 +100,19 @@ CREATE TABLE payments (
   created_at TIMESTAMP DEFAULT NOW(),
   failure_reason TEXT
 )
+
+CREATE TABLE refunds (
+  id SERIAL PRIMARY KEY,
+  payment_id INT REFERENCES payments(id) ON DELETE CASCADE,
+  stripe_refund_id VARCHAR(100) UNIQUE NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  refund_status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT NOW(),
+  reason VARCHAR(100), 
+  completed_at TIMESTAMP
+);
+-- reason: duplicate, fraudulent, requested_by_customer 등
+-- refund_status: pending, succeeded, failed
 
 CREATE TABLE payment_methods (
   id SERIAL PRIMARY KEY,
@@ -129,7 +141,6 @@ CREATE TABLE stripe_events (
   resolved_at TIMESTAMP NULL,
   processing_at TIMESTAMP NULL
 );
---DELETE FROM stripe_events;
 
 -- partial index: dead 상태이고 아직 알림 안 간 이벤트만 DB가 모아둠
 CREATE INDEX idx_stripe_dead_unnotified

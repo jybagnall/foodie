@@ -72,7 +72,7 @@ export async function getAllOrders(userId) {
 
 export async function getOrderById(orderId) {
   const q = `
-  SELECT user_id, total_amount
+  SELECT user_id, total_amount, status
   FROM orders
   WHERE id = $1
   `;
@@ -156,6 +156,7 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   };
 
   // 현재 상태 조회
+  // FOR UPDATE: SELECT 결과를 곧 UPDATE할 예정이니까 잠가둔다
   const { rows } = await client.query(
     `SELECT status FROM orders WHERE id = $1 FOR UPDATE`,
     [orderId],
@@ -166,6 +167,9 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   }
 
   const currentStatus = rows[0].status; // 'pending', 'paid'
+
+  if (currentStatus === newStatus) return { success: true };
+
   const allowed = ALLOWED_TRANSITIONS[currentStatus] ?? [];
   if (!allowed.includes(newStatus)) {
     throw new Error("ORDER_STATUS_CONFLICT");

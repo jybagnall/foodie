@@ -3,8 +3,10 @@ import { useState } from "react";
 import OrderHeader from "./OrderHeader";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderActions from "./OrderActions";
+import useOrder from "../../../../hooks/useOrder";
 
 export default function OrderCard({ order }) {
+  const { cancelOrder, isCanceling, isCancelError } = useOrder(order.id);
   const [expanded, setExpanded] = useState(false);
   const visibleItems = expanded
     ? order.preview_items
@@ -32,8 +34,18 @@ export default function OrderCard({ order }) {
           )}
         </div>
 
-        <OrderActions order={order} />
+        <OrderActions
+          order={order}
+          cancelOrder={cancelOrder}
+          isCanceling={isCanceling}
+        />
       </div>
+
+      {isCancelError && (
+        <p className="text-red-400 text-sm mt-2">
+          Failed to cancel order. Please try again.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,32 +1,60 @@
 import { Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import useAccessToken from "../../../../hooks/useAccessToken";
-import useUserId from "../../../../hooks/useUserId";
-import { useEffect } from "react";
 import { useState } from "react";
+import dayjs from "dayjs";
+import AlertModal from "../../../UI/AlertModal";
 
-export default function OrderActions({ order }) {
-  const accessToken = useAccessToken();
-  const userId = useUserId();
-  const queryClient = useQueryClient();
+export default function OrderActions({ order, cancelOrder, isCanceling }) {
+  const [showAlert, setShowAlert] = useState(false);
 
-  // Stripe는 에러를 throw하지 않고, return 값의 error로 줌.
-  const cancelOrder = async () => {};
+  const isCancellable =
+    order.status === "paid" &&
+    dayjs().diff(dayjs(order.created_at), "day") <= 7;
+
+  const canCompleteOrder =
+    order.status === "pending" &&
+    dayjs().diff(dayjs(order.created_at), "day") < 8;
 
   return (
     <div className="flex flex-row gap-2 sm:flex-col sm:gap-3 sm:min-w-[140px] mt-0 sm:mt-5">
       <Link
         to={`/my-account/orders/${order.id}`}
-        className="flex-1 sm:flex-none text-center border border-gray-300 shadow-md rounded-sm p-3 text-yellow-500 font-bold text-base cursor-pointer"
+        className="flex-1 sm:flex-none text-center border border-gray-300 shadow-md rounded-sm p-3 text-yellow-300 font-bold text-base cursor-pointer"
       >
         Order Details
       </Link>
-      <button className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-gray-300 text-base cursor-pointer">
-        Cancel Order
-      </button>
+
+      {isCancellable && (
+        <button
+          onClick={() => setShowAlert(true)}
+          disabled={isCanceling}
+          className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-gray-300 text-base cursor-pointer"
+        >
+          Cancel Order
+        </button>
+      )}
+
+      {canCompleteOrder && (
+        <button className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-red-400 text-base cursor-pointer">
+          Complete Payment
+        </button>
+      )}
+
+      {showAlert && (
+        <AlertModal
+          activateFn={() =>
+            cancelOrder(order.id, {
+              onSuccess: () => setShowAlert(false),
+              onError: () => setShowAlert(false),
+            })
+          }
+          isActivating={isCanceling}
+          modalIsOpen={showAlert}
+          onCancel={() => setShowAlert(false)}
+          title="Cancel Order?"
+          description="Your payment will be refunded. This may take 5–10 business days to appear in your account."
+          userIntentionText="Cancel Order"
+        />
+      )}
     </div>
   );
 }
-
-// ["order", orderId]
-// import { useQuery, useQueryClient } from "@tanstack/react-query";

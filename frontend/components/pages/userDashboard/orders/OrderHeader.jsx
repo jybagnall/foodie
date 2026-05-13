@@ -1,17 +1,11 @@
-import {
-  formatDateOnly,
-  formatOrderStatus,
-  formatPaymentStatus,
-} from "../../../../utils/format";
+import { formatDateOnly } from "../../../../utils/format";
+import { getDisplayOrderStatus } from "../../../../utils/orderHelpers";
 
 // 결제가 실패했거나 대기 중이면 → payment_status 우선
 // 결제가 완료됐으면 → order_status
 
 export default function OrderHeader({ order }) {
-  const displayStatus =
-    order.payment_status !== "succeeded"
-      ? formatPaymentStatus(order.payment_status)
-      : formatOrderStatus(order.status);
+  const displayStatus = getDisplayOrderStatus(order);
 
   return (
     <div className="pb-2 sm:pb-3">

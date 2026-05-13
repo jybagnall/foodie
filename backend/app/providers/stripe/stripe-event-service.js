@@ -1,6 +1,7 @@
 import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
+  handleRefundUpdated,
 } from "./stripe-handlers.js";
 
 export async function handleStripeEvent(client, event) {
@@ -10,6 +11,9 @@ export async function handleStripeEvent(client, event) {
       return { ignored: false };
     case "payment_intent.payment_failed":
       await handlePaymentIntentFailed(client, event.data.object);
+      return { ignored: false };
+    case "refund.updated":
+      await handleRefundUpdated(client, event.data.object);
       return { ignored: false };
     default:
       return { ignored: true };

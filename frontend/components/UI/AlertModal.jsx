@@ -12,7 +12,8 @@ export default function AlertModal({
   isActivating,
   modalIsOpen,
   onCancel,
-  alertText,
+  title,
+  description = "This cannot be undone.",
   userIntentionText,
 }) {
   return (
@@ -41,12 +42,10 @@ export default function AlertModal({
                     as="h3"
                     className="text-base font-semibold text-gray-200"
                   >
-                    {alertText}
+                    {title}
                   </DialogTitle>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-300">
-                      This cannot be undone.
-                    </p>
+                    <p className="text-sm text-gray-300">{description}</p>
                   </div>
                 </div>
               </div>

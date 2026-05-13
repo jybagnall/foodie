@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import OrderService from "../services/order.service";
 import useAccessToken from "./useAccessToken";
 import useUserId from "./useUserId";
@@ -28,23 +28,25 @@ export default function useOrder(orderId) {
     ? { ...listData, ...orderDetail }
     : (listData ?? null);
 
-  //     const {
-  //   mutate: deleteCard,
-  //   isPending: isDeleting,
-  //   isError: isDeleteError,
-  // } = useMutation({
-  //   mutationFn: (id) =>
-  //     new PaymentMethodsService(null, () => accessToken).deletePaymentMethod(
-  //       id,
-  //     ),
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
-  //   },
-  // });
+  const {
+    mutate: cancelOrder,
+    isPending: isCanceling,
+    isError: isCancelError,
+  } = useMutation({
+    mutationFn: (orderId) =>
+      new OrderService(null, () => accessToken).cancelOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", userId] });
+    },
+  });
 
   return {
     order,
     isFetching,
     orderFetchingError,
+    cancelOrder,
+    isCanceling,
+    isCancelError,
   };
 }

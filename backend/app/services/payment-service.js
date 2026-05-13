@@ -32,6 +32,18 @@ export async function findUniquePaymentByOrderId(orderId) {
   return result.rows[0];
 }
 
+export async function findPaymentByStripeChargeId(client, stripeChargeId) {
+  const q = `
+  SELECT 
+    id,
+    order_id
+  FROM payments
+  WHERE stripe_charge_id = $1
+  `;
+  const result = await client.query(q, [stripeChargeId]);
+  return result.rows[0];
+}
+
 export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
   const q = `
     UPDATE payments
@@ -57,20 +69,15 @@ export async function updatePaymentMethod(client, paymentMethodId, orderId) {
   return { success: true };
 }
 
-export async function updatePaymentStatus(
-  client,
-  newStatus,
-  refundedAmount,
-  stripeChargeId,
-) {
+export async function updatePaymentStatus(client, newStatus, stripeChargeId) {
   const q = `
     UPDATE payments 
     SET payment_status = $1,
-        refunded_amount = $2,
         updated_at = NOW()
-    WHERE stripe_charge_id = $3
+    WHERE stripe_charge_id = $2
+    AND payment_status != $1
   `;
-  const values = [newStatus, refundedAmount, stripeChargeId];
+  const values = [newStatus, stripeChargeId];
   await client.query(q, values);
   return { success: true };
 }

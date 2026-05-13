@@ -42,28 +42,3 @@ export function getTimeRangeStart(rangeKey) {
 export const formatPhone = (phone) => {
   return phone.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
 };
-
-export function formatPaymentStatus(status) {
-  const map = {
-    requires_payment: "Awaiting Payment",
-    requires_confirmation: "Confirming",
-    requires_action: "Action Required",
-    processing: "Processing",
-    succeeded: "Paid",
-    canceled: "Canceled",
-    failed: "Payment Failed",
-    refunded: "Refunded",
-  };
-  return map[status] ?? status;
-}
-
-export function formatOrderStatus(status) {
-  const map = {
-    pending: "Order Received",
-    paid: "Payment Confirmed",
-    preparing: "Preparing",
-    delivered: "Delivered",
-    cancelled: "Cancelled",
-  };
-  return map[status] ?? status;
-}

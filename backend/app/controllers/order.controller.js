@@ -1,12 +1,16 @@
 import Stripe from "stripe";
-import pool from "../config/db.js";
 import { getMenuPrices } from "../services/menu-service.js";
 import { getOrderById, updateOrderStatus } from "../services/order-service.js";
 import {
   findUniquePaymentByOrderId,
   updatePaymentStatus,
 } from "../services/payment-service.js";
-import { calculateOrderTotal } from "../utils/orderCalculations.js";
+import {
+  calculateOrderTotal,
+  isWithinCancellationWindow,
+} from "../utils/orderCalculations.js";
+import { createRefundRecord } from "../services/refund-service.js";
+import pool from "../config/db.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -41,26 +45,39 @@ export async function cancelOrderAndRefund(orderId, user) {
   if (!order) throw new Error("ORDER_NOT_FOUND");
   if (order.user_id !== user.id) throw new Error("FORBIDDEN");
   if (order.status !== "paid") throw new Error("ORDER_NOT_CANCELLABLE");
+  if (!isWithinCancellationWindow(order.created_at, 7))
+    throw new Error("ORDER_NOT_CANCELLABLE");
 
   const payment = await findUniquePaymentByOrderId(orderId);
   if (!payment) throw new Error("PAYMENT_NOT_FOUND");
+  if (!payment.stripe_charge_id) throw new Error("CHARGE_NOT_FOUND");
   if (payment.payment_status !== "succeeded")
     throw new Error("PAYMENT_NOT_REFUNDABLE");
+  if (!payment.stripe_payment_intent_id)
+    throw new Error("PAYMENT_INTENT_NOT_FOUND");
 
   const refund = await stripe.refunds.create({
     payment_intent: payment.stripe_payment_intent_id,
     // amount 생략 시 전액 환불
   });
 
+  // 카드사 환불 신호 전송 성공
   if (refund.status !== "succeeded") throw new Error("REFUND_FAILED");
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await createRefundRecord(client, {
+      paymentId: payment.id,
+      stripeRefundId: refund.id,
+      amount: refund.amount / 100,
+      refundStatus: "pending",
+      reason: refund.reason,
+    });
+
     await updatePaymentStatus(
       client,
-      "refunded",
-      refund.amount / 100,
+      "refund_pending",
       payment.stripe_charge_id,
     );
     await updateOrderStatus(client, orderId, "cancelled");
