@@ -8,6 +8,7 @@ export default function OrderActions({ order, cancelOrder, isCanceling }) {
 
   const isCancellable =
     order.status === "paid" &&
+    order.payment_status === "succeeded" &&
     dayjs().diff(dayjs(order.created_at), "day") <= 7;
 
   const canCompleteOrder =

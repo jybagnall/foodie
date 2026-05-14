@@ -43,7 +43,7 @@ export default function OrderCard({ order }) {
 
       {isCancelError && (
         <p className="text-red-400 text-sm mt-2">
-          Failed to cancel order. Please try again.
+          We failed to cancel order. Please try again.
         </p>
       )}
     </div>

@@ -87,9 +87,14 @@ export async function handlePaymentIntentFailed(client, paymentIntent) {
   await markPaymentFailed(client, paymentIntent.id, failureMsg);
 }
 
-export async function handleRefundUpdated(client, refundObj) {
-  if (refundObj.status !== "succeeded") return; // 완료된 것만 처리
+const REFUND_TO_PAYMENT_STATUS = {
+  succeeded: "refunded",
+  failed: "refund_failed",
+  canceled: "refund_failed",
+  pending: "refund_pending",
+};
 
+export async function handleRefundUpdated(client, refundObj) {
   const payment = await findPaymentByStripeChargeId(client, refundObj.charge);
 
   if (!payment) {
@@ -97,10 +102,12 @@ export async function handleRefundUpdated(client, refundObj) {
       chargeId: refundObj.charge,
     });
     return;
-  }
+  } // payment 없으면 런타임 에러 발생함
 
   const { id: paymentId, order_id: orderId } = payment;
   const alreadyProcessed = await refundRecordExists(client, refundObj.id);
+  const paymentStatus =
+    REFUND_TO_PAYMENT_STATUS[refundObj.status] ?? "refund_pending";
 
   // 환불 요청 데이터가 없음
   if (!alreadyProcessed) {
@@ -108,12 +115,13 @@ export async function handleRefundUpdated(client, refundObj) {
       paymentId: paymentId,
       stripeRefundId: refundObj.id,
       amount: refundObj.amount / 100,
-      refundStatus: "succeeded",
+      refundStatus: refundObj.status, // succeeded, failed, canceled
       reason: refundObj.reason,
     });
-    await updatePaymentStatus(client, "refund_pending", refundObj.charge);
     await updateOrderStatus(client, orderId, "cancelled");
   } else {
-    await markRefundAsCompleted(client, "succeeded", refundObj.id);
+    await markRefundAsCompleted(client, refundObj.status, refundObj.id);
   }
+  await updatePaymentStatus(client, paymentStatus, refundObj.charge);
 }
+// refundObj.charge: Stripe의 Charge ID

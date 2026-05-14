@@ -61,6 +61,7 @@ export default function PaymentForm({ orderId, stripe, elements }) {
       }
 
       markAsFromPayment();
+      queryClient.invalidateQueries({ queryKey: ["orders", userId] });
 
       if (saveCard) {
         queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });

@@ -72,7 +72,7 @@ export async function getAllOrders(userId) {
 
 export async function getOrderById(orderId) {
   const q = `
-  SELECT user_id, total_amount, status
+  SELECT user_id, total_amount, status, created_at
   FROM orders
   WHERE id = $1
   `;

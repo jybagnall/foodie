@@ -60,7 +60,7 @@ async function startStripeWorker() {
           continue; // while 루프 처음으로 돌아감
         }
 
-        const eventRow = rows[0];
+        const eventRow = rows[0]; // worker는 한 번에 이벤트 하나만 가져옴
 
         try {
           const result = await handleStripeEvent(client, eventRow.payload);

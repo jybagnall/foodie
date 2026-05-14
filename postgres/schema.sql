@@ -84,7 +84,7 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, refunded, succeeded, refund_pending
+-- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, succeeded, refunded, refund_pending, refund_failed
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,

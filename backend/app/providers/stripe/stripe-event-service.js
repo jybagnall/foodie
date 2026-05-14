@@ -23,3 +23,5 @@ export async function handleStripeEvent(client, event) {
 // payment_intent.payment_failed가 되는 예:
 // 잔액 부족, 카드 만료, 카드 분실, 도난, 한도 초과, 카드사 거절,
 // 3D Secure 인증 실패 또는 취소, CVC 불일치
+
+// { ignored: false }: 이벤트가 처리되었다.

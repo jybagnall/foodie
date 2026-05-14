@@ -36,8 +36,9 @@ function formatPaymentStatus(status) {
     processing: "Processing",
     canceled: "Canceled",
     failed: "Payment Failed",
-    refunded: "Refunded",
     refund_pending: "Refund Pending",
+    refunded: "Refunded",
+    refund_failed: "Refund Failed",
     expired: "Order Expired",
   };
   return map[status] ?? status;
