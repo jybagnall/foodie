@@ -28,6 +28,8 @@ export default function useOrder(orderId) {
     ? { ...listData, ...orderDetail }
     : (listData ?? null);
 
+  const paymentStatus = order?.payment_status ?? null;
+
   const {
     mutate: cancelOrder,
     isPending: isCanceling,
@@ -48,5 +50,6 @@ export default function useOrder(orderId) {
     cancelOrder,
     isCanceling,
     isCancelError,
+    paymentStatus,
   };
 }

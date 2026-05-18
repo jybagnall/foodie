@@ -1,55 +1,50 @@
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useContext, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import PaymentService from "../../../services/payment.service";
 import CartContext from "../../../contexts/CartContext";
 import {
-  clearFromPayment,
-  getFromPayment,
+  revokePaymentFlowAccess,
+  hasPaymentFlowAccess,
 } from "../../../storage/paymentStorage";
 import useAccessToken from "../../../hooks/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
+import useUserId from "../../../hooks/useUserId";
 
 // GET /order/completed/orderId?payment_intent=
 
 export default function OrderConfirmation() {
-  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const paymentIntentId = searchParams.get("payment_intent");
   const abortControllerRef = useRef(null);
-  const redirectStatus = location.state?.status; // "succeeded", "failed", undefined
+  const timeoutRef = useRef(null);
   const { orderId } = useParams();
-  const [status, setStatus] = useState(() => {
-    if (redirectStatus === "succeeded") return "succeeded";
-    if (redirectStatus === "failed") return "failed";
-    return paymentIntentId ? "loading" : "error";
-  });
+  const userId = useUserId();
+  const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
   const accessToken = useAccessToken();
   const { clearCart } = useContext(CartContext);
 
   useEffect(() => {
-    if (status === "succeeded") {
-      document.title = "Order Confirmed | Foodie";
-    } else if (status === "failed" || status === "requires_payment_method") {
-      document.title = "Payment Failed | Foodie";
-    } else {
-      document.title = "Order Confirmation | Foodie";
-    }
-  }, [status]);
+    document.title = "Order Confirmation | Foodie";
+  }, []);
+
+  // 이 페이지는 결제 직후에만 도착 가능, 그외는 튕겨냄
+  useEffect(() => {
+    const hasPaymentAccess = hasPaymentFlowAccess();
+
+    if (!hasPaymentAccess) {
+      navigate(`/my-account/orders`, { replace: true });
+      return;
+    } // 다른 곳에서 이 페이지에 재진입 시 유저를 튕겨냄
+
+    revokePaymentFlowAccess(); // ✅ 입장 확인 즉시 sessionStorage 삭제
+  }, []);
 
   useEffect(() => {
     if (!paymentIntentId) {
       return;
-    }
-
-    if (redirectStatus === "succeeded") {
-      clearCart();
-      return; // 3DS 성공
     }
 
     abortControllerRef.current = new AbortController();
@@ -58,13 +53,24 @@ export default function OrderConfirmation() {
       () => accessToken,
     );
 
-    const verifyStatus = async () => {
+    const verifyStatus = async (retryCount = 0) => {
       try {
         const { status } = await paymentService.verifyPayment(paymentIntentId);
         setStatus(status);
 
         if (status === "succeeded") {
           clearCart();
+          queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
+          queryClient.invalidateQueries({ queryKey: ["orders", userId] });
+        }
+
+        if (status === "processing" && retryCount < 5) {
+          timeoutRef.current = setTimeout(
+            () => verifyStatus(retryCount + 1),
+            2000,
+          );
+        } else if (status === "processing") {
+          setStatus("processing_timeout"); // 결제 상태가 계속 진행 중이면
         }
       } catch {
         setStatus("error");
@@ -73,35 +79,11 @@ export default function OrderConfirmation() {
 
     verifyStatus();
 
-    return () => abortControllerRef.current?.abort();
-  }, [paymentIntentId]);
-
-  // 결제 페이지가 state: { from: "payment" }을 보냄
-  // 이 페이지는 결제 페이지에서만 도착 가능, 그외는 튕겨냄
-  useEffect(() => {
-    const isFromPayment = getFromPayment();
-
-    if (location.state?.from !== "payment" && !isFromPayment) {
-      navigate(`/my-account/orders`, { replace: true });
-      return;
-    } // 1. 다른 곳에서 뒤로가기로 재진입 시, 주문 내역 페이지로 튕겨냄
-
-    // 정상적으로 결제하고 들어온 경우에 실행
-    // 2. 현재 URL을 히스토리에 한 번 더 추가 (완료 페이지가 2개), 즉
-    // [결제창 페이지] → [결제 완료] → [결제 완료(카피), 유저 위치함]
-    window.history.pushState(null, "", window.location.href);
-
-    // 3. [결제 완료 복사본] → [결제 완료 페이지] → 튕겨짐
-    const handlePopstate = () =>
-      navigate(`/my-account/orders/${orderId}`, { replace: true });
-    window.addEventListener("popstate", handlePopstate);
-
-    // 4. 페이지 떠날 때 이벤트 리스너 정리
     return () => {
-      window.removeEventListener("popstate", handlePopstate);
-      clearFromPayment(); // 페이지 떠날 때 sessionStorage 삭제
+      abortControllerRef.current?.abort();
+      clearTimeout(timeoutRef.current);
     };
-  }, []);
+  }, [paymentIntentId, clearCart, queryClient, userId]);
 
   // status에 따른 객체가 반환됨.
   const { title, message, action } = mapPaymentStatusToContent(status, orderId);

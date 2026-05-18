@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useStripe } from "@stripe/react-stripe-js";
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import useSavedCards from "../../../hooks/useSavedCards";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
@@ -14,8 +12,7 @@ import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";
 import DeliverySummary from "../../OrderUI/DeliverySummary";
 import OrderSummary from "../../OrderUI/OrderSummary";
-import { markAsFromPayment } from "../../../storage/paymentStorage";
-import useUserId from "../../../hooks/useUserId";
+import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
 
 export default function PaymentMethodSelector({ order, orderId }) {
   const [useNewCard, setUseNewCard] = useState(false);
@@ -24,11 +21,8 @@ export default function PaymentMethodSelector({ order, orderId }) {
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const accessToken = useAccessToken();
   const { savedCards, isFetching, isFetchingError } = useSavedCards();
-  const userId = useUserId();
-  const queryClient = useQueryClient();
   const stripe = useStripe();
   const abortControllerRef = useRef(null);
-  const navigate = useNavigate();
 
   // 카드 없으면 자동으로 새 카드 모드
   useEffect(() => {
@@ -56,23 +50,40 @@ export default function PaymentMethodSelector({ order, orderId }) {
     setErrorMsg("");
 
     try {
-      const { paymentIntent, requiresAction, clientSecret } =
+      let { paymentIntent, requiresAction, clientSecret } =
         await paymentService.chargeSavedCard(orderId, selectedCardId);
 
       if (requiresAction) {
-        await stripe.handleNextAction({ clientSecret });
-        return; // 유저가 이미 페이지를 벗어남. 인증 후 Stripe가 return_url로 리디렉트
-      } // 대부분 3DS. 유저의 추가 인증이 필요
+        const { error, paymentIntent: updatedIntent } =
+          await stripe.handleNextAction({
+            clientSecret,
+          });
 
-      markAsFromPayment();
-      queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
-      navigate(
+        if (error) {
+          setErrorMsg(error.message);
+          return;
+        }
+
+        // redirect 발생 시 코드 진행 안 됨.
+        // 유저가 OrderPaymentPage 로 리디렉팅 됨
+        if (!updatedIntent) {
+          return;
+        }
+
+        paymentIntent = updatedIntent;
+      }
+
+      if (!paymentIntent?.id) {
+        setErrorMsg(
+          "An unexpected error occurred. Please try again or contact support.",
+        );
+        return;
+      }
+
+      grantPaymentFlowAccess();
+      window.location.replace(
         `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
-        {
-          replace: true, // 뒤로가기에 이 페이지 삭제
-          state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
-        },
-      ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
+      );
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);

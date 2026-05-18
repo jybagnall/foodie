@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { PaymentElement } from "@stripe/react-stripe-js";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
-import { markAsFromPayment } from "../../../storage/paymentStorage";
+import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";
 import useAccessToken from "../../../hooks/useAccessToken";
 import SaveCardPreferences from "./SaveCardPreferences";
 import { confirmStripePayment } from "../../../utils/stripeHelpers";
-import useUserId from "../../../hooks/useUserId";
 
 // **Stripe Webhook 이벤트(payment_intent.succeeded)**를 연결해서
 // 결제 완료 시 백엔드가 자동으로 orders.status = 'paid'로 업데이트
@@ -21,8 +19,6 @@ export default function PaymentForm({ orderId, stripe, elements }) {
   const [setAsDefault, setSetAsDefault] = useState(false);
   const [isPayProcessing, setIsPayProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const userId = useUserId();
-  const queryClient = useQueryClient();
   const abortControllerRef = useRef(null);
   const accessToken = useAccessToken();
 
@@ -60,19 +56,10 @@ export default function PaymentForm({ orderId, stripe, elements }) {
         return;
       }
 
-      markAsFromPayment();
-      queryClient.invalidateQueries({ queryKey: ["orders", userId] });
-
-      if (saveCard) {
-        queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
-      }
-      navigate(
+      grantPaymentFlowAccess();
+      window.location.replace(
         `/order/completed/${orderId}?payment_intent=${paymentIntentId}`,
-        {
-          replace: true, // 뒤로가기에 이 페이지 삭제
-          state: { from: "payment" }, // 리디렉팅 시 상태도 몰래 보냄
-        },
-      ); // 결제의 흐름이 끝났다는 의미의 이동 (3DS 없음)
+      );
     } catch (err) {
       const message = getUserErrorMessage(err);
       if (message) setErrorMsg(message);

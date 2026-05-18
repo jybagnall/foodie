@@ -13,6 +13,12 @@ export function mapPaymentStatusToContent(status, orderId) {
     </Link>
   );
 
+  const viewOrdersPage = (
+    <Link to={"/my-account/orders"} className="text-orange-400 underline">
+      View orders page
+    </Link>
+  );
+
   switch (status) {
     case "loading":
       return {
@@ -26,6 +32,19 @@ export function mapPaymentStatusToContent(status, orderId) {
         message:
           "Please do not leave this page. Your payment is being confirmed.",
         action: <Spinner />,
+      };
+    case "processing_timeout":
+      return {
+        title: "Almost there!",
+        message:
+          "Your payment is taking longer than usual. Check your orders page in a moment.",
+        action: viewOrdersPage,
+      };
+    case "canceled":
+      return {
+        title: "Payment canceled",
+        message: "Your payment was canceled.",
+        action: viewOrdersPage,
       };
     case "succeeded":
       return {
