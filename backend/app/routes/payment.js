@@ -6,6 +6,7 @@ import {
   getOrCreateClientSecret,
   getExistingClientSecret,
   processSavedCardPayment,
+  verifyStripePayment,
 } from "../controllers/payment.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
@@ -28,13 +29,22 @@ router.get("/client-secret", verifyUserAuth, async (req, res) => {
 
 router.get("/verify", verifyUserAuth, async (req, res) => {
   try {
-    const paymentIntentId = req.query.payment_intent;
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const { payment_intent: paymentIntentId, order_id: orderId } = req.query;
 
-    return res.status(200).json({ status: paymentIntent.status });
+    const { paymentIntentStatus, lastPaymentError } = await verifyStripePayment(
+      paymentIntentId,
+      orderId,
+      req.user,
+    );
+
+    return res.status(200).json({
+      paymentIntentStatus,
+      lastPaymentError,
+    });
   } catch (err) {
     console.error("Stripe verification error:", err);
-    return res.status(500).json({
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
       error: "Something went wrong during payment. Please try again.",
     });
   }

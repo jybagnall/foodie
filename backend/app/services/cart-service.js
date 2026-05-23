@@ -35,16 +35,13 @@ export async function saveCurrentCart(client, userId) {
 }
 
 export async function saveCurrentCartItems(client, cartId, items = []) {
-  // NOTE: this is called inside a transaction
-  if (!items.length) {
-    return;
-  }
-
   const delete_q = `
     DELETE FROM saved_cart_items 
     WHERE cart_id = $1
     `;
   await client.query(delete_q, [cartId]);
+
+  if (!items.length) return;
 
   const values = [];
   const placeholders = items.map((item, index) => {

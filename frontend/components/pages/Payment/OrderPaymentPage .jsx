@@ -22,10 +22,10 @@ export default function OrderPaymentPage() {
   }, []);
 
   useEffect(() => {
-    if (paymentStatus === "paid") {
+    if (paymentStatus) {
       navigate("/my-account/orders", { replace: true });
     }
-  }, [paymentStatus]);
+  }, [paymentStatus, navigate]);
 
   useEffect(() => {
     // 결제 시도의 증거가 없으면 결제창(StripePaymentSetup)이 렌더링됨

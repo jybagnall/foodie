@@ -73,7 +73,7 @@ export default function ShippingForm() {
       const { orderId } = await orderService.initializeOrder(orderDetails);
       queryClient.invalidateQueries({ queryKey: ["defaultAddress", userId] });
       queryClient.invalidateQueries({ queryKey: ["addressBook", userId] });
-      navigate(`/order/payment/${orderId}`);
+      navigate(`/order/payment/${orderId}`, { replace: true });
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);

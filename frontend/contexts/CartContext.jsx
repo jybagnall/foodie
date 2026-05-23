@@ -16,7 +16,7 @@ const CartContext = createContext({
   numOfCheckedItems: 0,
   totalAmount: 0,
   addItem: (item) => {},
-  clearCart: () => {},
+  clearLocalCart: () => {},
   decreaseItem: (id) => {},
   deleteItem: (id) => {},
   toggleCheckedItem: (id) => {},
@@ -38,7 +38,6 @@ export function CartContextProvider({ children }) {
 
   const switchToServerMode = useCallback(() => {
     setMode("server");
-    clearCartStorage();
   }, []);
 
   const uniqueMenuCount = items.length;
@@ -76,9 +75,13 @@ export function CartContextProvider({ children }) {
     return result;
   }, []);
 
-  const clearCart = useCallback(() => {
+  const clearLocalCart = useCallback(() => {
     setItems([]);
     clearCartStorage();
+  }, []);
+
+  const removeOrderedItemsFromCart = useCallback(() => {
+    setItems((prev) => prev.filter((i) => !i.checked));
   }, []);
 
   const decreaseItem = useCallback((id) => {
@@ -117,7 +120,8 @@ export function CartContextProvider({ children }) {
         numOfCheckedItems,
         totalAmount,
         addItem,
-        clearCart,
+        clearLocalCart,
+        removeOrderedItemsFromCart,
         decreaseItem,
         deleteItem,
         toggleCheckedItem,

@@ -2,13 +2,6 @@ import express from "express";
 import Stripe from "stripe";
 import pool from "../config/db.js";
 
-// ❗Webhook 에러 알림 받기
-// ❗Webhook이 아예 실패했을 가능성 대비해서 물어볼 수 있음:
-// stripe.paymentIntents.retrieve(paymentIntentId)
-// ❗환불 처리 (charge.refunded), 별도의 테이블이 필요함
-// ❗"payment_intent.canceled"
-// ❗"payment_intent.processing"
-
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 

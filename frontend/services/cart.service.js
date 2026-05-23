@@ -10,7 +10,7 @@ class CartService {
     return data;
   }
 
-  async saveCurrentCart(payload) {
+  async syncCartToServer(payload) {
     const data = await this.client.post("/api/carts/save-cart", payload);
     return data;
   }

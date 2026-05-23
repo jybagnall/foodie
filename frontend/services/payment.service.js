@@ -5,8 +5,6 @@ class PaymentService {
     this.client = new Client(signal, getAccessToken);
   }
 
- 
-
   async chargeSavedCard(orderId, cardId) {
     const data = await this.client.post("/api/payments/charge-saved-card", {
       orderId,
@@ -42,9 +40,9 @@ class PaymentService {
     return data;
   }
 
-  async verifyPayment(paymentIntentId) {
+  async verifyPayment(paymentIntentId, orderId) {
     const data = await this.client.get(
-      `/api/payments/verify?payment_intent=${paymentIntentId}`,
+      `/api/payments/verify?payment_intent=${paymentIntentId}&order_id=${orderId}`,
     );
     return data;
   }

@@ -16,7 +16,7 @@ export default function UserName() {
   const [isSavingCart, setIsSavingCart] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useMyProfile();
-  const { clearCart, items } = useContext(CartContext);
+  const { clearLocalCart, items } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
   const isLoggedIn = !!accessToken;
@@ -62,7 +62,7 @@ export default function UserName() {
 
     setIsSavingCart(true);
     try {
-      await cartService.saveCurrentCart(currentItems);
+      await cartService.syncCartToServer(currentItems);
     } catch (err) {
       const returnedErrorMsg = err?.response?.data?.error || err.message;
       console.error(returnedErrorMsg);
@@ -73,7 +73,7 @@ export default function UserName() {
 
   const handleLogout = async () => {
     await persistCart();
-    clearCart();
+    clearLocalCart();
     setIsMenuOpen(false);
     logout();
   };

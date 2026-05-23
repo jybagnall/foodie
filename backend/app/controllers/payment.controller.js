@@ -201,3 +201,35 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
 
   return { paymentIntent };
 }
+
+export async function verifyStripePayment(paymentIntentId, orderId, user) {
+  if (
+    !paymentIntentId ||
+    typeof paymentIntentId !== "string" ||
+    !paymentIntentId.startsWith("pi_")
+  ) {
+    throw new Error("INVALID_PAYMENT_INTENT");
+  } // suspicious/bad request
+
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  } catch (err) {
+    if (err.type === "StripeInvalidRequestError") {
+      throw new Error("INVALID_PAYMENT_INTENT");
+    } // invalid payment intent ID
+    throw err;
+  }
+
+  if (
+    paymentIntent.metadata.userId !== user.id ||
+    paymentIntent.metadata.orderId !== orderId
+  ) {
+    throw new Error("INVALID_PAYMENT_INTENT");
+  }
+
+  return {
+    paymentIntentStatus: paymentIntent.status,
+    lastPaymentError: paymentIntent.last_payment_error?.message,
+  };
+}

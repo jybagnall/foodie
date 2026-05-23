@@ -11,20 +11,21 @@ import useAccessToken from "../../../hooks/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
 import useUserId from "../../../hooks/useUserId";
 
-// GET /order/completed/orderId?payment_intent=
+// /order/completed/orderId?payment_intent=
 
 export default function OrderConfirmation() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const paymentIntentId = searchParams.get("payment_intent");
   const abortControllerRef = useRef(null);
   const timeoutRef = useRef(null);
   const { orderId } = useParams();
   const userId = useUserId();
   const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
+  const [paymentErr, setPaymentErr] = useState("");
   const accessToken = useAccessToken();
-  const { clearCart } = useContext(CartContext);
+  const { removeOrderedItemsFromCart } = useContext(CartContext);
 
   useEffect(() => {
     document.title = "Order Confirmation | Foodie";
@@ -33,7 +34,6 @@ export default function OrderConfirmation() {
   // 이 페이지는 결제 직후에만 도착 가능, 그외는 튕겨냄
   useEffect(() => {
     const hasPaymentAccess = hasPaymentFlowAccess();
-
     if (!hasPaymentAccess) {
       navigate(`/my-account/orders`, { replace: true });
       return;
@@ -55,24 +55,42 @@ export default function OrderConfirmation() {
 
     const verifyStatus = async (retryCount = 0) => {
       try {
-        const { status } = await paymentService.verifyPayment(paymentIntentId);
-        setStatus(status);
+        const { paymentIntentStatus, lastPaymentError } =
+          await paymentService.verifyPayment(paymentIntentId, orderId);
 
-        if (status === "succeeded") {
-          clearCart();
+        setStatus(paymentIntentStatus);
+
+        if (lastPaymentError) {
+          setPaymentErr(lastPaymentError);
+        }
+
+        if (paymentIntentStatus === "succeeded") {
+          removeOrderedItemsFromCart();
           queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
           queryClient.invalidateQueries({ queryKey: ["orders", userId] });
         }
 
-        if (status === "processing" && retryCount < 5) {
+        if (paymentIntentStatus === "processing" && retryCount < 5) {
           timeoutRef.current = setTimeout(
             () => verifyStatus(retryCount + 1),
             2000,
           );
-        } else if (status === "processing") {
+        } else if (paymentIntentStatus === "processing") {
           setStatus("processing_timeout"); // 결제 상태가 계속 진행 중이면
         }
-      } catch {
+      } catch (err) {
+        const status = err.response?.status;
+
+        if (status === 400) {
+          setStatus("invalid_payment");
+          return;
+        }
+
+        if (status >= 500) {
+          setStatus("server_error");
+          return;
+        }
+
         setStatus("error");
       }
     };
@@ -83,10 +101,20 @@ export default function OrderConfirmation() {
       abortControllerRef.current?.abort();
       clearTimeout(timeoutRef.current);
     };
-  }, [paymentIntentId, clearCart, queryClient, userId]);
+  }, [
+    paymentIntentId,
+    removeOrderedItemsFromCart,
+    queryClient,
+    userId,
+    orderId,
+  ]);
 
   // status에 따른 객체가 반환됨.
-  const { title, message, action } = mapPaymentStatusToContent(status, orderId);
+  const { title, message, action } = mapPaymentStatusToContent(
+    status,
+    paymentErr,
+    orderId,
+  );
 
   return (
     <div className="text-center p-20">

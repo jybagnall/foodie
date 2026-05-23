@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Spinner from "../../user_feedback/Spinner";
 
 // UI 데이터 생성기
-export function mapPaymentStatusToContent(status, orderId) {
+export function mapPaymentStatusToContent(status, paymentErr, orderId) {
   const retryLink = (
     <Link
       to={`/order/payment/${orderId}`}
@@ -43,7 +43,7 @@ export function mapPaymentStatusToContent(status, orderId) {
     case "canceled":
       return {
         title: "Payment canceled",
-        message: "Your payment was canceled.",
+        message: paymentErr || "Your payment was canceled.",
         action: viewOrdersPage,
       };
     case "succeeded":
@@ -59,20 +59,26 @@ export function mapPaymentStatusToContent(status, orderId) {
     case "requires_payment_method":
       return {
         title: "Payment failed",
-        message: "Please try another payment method.",
+        message: paymentErr || "Please try another payment method.",
         action: retryLink,
       }; // 카드 문제
-    case "failed":
+    case "invalid_payment":
       return {
-        title: "Payment failed",
-        message:
-          "We couldn't process your payment. Please try again or use a different method.",
-        action: retryLink,
-      };
+        title: "Unable to verify payment",
+        message: "This payment session is no longer valid.",
+        action: viewOrdersPage,
+      }; // suspicious/bad request
+    case "server_error":
+      return {
+        title: "Verification unavailable",
+        message: "We're having trouble verifying your payment right now.",
+        action: viewOrdersPage,
+      }; // server/system issue
     default:
       return {
         title: "Something went wrong",
-        message: "We couldn't complete your payment. Please try again.",
+        message:
+          paymentErr || "Something went wrong while verifying your payment.",
         action: (
           <Link to="/cart" className="text-orange-400 underline">
             Return to cart

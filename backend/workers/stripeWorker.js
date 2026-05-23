@@ -50,7 +50,8 @@ async function startStripeWorker() {
             LIMIT 1
             )
           RETURNING *
-        `); // pending 이벤트 & worker가 죽어서 멈춘 이벤트 먼저 가져옴, 즉
+        `);
+        // pending 이벤트 & worker가 죽어서 멈춘 이벤트 먼저 가져옴, 즉
         // worker가 죽었다고 가정하고 다른 (혹은 같은) worker가 다시 처리
 
         // 더 이상 처리할 이벤트 없음
@@ -85,7 +86,8 @@ async function startStripeWorker() {
           await client.query(
             `
             UPDATE stripe_events
-            SET retry_count = retry_count + 1,
+            SET 
+              retry_count = retry_count + 1,
               last_error = $2,
               status = CASE
                 WHEN retry_count + 1 >= 5 THEN 'dead'

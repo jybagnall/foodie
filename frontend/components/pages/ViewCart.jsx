@@ -15,7 +15,7 @@ export default function ViewCart() {
     addItem,
     decreaseItem,
     deleteItem,
-    clearCart,
+    clearLocalCart,
     toggleCheckedItem,
     setAllChecked,
   } = useContext(CartContext);
@@ -144,7 +144,7 @@ export default function ViewCart() {
               </p>
               <div className="flex gap-2">
                 <Button
-                  onClick={clearCart}
+                  onClick={clearLocalCart}
                   className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-md text-gray-800 cursor-pointer"
                 >
                   Clear
