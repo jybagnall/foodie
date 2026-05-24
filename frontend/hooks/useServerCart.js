@@ -49,3 +49,10 @@ export default function useServerCart() {
     isUpdateError,
   };
 }
+
+// payload = {
+//   items: items.map((i) => ({
+//     menuId: i.id,
+//     qty: i.qty,
+//   })),
+// };

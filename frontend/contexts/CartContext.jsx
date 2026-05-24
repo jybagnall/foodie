@@ -12,12 +12,10 @@ const CartContext = createContext({
   items: [],
   setItems: () => {},
   switchToServerMode: () => {},
-  uniqueMenuCount: 0,
-  numOfCheckedItems: 0,
+  totalItemCount: 0,
+  checkedItemQty: 0,
   totalAmount: 0,
-  addItem: (item) => {},
   clearLocalCart: () => {},
-  decreaseItem: (id) => {},
   deleteItem: (id) => {},
   toggleCheckedItem: (id) => {},
 });
@@ -40,10 +38,13 @@ export function CartContextProvider({ children }) {
     setMode("server");
   }, []);
 
-  const uniqueMenuCount = items.length;
+  const totalItemCount = useMemo(
+    () => items.reduce((total, i) => total + i.qty, 0),
+    [items],
+  );
 
-  const numOfCheckedItems = useMemo(
-    () => items.filter((i) => i.checked).length,
+  const checkedItemQty = useMemo(
+    () => items.filter((i) => i.checked).reduce((total, i) => total + i.qty, 0),
     [items],
   );
 
@@ -55,26 +56,6 @@ export function CartContextProvider({ children }) {
     [items],
   );
 
-  // setItems 안에서 값이 바뀌어야 하므로 let을 씀
-  const addItem = useCallback((item) => {
-    let result = { isNew: true, nextQty: 1 };
-
-    setItems((prev) => {
-      const existingItem = prev.find((i) => i.id === item.id);
-
-      if (existingItem) {
-        result = { isNew: false, nextQty: existingItem.qty + 1 };
-
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: i.qty + 1, checked: true } : i,
-        );
-      }
-      return [...prev, { ...item, qty: 1, checked: true }];
-    });
-
-    return result;
-  }, []);
-
   const clearLocalCart = useCallback(() => {
     setItems([]);
     clearCartStorage();
@@ -82,18 +63,6 @@ export function CartContextProvider({ children }) {
 
   const removeOrderedItemsFromCart = useCallback(() => {
     setItems((prev) => prev.filter((i) => !i.checked));
-  }, []);
-
-  const decreaseItem = useCallback((id) => {
-    setItems((prev) => {
-      const existingItem = prev.find((i) => i.id === id);
-      if (!existingItem) return prev;
-      if (existingItem.qty > 1) {
-        return prev.map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i));
-      }
-
-      return prev;
-    });
   }, []);
 
   const deleteItem = useCallback((id) => {
@@ -116,13 +85,11 @@ export function CartContextProvider({ children }) {
         items,
         setItems,
         switchToServerMode,
-        uniqueMenuCount,
-        numOfCheckedItems,
+        totalItemCount,
+        checkedItemQty,
         totalAmount,
-        addItem,
         clearLocalCart,
         removeOrderedItemsFromCart,
-        decreaseItem,
         deleteItem,
         toggleCheckedItem,
         setAllChecked,

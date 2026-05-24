@@ -12,7 +12,7 @@ export function useCartMergeOnLogin(accessToken) {
     syncCartToServer,
     isFetchingServerCart,
     serverCartFetchingError,
-  } = useServerCart(accessToken);
+  } = useServerCart();
 
   useEffect(() => {
     if (!accessToken) return;

@@ -1,24 +1,27 @@
 import { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { MinusIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import CartContext from "../../contexts/CartContext";
 import EmptyCart from "../top_layout/header/cart/EmptyCart";
 import Button from "../UI/Button";
 import { currencyFormatter } from "../../utils/format";
+import useServerCart from "../../hooks/useServerCart";
+import useCartActions from "../../hooks/useCartActions";
 
 export default function ViewCart() {
   const {
     items,
-    uniqueMenuCount,
-    numOfCheckedItems,
+    totalItemCount,
+    checkedItemQty,
     totalAmount,
-    addItem,
-    decreaseItem,
     deleteItem,
     clearLocalCart,
     toggleCheckedItem,
     setAllChecked,
   } = useContext(CartContext);
+
+  const { isUpdatingServerCart, isUpdateError } = useServerCart();
+  const { addItemAndSync, decreaseItemAndSync } = useCartActions();
 
   const allChecked = items.every((i) => i.checked);
   const anyChecked = items.some((i) => i.checked);
@@ -36,7 +39,7 @@ export default function ViewCart() {
   return (
     <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <div className="w-full max-w-lg">
-        {uniqueMenuCount === 0 ? (
+        {totalItemCount === 0 ? (
           <EmptyCart />
         ) : (
           <>
@@ -55,10 +58,8 @@ export default function ViewCart() {
                 />
                 <label htmlFor="all" className="cursor-pointer text-gray-200">
                   Select all
-                  <span className="ml-2 font-semibold">
-                    {numOfCheckedItems}
-                  </span>
-                  /<span className="font-semibold">{uniqueMenuCount}</span>
+                  <span className="ml-2 font-semibold">{checkedItemQty}</span>/
+                  <span className="font-semibold">{totalItemCount}</span>
                 </label>
               </div>
             </div>
@@ -104,20 +105,22 @@ export default function ViewCart() {
                           <div className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
                             <button
                               type="button"
-                              className={`group relative mr-1 ml-0.5 size-3.5 rounded-xs ${
-                                i.qty === 1
-                                  ? "text-gray-300"
-                                  : "text-gray-700 hover:text-gray-900 cursor-pointer"
-                              }`}
-                              onClick={() => decreaseItem(i.id)}
+                              onClick={() => decreaseItemAndSync(i)}
+                              disabled={isUpdatingServerCart}
+                              className="text-gray-700 hover:text-gray-900 cursor-pointer relative mr-1 ml-0.5 size-3.5 rounded-xs"
                             >
-                              <MinusIcon className="size-3.5 stroke-current" />
+                              {i.qty === 1 ? (
+                                <TrashIcon className="size-3.5" />
+                              ) : (
+                                <MinusIcon className="size-3.5 stroke-current" />
+                              )}
                             </button>
                             {i.qty}
                             <button
                               type="button"
+                              onClick={() => addItemAndSync(i)}
+                              disabled={isUpdatingServerCart}
                               className="group relative ml-1 mr-0.5 size-3.5 rounded-xs cursor-pointer"
-                              onClick={() => addItem(i)}
                             >
                               <PlusIcon className="size-3.5 stroke-gray-700" />
                             </button>

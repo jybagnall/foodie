@@ -1,27 +1,20 @@
-import { useContext } from "react";
 import { toast } from "react-hot-toast";
-
 import { currencyFormatter } from "../../../utils/format";
 import Button from "../../UI/Button";
-import CartContext from "../../../contexts/CartContext";
 import AddingItemFeedback from "../../user_feedback/AddingItemFeedback";
+import useCartActions from "../../../hooks/useCartActions";
 
-export default function MenuItem({ meal }) {
-  const { name, price, description, image } = meal;
-  const { addItem } = useContext(CartContext);
+export default function MenuItem({ menuItem }) {
+  const { name, price, description, image } = menuItem;
+  const { addItemAndSync } = useCartActions();
 
-  const handleAddToCart = (meal) => {
-    const result = addItem(meal);
+  const handleAddToCart = (item) => {
+    const { isNew, nextQty } = addItemAndSync(item);
 
     // 커스텀 토스트에 같은 ID의 토스트가 이미 떠있으면 새로 안 만듬.
     toast.custom(
       (t) => (
-        <AddingItemFeedback
-          t={t}
-          meal={meal}
-          isNew={result.isNew}
-          nextQty={result.nextQty}
-        />
+        <AddingItemFeedback t={t} item={item} isNew={isNew} nextQty={nextQty} />
       ),
       {
         id: "cart-feedback",
@@ -50,7 +43,7 @@ export default function MenuItem({ meal }) {
 
           <div className="mt-4">
             <Button
-              onClick={() => handleAddToCart(meal)}
+              onClick={() => handleAddToCart(menuItem)}
               className="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
             >
               Add to Cart
