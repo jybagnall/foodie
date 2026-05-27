@@ -1,8 +1,7 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import PaymentService from "../../../services/payment.service";
-import CartContext from "../../../contexts/CartContext";
 import {
   revokePaymentFlowAccess,
   hasPaymentFlowAccess,
@@ -10,6 +9,7 @@ import {
 import useAccessToken from "../../../hooks/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
 import useUserId from "../../../hooks/useUserId";
+import useCartActions from "../../../hooks/useCartActions";
 
 // /order/completed/orderId?payment_intent=
 
@@ -24,8 +24,8 @@ export default function OrderConfirmation() {
   const userId = useUserId();
   const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
   const [paymentErr, setPaymentErr] = useState("");
+  const { removeOrderedItemsAndSync } = useCartActions();
   const accessToken = useAccessToken();
-  const { removeOrderedItemsFromCart } = useContext(CartContext);
 
   useEffect(() => {
     document.title = "Order Confirmation | Foodie";
@@ -65,7 +65,7 @@ export default function OrderConfirmation() {
         }
 
         if (paymentIntentStatus === "succeeded") {
-          removeOrderedItemsFromCart();
+          removeOrderedItemsAndSync();
           queryClient.invalidateQueries({ queryKey: ["savedCards", userId] });
           queryClient.invalidateQueries({ queryKey: ["orders", userId] });
         }
@@ -103,7 +103,7 @@ export default function OrderConfirmation() {
     };
   }, [
     paymentIntentId,
-    removeOrderedItemsFromCart,
+    removeOrderedItemsAndSync,
     queryClient,
     userId,
     orderId,

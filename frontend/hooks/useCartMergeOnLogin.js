@@ -10,21 +10,20 @@ export function useCartMergeOnLogin(accessToken) {
   const {
     serverCartItems,
     syncCartToServer,
-    isFetchingServerCart,
+    isServerCartReady,
     serverCartFetchingError,
   } = useServerCart();
 
   useEffect(() => {
     if (!accessToken) return;
-    if (isFetchingServerCart) return;
-
+    if (!isServerCartReady) return; // 도착한 서버 데이터
+    if (serverCartItems == null) return;
     if (serverCartFetchingError) {
       return; // 서버가 불안정한 상태이므로 서버에 저장 안 함
     } // localStorage 에 장바구니 저장 중 (게스트 카트가 유지되고 있음) ❗
 
     // 로그인 직후에 카트 합치기
     if (!hasInitializedCartRef.current) {
-      hasInitializedCartRef.current = true;
       const guestCartSnapshot = [...cartContext.items]; // 게스트 아이템 snapshot 저장
 
       const normalizedServerItems = (serverCartItems ?? []).map((i) => ({
@@ -37,6 +36,7 @@ export function useCartMergeOnLogin(accessToken) {
           ? mergeCarts(guestCartSnapshot, normalizedServerItems)
           : normalizedServerItems;
 
+      hasInitializedCartRef.current = true;
       cartContext.switchToServerMode();
       clearCartStorage();
       cartContext.setItems(mergedCart);
@@ -51,5 +51,5 @@ export function useCartMergeOnLogin(accessToken) {
       }
       return;
     }
-  }, [isFetchingServerCart, serverCartFetchingError, serverCartItems]);
+  }, [serverCartFetchingError, serverCartItems]);
 }

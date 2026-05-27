@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import Client, { RefreshTokenExpiredError } from "../services/client";
 import AccountService from "../services/account.service";
 import { authEvents } from "../utils/authEvents";
-import { useCartMergeOnLogin } from "../hooks/useCartMergeOnLogin";
 
 // refresh 실패 시 → logout, 성공 시 → state 갱신, Client 에러 타입 해석
 const AuthContext = React.createContext({
@@ -28,7 +27,6 @@ export function AuthContextProvider({ children }) {
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  useCartMergeOnLogin(accessToken);
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
   // 토큰 갱신 시 적용됨.

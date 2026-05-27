@@ -5,18 +5,17 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import { loadCart, saveCart, clearCartStorage } from "../storage/cartStorage";
+import { loadCart, saveCart } from "../storage/cartStorage";
 
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
   items: [],
   setItems: () => {},
+  mode: "guest",
   switchToServerMode: () => {},
   totalItemCount: 0,
   checkedItemQty: 0,
   totalAmount: 0,
-  clearLocalCart: () => {},
-  deleteItem: (id) => {},
   toggleCheckedItem: (id) => {},
 });
 
@@ -56,19 +55,6 @@ export function CartContextProvider({ children }) {
     [items],
   );
 
-  const clearLocalCart = useCallback(() => {
-    setItems([]);
-    clearCartStorage();
-  }, []);
-
-  const removeOrderedItemsFromCart = useCallback(() => {
-    setItems((prev) => prev.filter((i) => !i.checked));
-  }, []);
-
-  const deleteItem = useCallback((id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
-
   const toggleCheckedItem = useCallback((id) => {
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)),
@@ -84,13 +70,11 @@ export function CartContextProvider({ children }) {
       value={{
         items,
         setItems,
+        mode,
         switchToServerMode,
         totalItemCount,
         checkedItemQty,
         totalAmount,
-        clearLocalCart,
-        removeOrderedItemsFromCart,
-        deleteItem,
         toggleCheckedItem,
         setAllChecked,
       }}

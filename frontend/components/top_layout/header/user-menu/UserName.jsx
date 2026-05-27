@@ -4,21 +4,22 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import AuthContext from "../../../../contexts/AuthContext";
 import Spinner from "../../../user_feedback/Spinner";
 import CartContext from "../../../../contexts/CartContext";
-import CartService from "../../../../services/cart.service";
 import UserDropdown from "./UserDropdown";
 import useMyProfile from "../../../../hooks/useMyProfile";
+import useServerCart from "../../../../hooks/useServerCart";
+import { createCartSyncPayload } from "../../../../utils/calculateCart";
 
 export default function UserName() {
   const navigate = useNavigate();
   const wrapperRef = useRef(null);
   const abortControllerRef = useRef(null);
-
-  const [isSavingCart, setIsSavingCart] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useMyProfile();
-  const { clearLocalCart, items } = useContext(CartContext);
+  const { items, setItems } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
+  const { syncCartToServer, isUpdatingServerCart } = useServerCart();
+
   const isLoggedIn = !!accessToken;
 
   useEffect(() => {
@@ -44,41 +45,14 @@ export default function UserName() {
     }
   };
 
-  const persistCart = async () => {
-    if (isSavingCart) return;
-
-    abortControllerRef.current = new AbortController();
-    const cartService = new CartService(
-      abortControllerRef.current.signal,
-      () => accessToken,
-    );
-
-    const currentItems = {
-      items: items.map((i) => ({
-        menuId: i.id,
-        qty: i.qty,
-      })),
-    };
-
-    setIsSavingCart(true);
-    try {
-      await cartService.syncCartToServer(currentItems);
-    } catch (err) {
-      const returnedErrorMsg = err?.response?.data?.error || err.message;
-      console.error(returnedErrorMsg);
-    } finally {
-      setIsSavingCart(false);
-    }
-  };
-
   const handleLogout = async () => {
-    await persistCart();
-    clearLocalCart();
+    await syncCartToServer(createCartSyncPayload(items)).catch(() => {}); // 에러가 생겨도 무시
+    setItems([]);
     setIsMenuOpen(false);
     logout();
   };
 
-  if (isAuthLoading || isSavingCart) {
+  if (isAuthLoading || isUpdatingServerCart) {
     return <Spinner />;
   }
 

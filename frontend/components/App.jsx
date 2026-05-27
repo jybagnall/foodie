@@ -14,6 +14,7 @@ import AdminAccount from "./admin/AdminAccount";
 import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import AddressBook from "../components/pages/userDashboard/address/AddressBook";
+import CartMergeHandler from "./system/CartMergeHandler";
 import DeleteAccount from "./pages/userDashboard/account/DeleteAccount";
 import EditProfile from "./pages/userDashboard/account/EditProfile";
 import MyAccount from "../components/pages/userDashboard/account/MyAccount";
@@ -42,6 +43,7 @@ export default function App() {
     <BrowserRouter>
       <CartContextProvider>
         <AuthContextProvider>
+          <CartMergeHandler />
           <SidebarContextProvider>
             <Toaster position="top-center" reverseOrder={false} />
             <Header />

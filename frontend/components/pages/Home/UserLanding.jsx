@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import Spinner from "../../user_feedback/Spinner";
-import MenuItem from "../Home/MenuItem";
 import PageError from "../../user_feedback/PageError";
 import useMenu from "../../../hooks/useMenu";
+import MenuItemSwitcher from "./MenuItemSwitcher";
 
 export default function UserLanding() {
   const { menu, fetchingError, isFetchingMenu } = useMenu();
@@ -22,7 +22,7 @@ export default function UserLanding() {
   return (
     <ul className="w-[80%] max-w-[1200px] list-none my-8 mx-auto p-4 grid gap-6 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {menu.map((m) => (
-        <MenuItem key={m.id} menuItem={m} />
+        <MenuItemSwitcher key={m.id} menuItem={m} />
       ))}
     </ul>
   );

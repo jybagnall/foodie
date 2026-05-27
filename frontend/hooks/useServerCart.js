@@ -10,13 +10,13 @@ export default function useServerCart() {
 
   const {
     data: serverCartItems,
-    isFetching: isFetchingServerCart,
+    isSuccess: isServerCartReady,
     error: serverCartFetchingError,
   } = useQuery({
     queryKey: ["serverCart", userId],
     queryFn: ({ signal }) =>
       new CartService(signal, () => accessToken).getMyCart(),
-    enabled: !!userId,
+    enabled: !!userId && !!accessToken,
     staleTime: Infinity, // 직접 업데이트
     retry: false,
     refetchOnWindowFocus: false, // 탭으로 돌아올 때
@@ -24,7 +24,7 @@ export default function useServerCart() {
   });
 
   const {
-    mutate: syncCartToServer,
+    mutateAsync: syncCartToServer,
     isPending: isUpdatingServerCart,
     isError: isUpdateError,
   } = useMutation({
@@ -42,7 +42,7 @@ export default function useServerCart() {
 
   return {
     serverCartItems,
-    isFetchingServerCart,
+    isServerCartReady,
     serverCartFetchingError,
     syncCartToServer,
     isUpdatingServerCart,
