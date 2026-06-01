@@ -5,7 +5,7 @@ import EmptyCart from "../top_layout/header/cart/EmptyCart";
 import Button from "../UI/Button";
 import { currencyFormatter } from "../../utils/format";
 import useServerCart from "../../hooks/useServerCart";
-import useCartActions from "../../hooks/useCartActions";
+import useServerCartActions from "../../hooks/useServerCartActions";
 import CartHeader from "../ShoppingCartUI/CartHeader";
 import CartList from "../ShoppingCartUI/CartList";
 
@@ -15,8 +15,9 @@ export default function ViewCart() {
     totalItemCount,
     checkedItemQty,
     totalAmount,
+    selectedItemIds,
     toggleCheckedItem,
-    setAllChecked,
+    toggleAllSelections,
   } = useContext(CartContext);
 
   const { isUpdatingServerCart } = useServerCart();
@@ -25,10 +26,10 @@ export default function ViewCart() {
     decreaseItemAndSync,
     clearCartAndSync,
     deleteItemAndSync,
-  } = useCartActions();
+  } = useServerCartActions();
 
-  const allChecked = items.every((i) => i.checked);
-  const anyChecked = items.some((i) => i.checked);
+  const allChecked = items.length > 0 && selectedItemIds.size === items.length;
+  const anyChecked = selectedItemIds.size > 0;
 
   const navigate = useNavigate();
 
@@ -55,7 +56,7 @@ export default function ViewCart() {
       <div className="w-full max-w-lg">
         <CartHeader
           allChecked={allChecked}
-          setAllChecked={setAllChecked}
+          toggleAllSelections={toggleAllSelections}
           checkedItemQty={checkedItemQty}
           totalItemCount={totalItemCount}
         />
@@ -63,6 +64,7 @@ export default function ViewCart() {
         <CartList
           items={items}
           toggleCheckedItem={toggleCheckedItem}
+          selectedItemIds={selectedItemIds}
           decreaseItemAndSync={decreaseItemAndSync}
           addItemAndSync={addItemAndSync}
           deleteItemAndSync={deleteItemAndSync}

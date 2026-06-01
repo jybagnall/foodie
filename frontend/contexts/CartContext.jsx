@@ -5,18 +5,21 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import { loadCart, saveCart } from "../storage/cartStorage";
+import { loadCart, saveGuestCart } from "../storage/cartStorage";
 
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
   items: [],
   setItems: () => {},
+  selectedItemIds: new Set(),
+  setSelectedItemIds: () => {},
   mode: "guest",
   switchToServerMode: () => {},
   totalItemCount: 0,
   checkedItemQty: 0,
   totalAmount: 0,
   toggleCheckedItem: (id) => {},
+  toggleAllSelections: () => {},
 });
 
 // setItems()가 실행되면 items가 바뀌고 →
@@ -24,17 +27,22 @@ const CartContext = createContext({
 // Context를 사용하는 모든 컴포넌트가 리렌더링됨 ⚠️
 export function CartContextProvider({ children }) {
   const [items, setItems] = useState(() => loadCart()); // once
+  const [selectedItemIds, setSelectedItemIds] = useState(() => new Set());
   const [mode, setMode] = useState("guest");
 
   // guest일 때만 localStorage 저장
   useEffect(() => {
     if (mode === "guest") {
-      saveCart(items);
+      saveGuestCart(items);
     }
   }, [items, mode]);
 
   const switchToServerMode = useCallback(() => {
     setMode("server");
+  }, []);
+
+  const switchToGuestMode = useCallback(() => {
+    setMode("guest");
   }, []);
 
   const totalItemCount = useMemo(
@@ -43,40 +51,55 @@ export function CartContextProvider({ children }) {
   );
 
   const checkedItemQty = useMemo(
-    () => items.filter((i) => i.checked).reduce((total, i) => total + i.qty, 0),
-    [items],
+    () =>
+      items
+        .filter((i) => selectedItemIds.has(i.id))
+        .reduce((sum, i) => (sum += i.qty), 0),
+    [items, selectedItemIds],
   );
 
   const totalAmount = useMemo(
     () =>
       items
-        .filter((i) => i.checked)
+        .filter((i) => selectedItemIds.has(i.id))
         .reduce((sum, i) => (sum += i.price * i.qty), 0),
-    [items],
+    [items, selectedItemIds],
   );
 
   const toggleCheckedItem = useCallback((id) => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)),
-    );
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }, []);
 
-  const setAllChecked = useCallback((checked) => {
-    setItems((prev) => prev.map((i) => ({ ...i, checked })));
-  }, []);
+  const toggleAllSelections = useCallback(
+    (checked) => {
+      setSelectedItemIds(checked ? new Set(items.map((i) => i.id)) : new Set());
+    },
+    [items],
+  );
 
   return (
     <CartContext.Provider
       value={{
         items,
         setItems,
+        selectedItemIds,
+        setSelectedItemIds,
         mode,
         switchToServerMode,
+        switchToGuestMode,
         totalItemCount,
         checkedItemQty,
         totalAmount,
         toggleCheckedItem,
-        setAllChecked,
+        toggleAllSelections,
       }}
     >
       {children}

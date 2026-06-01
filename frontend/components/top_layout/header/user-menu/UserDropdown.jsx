@@ -26,7 +26,7 @@ const navigation = [
   },
 ];
 
-export default function UserDropdown({ onLogout }) {
+export default function UserDropdown({ onLogout, isUpdatingServerCart }) {
   return (
     <div className="absolute top-0 right-0 w-48 shadow-lg rounded-md mt-7 z-50 bg-gray-500">
       <nav aria-label="Sidebar" className="flex flex-1 flex-col">
@@ -49,6 +49,7 @@ export default function UserDropdown({ onLogout }) {
           <div className="my-1 rounded-md">
             <button
               onClick={onLogout}
+              disabled={isUpdatingServerCart}
               className="w-full flex items-center gap-x-3 rounded-md p-2 text-sm text-yellow-400 transition-colors font-semibold cursor-pointer"
             >
               <ArrowRightStartOnRectangleIcon className="size-6 text-yellow-400" />

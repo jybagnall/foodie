@@ -6,6 +6,8 @@ import {
   findUniqueStripeMethodId,
   getCardsInfo,
 } from "../services/payment.methods-service.js";
+import { getPaymentMethodByStripeId } from "../controllers/paymentMethod.controller.js";
+import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -18,6 +20,28 @@ router.get("/", verifyUserAuth, async (req, res) => {
     console.error("fetching error,", err.message);
     res
       .status(500)
+      .json({ error: "Something went wrong while loading the cards data." });
+  }
+});
+
+router.get("/:stripePaymentMethodId", verifyUserAuth, async (req, res) => {
+  try {
+    const { stripePaymentMethodId } = req.params;
+    const paymentMethod = await getPaymentMethodByStripeId(
+      stripePaymentMethodId,
+      req.user,
+    );
+    return res.status(200).json({
+      brand: paymentMethod.card.brand,
+      last4: paymentMethod.card.last4,
+      exp_month: paymentMethod.card.exp_month,
+      exp_year: paymentMethod.card.exp_year,
+    });
+  } catch (err) {
+    console.error("fetching error,", err.message);
+    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    res
+      .status(status)
       .json({ error: "Something went wrong while loading the cards data." });
   }
 });

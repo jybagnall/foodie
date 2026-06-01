@@ -9,8 +9,7 @@ import {
 import useAccessToken from "../../../hooks/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
 import useUserId from "../../../hooks/useUserId";
-import useCartActions from "../../../hooks/useCartActions";
-
+import useServerCartActions from "../../../hooks/useServerCartActions";
 // /order/completed/orderId?payment_intent=
 
 export default function OrderConfirmation() {
@@ -24,7 +23,7 @@ export default function OrderConfirmation() {
   const userId = useUserId();
   const [status, setStatus] = useState(paymentIntentId ? "loading" : "error");
   const [paymentErr, setPaymentErr] = useState("");
-  const { removeOrderedItemsAndSync } = useCartActions();
+  const { removeOrderedItemsAndSync } = useServerCartActions();
   const accessToken = useAccessToken();
 
   useEffect(() => {
@@ -101,13 +100,7 @@ export default function OrderConfirmation() {
       abortControllerRef.current?.abort();
       clearTimeout(timeoutRef.current);
     };
-  }, [
-    paymentIntentId,
-    removeOrderedItemsAndSync,
-    queryClient,
-    userId,
-    orderId,
-  ]);
+  }, [paymentIntentId, queryClient, userId, orderId]);
 
   // status에 따른 객체가 반환됨.
   const { title, message, action } = mapPaymentStatusToContent(

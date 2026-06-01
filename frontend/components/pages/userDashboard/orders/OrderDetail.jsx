@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import useOrder from "../../../../hooks/useOrder";
 import PageError from "../../../user_feedback/PageError";
 import BackToDash from "../../../UI/BackToDash";
@@ -8,6 +9,9 @@ import OrderHeader from "./OrderHeader";
 import { useEffect } from "react";
 import OrderSummary from "../../../OrderUI/OrderSummary";
 import DeliverySummary from "../../../OrderUI/DeliverySummary";
+import PaymentMethodCard from "./PaymentMethodCard";
+import usePaymentMethod from "../../../../hooks/usePaymentMethod";
+import useServerCartActions from "../../../../hooks/useServerCartActions";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -15,14 +19,26 @@ import DeliverySummary from "../../../OrderUI/DeliverySummary";
 
 export default function OrderDetail() {
   const { orderId } = useParams();
-  const { order, orderFetchingError, isFetching } = useOrder(orderId);
+  const { order, orderFetchingError, isOrderFetching } = useOrder(orderId);
+  const { paymentMethod, isPaymentMethodFetching, paymentMethodFetchingError } =
+    usePaymentMethod(order?.stripe_payment_method_id);
+  const { reorderItemsAndSync } = useServerCartActions();
+
+  const handleReorder = () => {
+    const reorderItems = order.items.map((i) => ({ ...i, id: i.menu_id }));
+    reorderItemsAndSync(reorderItems, {
+      onSuccess: () => {
+        toast.success("Items added to cart!");
+      },
+    });
+  };
 
   useEffect(() => {
     document.title = "Order Details | Foodie";
   }, []);
 
   // "데이터 요청 중인 상태" & "데이터 존재 여부" 확인!
-  if (isFetching || !order) return <Spinner />;
+  if (isOrderFetching || !order) return <Spinner />;
   if (orderFetchingError) return <PageError />;
 
   return (
@@ -50,20 +66,22 @@ export default function OrderDetail() {
 
               {/* RIGHT SIDE */}
               <div className="lg:col-span-1 space-y-6">
-                {/* Reorder */}
-                <button className="w-full border rounded-lg py-3 font-medium">
+                {/* Reorder ❌카트 업데이트 안 되고 있음 */}
+                <button
+                  onClick={() => handleReorder()}
+                  className="w-full border rounded-lg py-3 font-medium cursor-pointer"
+                >
                   Reorder
                 </button>
 
                 <OrderSummary order={order} />
 
                 {/* Payment */}
-                <div className="border rounded-lg p-5">
-                  <p className="font-semibold mb-2">Payment method</p>
-                  <p className="text-sm text-gray-400">
-                    Kakao Pay (Alipay+ Partner)
-                  </p>
-                </div>
+                <PaymentMethodCard
+                  paymentMethod={paymentMethod}
+                  isFetching={isPaymentMethodFetching}
+                  fetchingError={paymentMethodFetchingError}
+                />
               </div>
             </div>
           </div>

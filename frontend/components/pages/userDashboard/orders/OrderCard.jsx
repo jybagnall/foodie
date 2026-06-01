@@ -7,6 +7,7 @@ import useOrder from "../../../../hooks/useOrder";
 
 export default function OrderCard({ order }) {
   const { cancelOrder, isCanceling, isCancelError } = useOrder(order.id);
+
   const [expanded, setExpanded] = useState(false);
   const visibleItems = expanded
     ? order.preview_items

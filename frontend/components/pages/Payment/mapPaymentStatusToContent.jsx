@@ -23,33 +23,34 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
     case "loading":
       return {
         title: "Checking payment...",
-        message: "Please wait while we verify your payment.",
+        message: "Please wait while we confirm your payment.",
         action: <Spinner />,
       };
     case "processing":
       return {
-        title: "Processing your payment...",
+        title: "Finalizing your payment...",
         message:
-          "Please do not leave this page. Your payment is being confirmed.",
+          "Your payment is being processed. Please stay on this page for a moment.",
         action: <Spinner />,
       };
     case "processing_timeout":
       return {
         title: "Almost there!",
         message:
-          "Your payment is taking longer than usual. Check your orders page in a moment.",
+          "Your payment is taking longer than usual. You can check your order status shortly.",
         action: viewOrdersPage,
       };
     case "canceled":
       return {
         title: "Payment canceled",
-        message: paymentErr || "Your payment was canceled.",
+        message:
+          paymentErr || "Your payment was canceled and no charge was made.",
         action: viewOrdersPage,
       };
     case "succeeded":
       return {
-        title: "Payment successful!",
-        message: `Your order #${orderId} has been confirmed.`,
+        title: "Order confirmed!",
+        message: `Your order #${orderId} has been successfully placed.`,
         action: (
           <Link to="/" className="text-orange-400 underline">
             Back to home
@@ -59,26 +60,31 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
     case "requires_payment_method":
       return {
         title: "Payment failed",
-        message: paymentErr || "Please try another payment method.",
+        message:
+          paymentErr ||
+          "Your payment could not be completed. Please try another payment method.",
         action: retryLink,
       }; // 카드 문제
     case "invalid_payment":
       return {
-        title: "Unable to verify payment",
-        message: "This payment session is no longer valid.",
+        title: "We couldn't confirm your payment",
+        message:
+          "Please check your order status or try again in a few moments.",
         action: viewOrdersPage,
       }; // suspicious/bad request
     case "server_error":
       return {
         title: "Verification unavailable",
-        message: "We're having trouble verifying your payment right now.",
+        message:
+          "We're having trouble confirming your payment right now. Please check your orders page shortly.",
         action: viewOrdersPage,
       }; // server/system issue
     default:
       return {
         title: "Something went wrong",
         message:
-          paymentErr || "Something went wrong while verifying your payment.",
+          paymentErr ||
+          "We couldn't verify your payment. Please try again shortly.",
         action: (
           <Link to="/cart" className="text-orange-400 underline">
             Return to cart

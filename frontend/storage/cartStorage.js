@@ -9,7 +9,7 @@ export function loadCart() {
   }
 }
 
-export function saveCart(items) {
+export function saveGuestCart(items) {
   localStorage.setItem(CART_KEY, JSON.stringify(items));
 }
 

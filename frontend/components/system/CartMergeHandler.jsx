@@ -1,4 +1,5 @@
 import useAccessToken from "../../hooks/useAccessToken";
+import CartMergeEffect from "./CartMergeEffect";
 
 export default function CartMergeHandler() {
   const accessToken = useAccessToken();

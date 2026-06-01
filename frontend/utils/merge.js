@@ -9,8 +9,6 @@ export function mergeCarts(guest, server) {
     }
   });
 
-  return Array.from(map.values()).map((item) => ({
-    ...item,
-    checked: true,
-  }));
+  return Array.from(map.values());
 }
+// 같은 상품은 수량만 더한다

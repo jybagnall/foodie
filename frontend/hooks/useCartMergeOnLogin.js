@@ -5,7 +5,8 @@ import useServerCart from "./useServerCart";
 import { clearCartStorage } from "../storage/cartStorage";
 
 export function useCartMergeOnLogin(accessToken) {
-  const cartContext = useContext(CartContext);
+  const { items, setItems, setSelectedItemIds, switchToServerMode } =
+    useContext(CartContext);
   const hasInitializedCartRef = useRef(false);
   const {
     serverCartItems,
@@ -24,12 +25,9 @@ export function useCartMergeOnLogin(accessToken) {
 
     // 로그인 직후에 카트 합치기
     if (!hasInitializedCartRef.current) {
-      const guestCartSnapshot = [...cartContext.items]; // 게스트 아이템 snapshot 저장
-
-      const normalizedServerItems = (serverCartItems ?? []).map((i) => ({
-        ...i,
-        checked: true,
-      }));
+      const guestCartSnapshot = [...items]; // 게스트 아이템 snapshot 저장
+      setSelectedItemIds(new Set());
+      const normalizedServerItems = serverCartItems ?? [];
 
       const mergedCart =
         guestCartSnapshot.length > 0
@@ -37,9 +35,9 @@ export function useCartMergeOnLogin(accessToken) {
           : normalizedServerItems;
 
       hasInitializedCartRef.current = true;
-      cartContext.switchToServerMode();
+      switchToServerMode();
       clearCartStorage();
-      cartContext.setItems(mergedCart);
+      setItems(mergedCart);
 
       if (guestCartSnapshot.length > 0) {
         syncCartToServer({

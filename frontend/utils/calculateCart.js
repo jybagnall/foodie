@@ -12,13 +12,13 @@ export function createNextCartAfterAdd(items, item) {
 
   if (targetItem) {
     const nextCart = items.map((i) =>
-      i.id === item.id ? { ...i, checked: true, qty: i.qty + 1 } : i,
+      i.id === item.id ? { ...i, qty: i.qty + 1 } : i,
     );
     return { nextCart, nextQty: targetItem.qty + 1, isNew: false };
   }
 
   return {
-    nextCart: [...items, { ...item, qty: 1, checked: true }],
+    nextCart: [...items, { ...item, qty: 1 }],
     nextQty: 1,
     isNew: true,
   };

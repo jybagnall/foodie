@@ -4,6 +4,7 @@ import { currencyFormatter } from "../../utils/format";
 export default function CartList({
   items,
   toggleCheckedItem,
+  selectedItemIds,
   decreaseItemAndSync,
   addItemAndSync,
   deleteItemAndSync,
@@ -19,7 +20,7 @@ export default function CartList({
               <input
                 id={i.name}
                 type="checkbox"
-                checked={i.checked}
+                checked={selectedItemIds.has(i.id)}
                 onChange={() => toggleCheckedItem(i.id)}
                 aria-label={`Select ${i.name}`}
                 className="w-5 h-5 cursor-pointer rounded-sm border border-gray-200 bg-white checked:bg-gray-100 checked:border-gray-100 transition-colors"

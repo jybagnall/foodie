@@ -1,4 +1,6 @@
-export function buildOrderDetails(shippingInfo, items) {
+export function buildOrderDetails(shippingInfo, items, selectedItemIds) {
+  const checkedItems = items.filter((i) => selectedItemIds.has(i.id));
+
   return {
     address: {
       full_name: shippingInfo.full_name.trim(),
@@ -9,7 +11,7 @@ export function buildOrderDetails(shippingInfo, items) {
       is_default: shippingInfo.is_default,
     },
     orderPayload: {
-      items: items.map((i) => ({
+      items: checkedItems.map((i) => ({
         menu_name: i.name,
         menu_id: i.id,
         qty: i.qty,

@@ -1,3 +1,8 @@
+import useServerCartActions from "../../../hooks/useServerCartActions";
+import MenuItemView from "./MenuItemView";
+
 export default function ServerMenuItem({ menuItem }) {
-  return <div></div>;
+  const { addItemAndSync } = useServerCartActions();
+
+  return <MenuItemView menuItem={menuItem} onAdd={addItemAndSync} />;
 }

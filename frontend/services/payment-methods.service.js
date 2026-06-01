@@ -14,6 +14,13 @@ class PaymentMethodsService {
     const data = await this.client.get("/api/payment-methods");
     return data;
   }
+
+  async getPaymentMethodByStripeId(paymentMethodId) {
+    const data = await this.client.get(
+      `/api/payment-methods/${paymentMethodId}`,
+    );
+    return data;
+  }
 }
 
 export default PaymentMethodsService;

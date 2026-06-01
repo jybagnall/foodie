@@ -39,6 +39,7 @@ export async function getAllOrders(userId) {
     (
       SELECT JSON_AGG(
         JSON_BUILD_OBJECT(
+          'menu_id', m.id,
           'name', m.name,
           'image', m.image,
           'price', oi2.price,
@@ -100,7 +101,7 @@ export async function getOrderDetails(orderId, userId) {
       o.id, o.created_at, o.total_amount, o.status, o.shipping_street, 
       o.shipping_city, o.shipping_postal_code, 
       o.shipping_phone, o.shipping_full_name,
-      p.payment_status,
+      p.payment_status, p.stripe_payment_method_id,
 
       JSON_AGG( 
           JSON_BUILD_OBJECT(
@@ -118,7 +119,7 @@ export async function getOrderDetails(orderId, userId) {
       JOIN order_items oi ON oi.order_id = o.id
       JOIN menus m ON m.id = oi.menu_id
       WHERE o.id = $1 AND o.user_id = $2
-      GROUP BY o.id, p.payment_status
+      GROUP BY o.id, p.payment_status, p.stripe_payment_method_id
   `;
   const result = await pool.query(q, [orderId, userId]);
   return result.rows[0] ?? null;

@@ -21,4 +21,4 @@ export default function useMyOrders() {
   return { orders, ordersFetchingError, isFetchingOrders };
 }
 
-// {id, created_at, total_amount, payment_status, item_count, preview_items= {name, image, qty}}
+// {id, created_at, total_amount, payment_status, item_count, preview_items= {id, name, image, qty, price}}

@@ -15,7 +15,7 @@ export default function UserName() {
   const abortControllerRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useMyProfile();
-  const { items, setItems } = useContext(CartContext);
+  const { items, setItems, switchToGuestMode, mode } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
   const { syncCartToServer, isUpdatingServerCart } = useServerCart();
@@ -49,10 +49,11 @@ export default function UserName() {
     await syncCartToServer(createCartSyncPayload(items)).catch(() => {}); // 에러가 생겨도 무시
     setItems([]);
     setIsMenuOpen(false);
+    switchToGuestMode();
     logout();
   };
 
-  if (isAuthLoading || isUpdatingServerCart) {
+  if (isAuthLoading) {
     return <Spinner />;
   }
 
@@ -80,7 +81,12 @@ export default function UserName() {
             <ChevronDownIcon className="w-4 h-4 mt-2" />
           </span>
 
-          {isMenuOpen && <UserDropdown onLogout={handleLogout} />}
+          {isMenuOpen && (
+            <UserDropdown
+              onLogout={handleLogout}
+              isUpdatingServerCart={isUpdatingServerCart}
+            />
+          )}
         </div>
       )}
     </div>

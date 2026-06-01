@@ -17,7 +17,7 @@ import useUserId from "../../hooks/useUserId";
 import { buildOrderDetails } from "../../utils/orderHelpers";
 
 export default function ShippingForm() {
-  const { items, totalAmount } = useContext(CartContext);
+  const { items, totalAmount, selectedItemIds } = useContext(CartContext);
   const accessToken = useAccessToken();
   const userId = useUserId();
   const { addresses, isFetching, fetchingError, isDeleteError } =
@@ -42,7 +42,12 @@ export default function ShippingForm() {
 
   const onAddressSubmit = async (formData) => {
     if (isOrderProcessing) return;
-    if (items.length === 0 || !totalAmount || totalAmount <= 0) {
+    if (
+      items.length === 0 ||
+      selectedItemIds.size === 0 ||
+      !totalAmount ||
+      totalAmount <= 0
+    ) {
       setErrorMsg(
         "Your cart is empty. Please add items before placing an order.",
       );
@@ -66,7 +71,11 @@ export default function ShippingForm() {
       () => accessToken,
     );
 
-    const orderDetails = buildOrderDetails(shippingInfo, items);
+    const orderDetails = buildOrderDetails(
+      shippingInfo,
+      items,
+      selectedItemIds,
+    );
     setIsOrderProcessing(true);
 
     try {

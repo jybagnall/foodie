@@ -202,6 +202,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   return { paymentIntent };
 }
 
+// "pi_3TbrqCJgr0Jxdxnc0ELERjXy"
 export async function verifyStripePayment(paymentIntentId, orderId, user) {
   if (
     !paymentIntentId ||
@@ -222,8 +223,8 @@ export async function verifyStripePayment(paymentIntentId, orderId, user) {
   }
 
   if (
-    paymentIntent.metadata.userId !== user.id ||
-    paymentIntent.metadata.orderId !== orderId
+    paymentIntent.metadata.userId !== String(user.id) ||
+    paymentIntent.metadata.orderId !== String(orderId)
   ) {
     throw new Error("INVALID_PAYMENT_INTENT");
   }

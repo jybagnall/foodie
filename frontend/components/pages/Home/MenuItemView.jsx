@@ -2,14 +2,12 @@ import { toast } from "react-hot-toast";
 import { currencyFormatter } from "../../../utils/format";
 import Button from "../../UI/Button";
 import AddingItemFeedback from "../../user_feedback/AddingItemFeedback";
-import useCartActions from "../../../hooks/useCartActions";
 
-export default function MenuItem({ menuItem }) {
+export default function MenuItemView({ menuItem, onAdd }) {
   const { name, price, description, image } = menuItem;
-  const { addItemAndSync } = useCartActions();
 
   const handleAddToCart = (item) => {
-    const { isNew, nextQty } = addItemAndSync(item);
+    const { isNew, nextQty } = onAdd(item);
 
     // 커스텀 토스트에 같은 ID의 토스트가 이미 떠있으면 새로 안 만듬.
     toast.custom(

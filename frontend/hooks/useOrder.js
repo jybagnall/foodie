@@ -10,7 +10,7 @@ export default function useOrder(orderId) {
 
   const {
     data: orderDetail,
-    isFetching,
+    isFetching: isOrderFetching,
     error: orderFetchingError,
   } = useQuery({
     queryKey: ["order", orderId], // 주문별 캐시 분리
@@ -45,7 +45,7 @@ export default function useOrder(orderId) {
 
   return {
     order,
-    isFetching,
+    isOrderFetching,
     orderFetchingError,
     cancelOrder,
     isCanceling,

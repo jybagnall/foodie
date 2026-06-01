@@ -9,25 +9,31 @@ import {
 } from "../utils/calculateCart";
 
 export default function useServerCartActions() {
-  const { items, setItems } = useContext(CartContext);
+  const { items, setItems, selectedItemIds, setSelectedItemIds } =
+    useContext(CartContext);
   const { syncCartToServer } = useServerCart();
 
   const addItemAndSync = useCallback(
     (item) => {
       const prevCart = [...items];
+      const prevSelectedItemIds = new Set(selectedItemIds);
       const { nextCart, isNew, nextQty } = createNextCartAfterAdd(items, item);
       setItems(nextCart);
 
+      if (isNew) {
+        setSelectedItemIds((prev) => new Set([...prev, item.id]));
+      }
       syncCartToServer(createCartSyncPayload(nextCart), {
         onError: () => {
           setItems(prevCart);
+          setSelectedItemIds(prevSelectedItemIds);
           toast.error("We couldn't update your cart. Please try again.");
         },
       });
 
       return { isNew, nextQty };
     },
-    [items, setItems, syncCartToServer],
+    [items, selectedItemIds, syncCartToServer],
   );
 
   const clearCartAndSync = useCallback(() => {
@@ -40,7 +46,7 @@ export default function useServerCartActions() {
         toast.error("We couldn't clear your cart. Please try again.");
       },
     });
-  }, [items, setItems, syncCartToServer]);
+  }, [items, syncCartToServer]);
 
   const decreaseItemAndSync = useCallback(
     (item) => {
@@ -55,7 +61,7 @@ export default function useServerCartActions() {
         },
       });
     },
-    [items, setItems, syncCartToServer],
+    [items, syncCartToServer],
   );
 
   const deleteItemAndSync = useCallback(
@@ -71,14 +77,50 @@ export default function useServerCartActions() {
         },
       });
     },
-    [items, setItems, syncCartToServer],
+    [items, syncCartToServer],
   );
 
   const removeOrderedItemsAndSync = useCallback(() => {
-    const nextCart = items.filter((i) => !i.checked);
+    const nextCart = items.filter((i) => !selectedItemIds.has(i.id));
     setItems(nextCart);
+    setSelectedItemIds(new Set());
     syncCartToServer(createCartSyncPayload(nextCart));
-  }, [items, setItems, syncCartToServer]);
+  }, [items, syncCartToServer, selectedItemIds]);
+
+  const reorderItemsAndSync = useCallback(
+    (reorderItems, callbacks = {}) => {
+      const prevCart = [...items];
+      let nextCart = [...items];
+      const newIds = [];
+      const prevSelectedItemIds = new Set(selectedItemIds);
+
+      reorderItems.forEach((i) => {
+        const { nextCart: updatedCart, isNew } = createNextCartAfterAdd(
+          nextCart,
+          i,
+        );
+        nextCart = updatedCart;
+
+        if (isNew) {
+          newIds.push(i.id);
+        }
+      });
+      setSelectedItemIds((prev) => new Set([...prev, ...newIds]));
+      setItems(nextCart);
+
+      syncCartToServer(createCartSyncPayload(nextCart), {
+        onSuccess: () => {
+          callbacks.onSuccess?.();
+        },
+        onError: () => {
+          setItems(prevCart);
+          setSelectedItemIds(prevSelectedItemIds);
+          toast.error("We couldn't update your cart. Please try again.");
+        },
+      });
+    },
+    [items, syncCartToServer, selectedItemIds],
+  );
 
   return {
     addItemAndSync,
@@ -86,5 +128,6 @@ export default function useServerCartActions() {
     clearCartAndSync,
     deleteItemAndSync,
     removeOrderedItemsAndSync,
+    reorderItemsAndSync,
   };
 }

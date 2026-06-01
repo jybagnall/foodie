@@ -14,7 +14,7 @@ export default function OrderPaymentPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirectPaymentIntentId = searchParams.get("payment_intent");
-  const { order, paymentStatus, isFetching, orderFetchingError } =
+  const { order, paymentStatus, isOrderFetching, orderFetchingError } =
     useOrder(orderId);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function OrderPaymentPage() {
   // payment_intent가 있다면 결제창 막고(빈 화면 후) 결제 완료 페이지로
   if (redirectPaymentIntentId) return null;
   if (paymentStatus === "paid") return null;
-  if (isFetching) return <Spinner />;
+  if (isOrderFetching) return <Spinner />;
 
   if (orderFetchingError)
     return (
