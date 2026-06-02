@@ -19,7 +19,8 @@ const router = express.Router();
 
 router.get("/all", verifyUserAuth, async (req, res) => {
   try {
-    const orders = await getAllOrders(req.user.id);
+    const cursor = req.query.cursor ? JSON.parse(req.query.cursor) : null;
+    const orders = await getAllOrders(req.user.id, cursor, 10);
     res.status(200).json(orders);
   } catch (err) {
     console.error("fetching error,", err.message);

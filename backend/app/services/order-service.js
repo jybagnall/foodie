@@ -29,7 +29,7 @@ export async function createOrderId(
   return result.rows[0].id;
 }
 
-export async function getAllOrders(userId) {
+export async function getAllOrders(userId, cursor = null, limit = 10) {
   const q = `
   SELECT 
     o.id, o.created_at, o.total_amount, o.status,
@@ -65,6 +65,7 @@ export async function getAllOrders(userId) {
   GROUP BY o.id, o.created_at, o.total_amount, o.status, 
            p.payment_status
   ORDER BY o.created_at DESC
+  LIMIT 11
   `;
 
   const result = await pool.query(q, [userId]);

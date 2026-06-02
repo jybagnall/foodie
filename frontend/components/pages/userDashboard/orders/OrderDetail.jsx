@@ -12,6 +12,7 @@ import DeliverySummary from "../../../OrderUI/DeliverySummary";
 import PaymentMethodCard from "./PaymentMethodCard";
 import usePaymentMethod from "../../../../hooks/usePaymentMethod";
 import useServerCartActions from "../../../../hooks/useServerCartActions";
+import useServerCart from "../../../../hooks/useServerCart";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -23,14 +24,13 @@ export default function OrderDetail() {
   const { paymentMethod, isPaymentMethodFetching, paymentMethodFetchingError } =
     usePaymentMethod(order?.stripe_payment_method_id);
   const { reorderItemsAndSync } = useServerCartActions();
+  const { isUpdatingServerCart } = useServerCart();
 
   const handleReorder = () => {
+    if (!order?.items?.length) return;
+
     const reorderItems = order.items.map((i) => ({ ...i, id: i.menu_id }));
-    reorderItemsAndSync(reorderItems, {
-      onSuccess: () => {
-        toast.success("Items added to cart!");
-      },
-    });
+    reorderItemsAndSync(reorderItems);
   };
 
   useEffect(() => {
@@ -69,6 +69,7 @@ export default function OrderDetail() {
                 {/* Reorder ❌카트 업데이트 안 되고 있음 */}
                 <button
                   onClick={() => handleReorder()}
+                  disabled={isUpdatingServerCart}
                   className="w-full border rounded-lg py-3 font-medium cursor-pointer"
                 >
                   Reorder

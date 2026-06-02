@@ -88,36 +88,39 @@ export default function useServerCartActions() {
   }, [items, syncCartToServer, selectedItemIds]);
 
   const reorderItemsAndSync = useCallback(
-    (reorderItems, callbacks = {}) => {
+    async (reorderItems) => {
       const prevCart = [...items];
       let nextCart = [...items];
-      const newIds = [];
+      const reorderedItemIds = [];
       const prevSelectedItemIds = new Set(selectedItemIds);
 
       reorderItems.forEach((i) => {
-        const { nextCart: updatedCart, isNew } = createNextCartAfterAdd(
-          nextCart,
-          i,
-        );
+        const { nextCart: updatedCart } = createNextCartAfterAdd(nextCart, i);
         nextCart = updatedCart;
-
-        if (isNew) {
-          newIds.push(i.id);
-        }
+        reorderedItemIds.push(i.id);
       });
-      setSelectedItemIds((prev) => new Set([...prev, ...newIds]));
+      setSelectedItemIds((prev) => new Set([...prev, ...reorderedItemIds]));
       setItems(nextCart);
+      try {
+        await syncCartToServer(createCartSyncPayload(nextCart));
+        toast.success("Items added to cart!");
+      } catch (err) {
+        console.error("sync failed", err);
+        setItems(prevCart);
+        setSelectedItemIds(prevSelectedItemIds);
 
-      syncCartToServer(createCartSyncPayload(nextCart), {
-        onSuccess: () => {
-          callbacks.onSuccess?.();
-        },
-        onError: () => {
-          setItems(prevCart);
-          setSelectedItemIds(prevSelectedItemIds);
-          toast.error("We couldn't update your cart. Please try again.");
-        },
-      });
+        toast.error("We couldn't update your cart. Please try again.");
+      }
+      // syncCartToServer(createCartSyncPayload(nextCart), {
+      //   onSuccess: () => {
+      //     toast.success("Items added to cart!");
+      //   },
+      //   onError: () => {
+      //     setItems(prevCart);
+      //     setSelectedItemIds(prevSelectedItemIds);
+      //     toast.error("We couldn't update your cart. Please try again.");
+      //   },
+      // });
     },
     [items, syncCartToServer, selectedItemIds],
   );

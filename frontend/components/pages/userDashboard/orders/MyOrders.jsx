@@ -1,17 +1,33 @@
+import { useEffect, useRef } from "react";
 import useMyOrders from "../../../../hooks/useMyOrders";
 import Spinner from "../../../user_feedback/Spinner";
 import PageError from "../../../user_feedback/PageError";
 import { ShoppingBagIcon } from "@heroicons/react/24/outline";
 import EmptyDataState from "../../../UI/EmptyDataState";
 import OrderCard from "./OrderCard";
-import { useEffect } from "react";
 
 // {id, created_at, total_amount, payment_status, item_count, preview_items= {name, image, qty}}
 export default function MyOrders() {
-  const { orders, ordersFetchingError, isFetchingOrders } = useMyOrders();
+  const {
+    orders,
+    ordersFetchingError,
+    isFetchingOrders,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useMyOrders();
+
+  // 맨 아래 sentinel 요소를 감시
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
     document.title = "Orders | Foodie";
+  }, []);
+
+  useEffect(() => {
+    //   if (!hasNextPage) return;
+    const el = sentinelRef.current;
+    if (!el) return; // ❗무슨 뜻
   }, []);
 
   if (isFetchingOrders) return <Spinner />;
