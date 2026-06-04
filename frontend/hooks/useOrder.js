@@ -19,9 +19,12 @@ export default function useOrder(orderId) {
     enabled: !!userId && !!orderId,
   });
 
-  const listData = queryClient
-    .getQueryData(["orders", userId])
-    ?.find((o) => o.id === Number(orderId));
+  const cachedOrders =
+    queryClient
+      .getQueryData(["orders", userId])
+      ?.pages?.flatMap((page) => page.orders) ?? [];
+
+  const listData = cachedOrders.find((o) => o.id === Number(orderId));
 
   // 세부 정보 fetch 완료 후 → 합친 데이터
   const order = orderDetail

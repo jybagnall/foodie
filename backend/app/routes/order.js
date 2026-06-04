@@ -14,14 +14,30 @@ import {
   cancelOrderAndRefund,
 } from "../controllers/order.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
+import { parseCursor } from "../utils/validators.js";
 
 const router = express.Router();
 
-router.get("/all", verifyUserAuth, async (req, res) => {
+router.get("/my-orders", verifyUserAuth, async (req, res) => {
   try {
-    const cursor = req.query.cursor ? JSON.parse(req.query.cursor) : null;
-    const orders = await getAllOrders(req.user.id, cursor, 10);
-    res.status(200).json(orders);
+    // "2024-01-15T10:30:00Z_42"
+    const cursor = parseCursor(req.query.cursor);
+
+    if (req.query.cursor && !cursor) {
+      return res.status(400).json({
+        error: "Invalid cursor",
+      });
+    }
+
+    const limit = Math.max(
+      1,
+      Math.min(parseInt(req.query.limit, 10) || 10, 50),
+    );
+    const { orders, nextCursor } = await getAllOrders(req.user.id, {
+      limit,
+      cursor,
+    });
+    res.status(200).json({ orders, nextCursor });
   } catch (err) {
     console.error("fetching error,", err.message);
     res.status(500).json({ error: err.message });

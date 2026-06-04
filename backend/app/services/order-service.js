@@ -29,13 +29,22 @@ export async function createOrderId(
   return result.rows[0].id;
 }
 
-export async function getAllOrders(userId, cursor = null, limit = 10) {
+export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
+  let cursorClause = "";
+  let values = [userId, limit + 1];
+
+  if (cursor) {
+    values.push(cursor.created_at);
+    values.push(cursor.id);
+
+    cursorClause = `AND (o.created_at, o.id) < ($3::timestamptz, $4::int)`;
+  }
+
   const q = `
   SELECT 
     o.id, o.created_at, o.total_amount, o.status,
     p.payment_status,
     COUNT(DISTINCT oi.id) AS item_count,
-    
     (
       SELECT JSON_AGG(
         JSON_BUILD_OBJECT(
@@ -55,21 +64,30 @@ export async function getAllOrders(userId, cursor = null, limit = 10) {
       JOIN menus m 
         ON oi2.menu_id = m.id
     ) AS preview_items
-
   FROM orders o
   JOIN payments p 
     ON p.order_id = o.id
   JOIN order_items oi 
     ON oi.order_id = o.id
   WHERE o.user_id = $1
+  ${cursorClause}
   GROUP BY o.id, o.created_at, o.total_amount, o.status, 
            p.payment_status
-  ORDER BY o.created_at DESC
-  LIMIT 11
+  ORDER BY o.created_at DESC, o.id DESC 
+  LIMIT $2
   `;
 
-  const result = await pool.query(q, [userId]);
-  return result.rows;
+  const result = await pool.query(q, values);
+  const hasMore = result.rows.length > limit;
+  const orders = hasMore ? result.rows.slice(0, limit) : result.rows;
+  const lastOrder = orders[orders.length - 1];
+
+  // 다음 cursor는 마지막 row의 created_at + id
+  const nextCursor = hasMore
+    ? { created_at: lastOrder.created_at.toISOString(), id: lastOrder.id }
+    : null;
+
+  return { orders, nextCursor };
 }
 
 export async function getOrderById(orderId) {

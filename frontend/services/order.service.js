@@ -23,8 +23,11 @@ class OrderService {
     return data;
   }
 
-  async getMyOrders() {
-    const data = await this.client.get("/api/orders/all");
+  async getMyOrders({ cursor, limit } = {}) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor != null) params.set("cursor", JSON.stringify(cursor));
+
+    const data = await this.client.get(`/api/orders/my-orders?${params}`);
     return data;
   }
 }
