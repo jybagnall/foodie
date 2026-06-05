@@ -21,8 +21,7 @@ export default function useGuestCartActions() {
 
   const clearCart = useCallback(() => {
     setItems([]);
-    setSelectedItemIds(new Set());
-  }, [setItems, setSelectedItemIds]);
+  }, [setItems]);
 
   const decreaseItem = useCallback(
     (item) => {
@@ -36,14 +35,8 @@ export default function useGuestCartActions() {
     (item) => {
       const nextCart = items.filter((i) => i.id !== item.id);
       setItems(nextCart);
-
-      setSelectedItemIds((prev) => {
-        const next = new Set(prev);
-        next.delete(item.id);
-        return next;
-      });
     },
-    [items, setSelectedItemIds],
+    [items],
   );
 
   return {

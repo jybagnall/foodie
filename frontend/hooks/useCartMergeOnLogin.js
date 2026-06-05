@@ -26,7 +26,6 @@ export function useCartMergeOnLogin(accessToken) {
     // 로그인 직후에 카트 합치기
     if (!hasInitializedCartRef.current) {
       const guestCartSnapshot = [...items]; // 게스트 아이템 snapshot 저장
-      setSelectedItemIds(new Set());
 
       const mergedCart =
         guestCartSnapshot.length > 0
@@ -37,6 +36,7 @@ export function useCartMergeOnLogin(accessToken) {
       switchToServerMode();
       clearCartStorage();
       setItems(mergedCart);
+      setSelectedItemIds(new Set(mergedCart.map((i) => i.id)));
 
       if (guestCartSnapshot.length > 0) {
         syncCartToServer({

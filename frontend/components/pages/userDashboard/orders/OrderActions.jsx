@@ -35,9 +35,12 @@ export default function OrderActions({ order, cancelOrder, isCanceling }) {
       )}
 
       {canCompleteOrder && (
-        <button className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-red-400 text-base cursor-pointer">
+        <Link
+          to={`/order/payment/${order.id}`}
+          className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-red-400 text-base cursor-pointer"
+        >
           Complete Payment
-        </button>
+        </Link>
       )}
 
       {showAlert && (
