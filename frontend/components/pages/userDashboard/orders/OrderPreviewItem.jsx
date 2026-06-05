@@ -4,10 +4,10 @@ import useServerCartActions from "../../../../hooks/useServerCartActions";
 import AddingItemFeedback from "../../../user_feedback/AddingItemFeedback";
 
 export default function OrderPreviewItem({ item, showPrice = false }) {
-  const { addItemAndSync } = useServerCartActions();
+  const { addItem } = useServerCartActions();
 
   const handleBuyAgain = (item) => {
-    const { isNew, nextQty } = addItemAndSync({ ...item, id: item.menu_id });
+    const { isNew, nextQty } = addItem({ ...item, id: item.menu_id });
     toast.custom(
       (t) => (
         <AddingItemFeedback t={t} item={item} isNew={isNew} nextQty={nextQty} />

@@ -27,12 +27,11 @@ export function useCartMergeOnLogin(accessToken) {
     if (!hasInitializedCartRef.current) {
       const guestCartSnapshot = [...items]; // 게스트 아이템 snapshot 저장
       setSelectedItemIds(new Set());
-      const normalizedServerItems = serverCartItems ?? [];
 
       const mergedCart =
         guestCartSnapshot.length > 0
-          ? mergeCarts(guestCartSnapshot, normalizedServerItems)
-          : normalizedServerItems;
+          ? mergeCarts(guestCartSnapshot, serverCartItems)
+          : serverCartItems;
 
       hasInitializedCartRef.current = true;
       switchToServerMode();

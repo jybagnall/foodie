@@ -49,7 +49,6 @@ export default function MyOrders() {
           !isFetchingNextPageRef.current
         ) {
           const result = fetchNextPage();
-          console.log(result);
         }
       },
       {
@@ -82,7 +81,7 @@ export default function MyOrders() {
         ))}
 
         {/* 이 요소가 viewport에 들어오면 다음 페이지 fetch */}
-        <div ref={loadMoreTriggerRef} className="h-20 bg-red-500" />
+        <div ref={loadMoreTriggerRef} className="h-4" />
 
         {isFetchingNextPage && (
           <div className="flex justify-center py-4">

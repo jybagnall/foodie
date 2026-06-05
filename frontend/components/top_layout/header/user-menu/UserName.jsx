@@ -47,6 +47,7 @@ export default function UserName() {
 
   const handleLogout = async () => {
     await syncCartToServer(createCartSyncPayload(items)).catch(() => {}); // 에러가 생겨도 무시
+
     setItems([]);
     setIsMenuOpen(false);
     switchToGuestMode();

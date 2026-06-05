@@ -5,9 +5,9 @@ export default function CartList({
   items,
   toggleCheckedItem,
   selectedItemIds,
-  decreaseItemAndSync,
-  addItemAndSync,
-  deleteItemAndSync,
+  decreaseItem,
+  addItem,
+  deleteItem,
   isUpdatingServerCart,
 }) {
   return (
@@ -49,7 +49,7 @@ export default function CartList({
                   <div className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
                     <button
                       type="button"
-                      onClick={() => decreaseItemAndSync(i)}
+                      onClick={() => decreaseItem(i)}
                       disabled={isUpdatingServerCart}
                       className="text-gray-700 hover:text-gray-900 cursor-pointer relative mr-1 ml-0.5 size-3.5 rounded-xs"
                     >
@@ -62,7 +62,7 @@ export default function CartList({
                     {i.qty}
                     <button
                       type="button"
-                      onClick={() => addItemAndSync(i)}
+                      onClick={() => addItem(i)}
                       disabled={isUpdatingServerCart}
                       className="group relative ml-1 mr-0.5 size-3.5 rounded-xs cursor-pointer"
                     >
@@ -72,7 +72,7 @@ export default function CartList({
                   {/* vertical divider */}
                   <div className="h-4 w-px bg-gray-300" />
                   <span
-                    onClick={() => deleteItemAndSync(i)}
+                    onClick={() => deleteItem(i)}
                     className="cursor-pointer text-sm text-gray-300 hover:underline"
                   >
                     Delete

@@ -16,6 +16,9 @@ export default function useMyProfileMutations() {
     mutationFn: (name) => {
       return new AccountService(null, () => accessToken).updateUsername(name);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+    },
   });
 
   const {

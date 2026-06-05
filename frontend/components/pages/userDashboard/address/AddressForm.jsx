@@ -96,7 +96,7 @@ export default function AddressForm() {
 
   return (
     <main className="min-h-screen flex justify-center items-start py-10 px-4">
-      <section className="w-full max-w-lg bg-gray-400 border-2 border-gray-400 shadow-xl rounded-xl p-8">
+      <section className="w-full max-w-lg bg-gray-700 border-2 border-gray-400 shadow-xl rounded-xl p-8">
         {errorConfigs.condition && (
           <div className="mb-4">
             <ErrorAlert
@@ -106,7 +106,7 @@ export default function AddressForm() {
           </div>
         )}
 
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+        <h2 className="text-2xl font-semibold text-gray-100 mb-6 border-b pb-3">
           {isEditMode ? "Edit Address" : "Add Address"}
         </h2>
 
@@ -121,7 +121,7 @@ export default function AddressForm() {
               <Button
                 type="button"
                 textOnly
-                className="text-gray-800 hover:text-gray-700"
+                className="text-gray-100 hover:text-gray-700"
                 onClick={onCancelSubmit}
               >
                 Cancel

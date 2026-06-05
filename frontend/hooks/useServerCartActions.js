@@ -13,16 +13,13 @@ export default function useServerCartActions() {
     useContext(CartContext);
   const { syncCartToServer } = useServerCart();
 
-  const addItemAndSync = useCallback(
+  const addItem = useCallback(
     (item) => {
       const prevCart = [...items];
       const prevSelectedItemIds = new Set(selectedItemIds);
       const { nextCart, isNew, nextQty } = createNextCartAfterAdd(items, item);
       setItems(nextCart);
-
-      if (isNew) {
-        setSelectedItemIds((prev) => new Set([...prev, item.id]));
-      }
+      setSelectedItemIds((prev) => new Set([...prev, item.id]));
       syncCartToServer(createCartSyncPayload(nextCart), {
         onError: () => {
           setItems(prevCart);
@@ -36,7 +33,7 @@ export default function useServerCartActions() {
     [items, selectedItemIds, syncCartToServer],
   );
 
-  const clearCartAndSync = useCallback(() => {
+  const clearCart = useCallback(() => {
     const prevCart = [...items];
     setItems([]);
 
@@ -48,7 +45,7 @@ export default function useServerCartActions() {
     });
   }, [items, syncCartToServer]);
 
-  const decreaseItemAndSync = useCallback(
+  const decreaseItem = useCallback(
     (item) => {
       const prevCart = [...items];
       const nextCart = createNextCartAfterDecrease(items, item);
@@ -64,7 +61,7 @@ export default function useServerCartActions() {
     [items, syncCartToServer],
   );
 
-  const deleteItemAndSync = useCallback(
+  const deleteItem = useCallback(
     (item) => {
       const prevCart = [...items];
       const nextCart = items.filter((i) => i.id !== item.id);
@@ -111,25 +108,15 @@ export default function useServerCartActions() {
 
         toast.error("We couldn't update your cart. Please try again.");
       }
-      // syncCartToServer(createCartSyncPayload(nextCart), {
-      //   onSuccess: () => {
-      //     toast.success("Items added to cart!");
-      //   },
-      //   onError: () => {
-      //     setItems(prevCart);
-      //     setSelectedItemIds(prevSelectedItemIds);
-      //     toast.error("We couldn't update your cart. Please try again.");
-      //   },
-      // });
     },
     [items, syncCartToServer, selectedItemIds],
   );
 
   return {
-    addItemAndSync,
-    decreaseItemAndSync,
-    clearCartAndSync,
-    deleteItemAndSync,
+    addItem,
+    decreaseItem,
+    clearCart,
+    deleteItem,
     removeOrderedItemsAndSync,
     reorderItemsAndSync,
   };

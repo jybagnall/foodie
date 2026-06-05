@@ -109,7 +109,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
             <ErrorAlert title="There was a problem" message={errorMsg} />
           </div>
         )}
-        <div className="w-full rounded-lg border-2 border-yellow-600 p-6 text-left mt-5">
+        <div className="w-full rounded-lg border-2 border-gray-500 p-6 text-left mt-5">
           <h2
             className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 border-b`}
           >
@@ -123,6 +123,9 @@ export default function PaymentMethodSelector({ order, orderId }) {
 
               <div className="border rounded-lg p-5 border-gray-200">
                 <div className="flex flex-col gap-5">
+                  <p className="text-gray-200 ml-2">
+                    Select a saved card below
+                  </p>
                   {savedCards.map((card) => (
                     <SavedCard
                       key={card.id}
@@ -131,11 +134,12 @@ export default function PaymentMethodSelector({ order, orderId }) {
                       setSelectedCardId={setSelectedCardId}
                     />
                   ))}
+
                   <Button
                     onClick={() => setUseNewCard(true)}
                     className="text-yellow-300 hover:text-yellow-400 bg-gray-500"
                   >
-                    Add a credit / debit card
+                    or pay with a new card
                   </Button>
                 </div>
               </div>

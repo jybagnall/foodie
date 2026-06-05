@@ -6,12 +6,14 @@ import Button from "../UI/Button";
 import { currencyFormatter } from "../../utils/format";
 import useServerCart from "../../hooks/useServerCart";
 import useServerCartActions from "../../hooks/useServerCartActions";
+import useGuestCartActions from "../../hooks/useGuestCartActions";
 import CartHeader from "../ShoppingCartUI/CartHeader";
 import CartList from "../ShoppingCartUI/CartList";
 
 export default function ViewCart() {
   const {
     items,
+    mode,
     totalItemCount,
     checkedItemQty,
     totalAmount,
@@ -21,12 +23,10 @@ export default function ViewCart() {
   } = useContext(CartContext);
 
   const { isUpdatingServerCart } = useServerCart();
-  const {
-    addItemAndSync,
-    decreaseItemAndSync,
-    clearCartAndSync,
-    deleteItemAndSync,
-  } = useServerCartActions();
+  const serverActions = useServerCartActions();
+  const guestActions = useGuestCartActions();
+
+  const actions = mode === "server" ? serverActions : guestActions;
 
   const allChecked = items.length > 0 && selectedItemIds.size === items.length;
   const anyChecked = selectedItemIds.size > 0;
@@ -65,9 +65,9 @@ export default function ViewCart() {
           items={items}
           toggleCheckedItem={toggleCheckedItem}
           selectedItemIds={selectedItemIds}
-          decreaseItemAndSync={decreaseItemAndSync}
-          addItemAndSync={addItemAndSync}
-          deleteItemAndSync={deleteItemAndSync}
+          decreaseItem={actions.decreaseItem}
+          addItem={actions.addItem}
+          deleteItem={actions.deleteItem}
           isUpdatingServerCart={isUpdatingServerCart}
         />
 
@@ -77,7 +77,7 @@ export default function ViewCart() {
           </p>
           <div className="flex gap-2">
             <Button
-              onClick={clearCartAndSync}
+              onClick={actions.clearCart}
               className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-md text-gray-800 cursor-pointer"
             >
               Clear
