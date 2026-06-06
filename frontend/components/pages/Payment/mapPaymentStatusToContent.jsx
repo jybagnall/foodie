@@ -9,13 +9,34 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
       state={{ retry: true }}
       className="text-orange-400 underline"
     >
-      Try again
+      Try Again
     </Link>
   );
 
   const viewOrdersPage = (
     <Link to={"/my-account/orders"} className="text-orange-400 underline">
-      View orders page
+      Go to My Orders
+    </Link>
+  );
+
+  const backToMenuLink = (
+    <Link to="/" className="text-gray-300 underline">
+      Back to Menu
+    </Link>
+  );
+
+  const viewReceiptPage = (
+    <Link
+      to={`/order/completed/${orderId}/receipt`}
+      className="text-orange-400 underline"
+    >
+      View Order
+    </Link>
+  );
+
+  const returnToCart = (
+    <Link to="/cart" className="text-orange-400 underline">
+      Return to Cart
     </Link>
   );
 
@@ -52,9 +73,10 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
         title: "Order confirmed!",
         message: `Your order #${orderId} has been successfully placed.`,
         action: (
-          <Link to="/" className="text-orange-400 underline">
-            Back to home
-          </Link>
+          <div className="flex flex-col gap-2">
+            {viewReceiptPage}
+            {backToMenuLink}
+          </div>
         ),
       };
     case "requires_payment_method":
@@ -85,11 +107,7 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
         message:
           paymentErr ||
           "We couldn't verify your payment. Please try again shortly.",
-        action: (
-          <Link to="/cart" className="text-orange-400 underline">
-            Return to cart
-          </Link>
-        ),
+        action: returnToCart,
       };
   }
 }

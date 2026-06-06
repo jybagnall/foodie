@@ -100,7 +100,7 @@ export default function useServerCartActions() {
       setItems(nextCart);
       try {
         await syncCartToServer(createCartSyncPayload(nextCart));
-        toast.success("Items added to cart!");
+        toast.success("Added to cart!");
       } catch (err) {
         console.error("sync failed", err);
         setItems(prevCart);

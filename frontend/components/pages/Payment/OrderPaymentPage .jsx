@@ -6,6 +6,7 @@ import StripePaymentSetup from "./StripePaymentSetup";
 import Spinner from "../../user_feedback/Spinner";
 import EmptyDataState from "../../UI/EmptyDataState";
 import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
+import { canRetryPayment } from "../../../utils/orderHelpers";
 
 // 라우터 진입점, 3DS 복귀 처리, 주문 관련 데이터 fetch
 
@@ -22,7 +23,9 @@ export default function OrderPaymentPage() {
   }, []);
 
   useEffect(() => {
-    if (paymentStatus) {
+    if (!paymentStatus) return;
+
+    if (!canRetryPayment(paymentStatus)) {
       navigate("/my-account/orders", { replace: true });
     }
   }, [paymentStatus, navigate]);

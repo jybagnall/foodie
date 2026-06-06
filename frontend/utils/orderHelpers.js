@@ -74,3 +74,14 @@ export function getDisplayOrderStatus(order) {
 
   return formatPaymentStatus(order.payment_status);
 }
+
+const RETRYABLE_PAYMENT_STATUSES = [
+  "requires_payment",
+  "requires_confirmation",
+  "requires_action",
+  "failed",
+];
+
+export function canRetryPayment(paymentStatus) {
+  return RETRYABLE_PAYMENT_STATUSES.includes(paymentStatus);
+}

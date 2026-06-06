@@ -26,6 +26,7 @@ import MenuLiveView from "./admin/MenuLiveView";
 import OrderConfirmation from "./pages/Payment/OrderConfirmation";
 import OrderDetail from "../components/pages/userDashboard/orders/OrderDetail";
 import OrderPaymentPage from "./pages/Payment/OrderPaymentPage ";
+import OrderReceipt from "./pages/Payment/OrderReceipt";
 import PageNotFound from "./user_feedback/PageNotFound";
 import PaymentMethod from "../components/pages/userDashboard/payment/PaymentMethod";
 import Signup from "./pages/Signup";
@@ -46,66 +47,86 @@ export default function App() {
           <CartMergeHandler />
           <SidebarContextProvider>
             <Toaster position="top-center" reverseOrder={false} />
-            <Header />
+            <div className="h-screen flex flex-col">
+              <Header />
+              <div className="flex-1">
+                <Routes>
+                  <Route path="/" element={<UserLanding />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route
+                    path="/create-admin-account"
+                    element={<AdminSignup />}
+                  />
+                  <Route path="/cart" element={<ViewCart />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route
+                    path="/my-account"
+                    element={
+                      <UserProtectedRoutes>
+                        <UserLayout />
+                      </UserProtectedRoutes>
+                    }
+                  >
+                    <Route index element={<MyAccount />} />
+                    <Route path="orders/:orderId" element={<OrderDetail />} />
+                    <Route path="orders" element={<MyOrders />} />
+                    <Route path="address" element={<AddressBook />} />
+                    <Route path="address/new" element={<AddressForm />} />
+                    <Route path="address/:id/edit" element={<AddressForm />} />
+                    <Route path="edit/:field" element={<EditProfile />} />
+                    <Route
+                      path="account-deletion"
+                      element={<DeleteAccount />}
+                    />
+                    <Route path="payment-methods" element={<PaymentMethod />} />
+                  </Route>
 
-            <Routes>
-              <Route path="/" element={<UserLanding />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/create-admin-account" element={<AdminSignup />} />
-              <Route path="/cart" element={<ViewCart />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route
-                path="/my-account"
-                element={
-                  <UserProtectedRoutes>
-                    <UserLayout />
-                  </UserProtectedRoutes>
-                }
-              >
-                <Route index element={<MyAccount />} />
-                <Route path="orders/:orderId" element={<OrderDetail />} />
-                <Route path="orders" element={<MyOrders />} />
-                <Route path="address" element={<AddressBook />} />
-                <Route path="address/new" element={<AddressForm />} />
-                <Route path="address/:id/edit" element={<AddressForm />} />
-                <Route path="edit/:field" element={<EditProfile />} />
-                <Route path="account-deletion" element={<DeleteAccount />} />
-                <Route path="payment-methods" element={<PaymentMethod />} />
-              </Route>
-              <Route
-                path="/order"
-                element={
-                  <UserProtectedRoutes>
-                    <OrderLayout />
-                  </UserProtectedRoutes>
-                }
-              >
-                <Route path="shipping" element={<ShippingForm />} />
-                <Route path="payment/:orderId" element={<OrderPaymentPage />} />
-                <Route
-                  path="completed/:orderId"
-                  element={<OrderConfirmation />}
-                />
-              </Route>
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminLayout />
-                  </AdminRoute>
-                }
-              >
-                <Route index element={<AdminLanding />} />
-                <Route path="new-menu" element={<UploadNewMenu />} />
-                <Route path="menu-preview" element={<MenuLiveView />} />
-                <Route path="invite" element={<AdminInvite />} />
-                <Route path="account" element={<AdminAccount />} />
-                <Route path="events-monitor" element={<StripeEventMonitor />} />
-              </Route>
-              <Route path="*" element={<PageNotFound />} />
-            </Routes>
+                  <Route
+                    path="/order"
+                    element={
+                      <UserProtectedRoutes>
+                        <OrderLayout />
+                      </UserProtectedRoutes>
+                    }
+                  >
+                    <Route path="shipping" element={<ShippingForm />} />
+                    <Route
+                      path="payment/:orderId"
+                      element={<OrderPaymentPage />}
+                    />
+                    <Route
+                      path="completed/:orderId"
+                      element={<OrderConfirmation />}
+                    />
+                    <Route
+                      path="completed/:orderId/receipt"
+                      element={<OrderReceipt />}
+                    />
+                  </Route>
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <AdminLayout />
+                      </AdminRoute>
+                    }
+                  >
+                    <Route index element={<AdminLanding />} />
+                    <Route path="new-menu" element={<UploadNewMenu />} />
+                    <Route path="menu-preview" element={<MenuLiveView />} />
+                    <Route path="invite" element={<AdminInvite />} />
+                    <Route path="account" element={<AdminAccount />} />
+                    <Route
+                      path="events-monitor"
+                      element={<StripeEventMonitor />}
+                    />
+                  </Route>
+                  <Route path="*" element={<PageNotFound />} />
+                </Routes>
+              </div>
+            </div>
           </SidebarContextProvider>
         </AuthContextProvider>
       </CartContextProvider>

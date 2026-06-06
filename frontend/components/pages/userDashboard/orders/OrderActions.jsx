@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import dayjs from "dayjs";
 import AlertModal from "../../../UI/AlertModal";
+import { canRetryPayment } from "../../../../utils/orderHelpers";
 
 export default function OrderActions({ order, cancelOrder, isCanceling }) {
   const [showAlert, setShowAlert] = useState(false);
@@ -13,6 +14,7 @@ export default function OrderActions({ order, cancelOrder, isCanceling }) {
 
   const canCompleteOrder =
     order.status === "pending" &&
+    canRetryPayment(order.payment_status) &&
     dayjs().diff(dayjs(order.created_at), "day") < 8;
 
   return (
