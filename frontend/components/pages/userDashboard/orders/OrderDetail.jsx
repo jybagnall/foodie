@@ -66,7 +66,6 @@ export default function OrderDetail() {
 
               {/* RIGHT SIDE */}
               <div className="lg:col-span-1 space-y-6">
-                {/* Reorder ❌카트 업데이트 안 되고 있음 */}
                 <button
                   onClick={() => handleReorder()}
                   disabled={isUpdatingServerCart}

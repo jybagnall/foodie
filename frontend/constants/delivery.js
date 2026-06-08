@@ -1,0 +1,2 @@
+export const FREE_DELIVERY_THRESHOLD = 30;
+export const DEFAULT_DELIVERY_FEE = 5;

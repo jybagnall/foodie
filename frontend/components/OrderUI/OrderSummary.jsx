@@ -7,7 +7,7 @@ export default function OrderSummary({ order }) {
 
       <div className="flex justify-between text-sm mb-2">
         <span>Subtotal</span>
-        <span>{currencyFormatter.format(order.total_amount)}</span>
+        <span>{currencyFormatter.format(order.subtotal_amount)}</span>
       </div>
 
       <div className="flex justify-between text-sm mb-2">
@@ -17,7 +17,11 @@ export default function OrderSummary({ order }) {
 
       <div className="flex justify-between text-sm mb-4">
         <span>Tax</span>
-        <span>₩0</span>
+        <span>
+          {order.delivery_fee === 0
+            ? "Free"
+            : currencyFormatter.format(order.delivery_fee)}
+        </span>
       </div>
 
       <div className="border-t pt-3 flex justify-between font-semibold text-gray-200">
@@ -25,7 +29,7 @@ export default function OrderSummary({ order }) {
         <span>{currencyFormatter.format(order.total_amount)}</span>
       </div>
 
-      <div className="mt-3 text-green-500 text-sm">You saved ₩21,210</div>
+      {/* <div className="mt-3 text-green-500 text-sm">You saved ₩21,210</div> */}
     </div>
   );
 }

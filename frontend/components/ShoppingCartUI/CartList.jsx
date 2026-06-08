@@ -27,7 +27,7 @@ export default function CartList({
               />
               <label
                 htmlFor={i.name}
-                className="font-medium text-md cursor-pointer"
+                className="font-medium text-lg cursor-pointer"
               >
                 {i.name}
               </label>
@@ -37,16 +37,16 @@ export default function CartList({
               <img
                 src={i.image}
                 alt={i.name}
-                className="w-18 h-18 rounded-md object-cover"
+                className="w-22 h-22 rounded-md object-cover"
               />
 
               <div className="flex flex-col gap-y-2">
-                <span className="text-sm font-semibold">
+                <span className="text-md font-semibold">
                   {currencyFormatter.format(i.price * i.qty)}
                 </span>
 
                 <div className="flex items-center gap-x-4">
-                  <div className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                  <div className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-100 px-2 py-1 text-sm font-medium text-gray-600">
                     <button
                       type="button"
                       onClick={() => decreaseItem(i)}
@@ -73,7 +73,7 @@ export default function CartList({
                   <div className="h-4 w-px bg-gray-300" />
                   <span
                     onClick={() => deleteItem(i)}
-                    className="cursor-pointer text-sm text-gray-300 hover:underline"
+                    className="cursor-pointer text-md text-gray-300 hover:underline"
                   >
                     Delete
                   </span>

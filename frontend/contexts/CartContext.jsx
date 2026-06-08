@@ -6,6 +6,10 @@ import {
   useCallback,
 } from "react";
 import { loadCart, saveGuestCart } from "../storage/cartStorage";
+import {
+  FREE_DELIVERY_THRESHOLD,
+  DEFAULT_DELIVERY_FEE,
+} from "../constants/delivery";
 
 // 나중에 Provider가 진짜 함수를 제공할 거야”라는 형태 선언용
 const CartContext = createContext({
@@ -17,6 +21,8 @@ const CartContext = createContext({
   switchToServerMode: () => {},
   totalItemCount: 0,
   checkedItemQty: 0,
+  subTotalAmount: 0,
+  deliveryFee: 0,
   totalAmount: 0,
   toggleCheckedItem: (id) => {},
   toggleAllSelections: () => {},
@@ -58,12 +64,23 @@ export function CartContextProvider({ children }) {
     [items, selectedItemIds],
   );
 
-  const totalAmount = useMemo(
+  const subTotalAmount = useMemo(
     () =>
       items
         .filter((i) => selectedItemIds.has(i.id))
         .reduce((sum, i) => (sum += i.price * i.qty), 0),
     [items, selectedItemIds],
+  );
+
+  const deliveryFee = useMemo(
+    () =>
+      subTotalAmount >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_FEE,
+    [subTotalAmount],
+  );
+
+  const totalAmount = useMemo(
+    () => subTotalAmount + deliveryFee,
+    [subTotalAmount, deliveryFee],
   );
 
   const toggleCheckedItem = useCallback((id) => {
@@ -97,6 +114,8 @@ export function CartContextProvider({ children }) {
         switchToGuestMode,
         totalItemCount,
         checkedItemQty,
+        subTotalAmount,
+        deliveryFee,
         totalAmount,
         toggleCheckedItem,
         toggleAllSelections,

@@ -5,7 +5,7 @@ export default function CartHeader({
 }) {
   return (
     <>
-      <h2 className="text-3xl font-bold tracking-tight text-white mb-6 border-b pb-4 drop-shadow-sm">
+      <h2 className="text-3xl font-bold tracking-tight text-white mb-6 pb-4 drop-shadow-sm">
         Cart ({checkedItemQty})
       </h2>
       <div className="flex justify-between items-center mt-2 mb-4">

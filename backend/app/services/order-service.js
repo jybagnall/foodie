@@ -117,7 +117,9 @@ export async function getOrderConfirmationDetails(client, orderId) {
 export async function getOrderDetails(orderId, userId) {
   const q = `
     SELECT
-      o.id, o.created_at, o.total_amount, o.status, o.shipping_street, 
+      o.id, o.created_at, o.status,
+      o.total_amount, o.subtotal_amount, o.delivery_fee,
+      o.shipping_street, 
       o.shipping_city, o.shipping_postal_code, 
       o.shipping_phone, o.shipping_full_name,
       p.payment_status, p.stripe_payment_method_id,
