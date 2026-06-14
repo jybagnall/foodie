@@ -3,23 +3,28 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import AddressFields from "../../../UI/AddressFields";
 import AddressSelectableCard from "../../userDashboard/address/AddressSelectableCard";
+import {
+  ADDRESS_MODE,
+  ADDRESS_SELECTOR_HEADINGS,
+  EMPTY_ADDRESS,
+} from "./address.constants";
 
-const EMPTY_ADDRESS = {
-  full_name: "",
-  street: "",
-  city: "",
-  postal_code: "",
-  phone: "",
-  is_default: false,
-};
+// EMPTY_ADDRESS = {
+//   full_name: "",
+//   street: "",
+//   city: "",
+//   postal_code: "",
+//   phone: "",
+//   is_default: false,
+// };
 
 export default function AddressSelector({
   addresses,
   selectedAddressId,
   setSelectedAddressId,
+  mode,
+  setMode,
   onAddressSubmit,
-  editingAddressId,
-  setEditingAddressId,
 }) {
   const {
     register,
@@ -28,44 +33,39 @@ export default function AddressSelector({
     formState: { errors },
   } = useFormContext();
 
-  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-
   const sortedAddresses = [...addresses].sort(
     (a, b) => Number(b.is_default) - Number(a.is_default),
   );
 
   const handleEditClick = (address) => {
     reset(address);
-    setEditingAddressId(address.id);
+    setMode(ADDRESS_MODE.EDIT);
     setSelectedAddressId(address.id);
-    setShowNewAddressForm(false);
   };
 
   const handleNewAddressClick = () => {
     reset(EMPTY_ADDRESS);
-    setShowNewAddressForm((prev) => !prev);
+    setMode(ADDRESS_MODE.CREATE);
     setSelectedAddressId(null); // 새 주소 입력 시 기존 선택 해제
-    setEditingAddressId(null); // 수정 폼 닫기
   };
 
   const handleRadioChange = (addressId) => {
+    setMode(ADDRESS_MODE.SELECT);
     setSelectedAddressId(addressId);
-    setEditingAddressId(null);
-    setShowNewAddressForm(false);
     reset(EMPTY_ADDRESS);
   };
 
   return (
     <div className="space-y-3 mb-3">
       <h2 className="font-semibold text-lg text-gray-300">
-        Select a shipping address
+        {ADDRESS_SELECTOR_HEADINGS[mode]}
       </h2>
       {sortedAddresses.map((address) => (
         <div
           key={address.id}
           className={`cursor-pointer border rounded-lg p-2 transition ${address.id === selectedAddressId ? "border-blue-600 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
-          {editingAddressId === address.id ? (
+          {mode === ADDRESS_MODE.EDIT && selectedAddressId === address.id ? (
             <form
               onSubmit={handleSubmit(onAddressSubmit)}
               className={`border rounded-lg p-4 transition border-gray-200 flex flex-col gap-5`}
@@ -84,7 +84,7 @@ export default function AddressSelector({
       ))}
 
       {/* 새 주소 입력창 무조건 보여줌 */}
-      {!showNewAddressForm && (
+      {mode !== ADDRESS_MODE.CREATE && (
         <div
           onClick={handleNewAddressClick}
           className="flex items-center gap-2 text-md text-gray-300 cursor-pointer mt-5"
@@ -93,7 +93,7 @@ export default function AddressSelector({
           <p>Enter a new address</p>
         </div>
       )}
-      {showNewAddressForm && (
+      {mode === ADDRESS_MODE.CREATE && (
         <form
           onSubmit={handleSubmit(onAddressSubmit)}
           className={`border rounded-lg p-4 transition border-blue-600 ring-2 ring-blue-100 flex flex-col gap-5`}

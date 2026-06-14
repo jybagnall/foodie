@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import useMyOrders from "../../../../hooks/useMyOrders";
 import Spinner from "../../../user_feedback/Spinner";
 import PageError from "../../../user_feedback/PageError";
@@ -7,7 +7,6 @@ import EmptyDataState from "../../../UI/EmptyDataState";
 import OrderCard from "./OrderCard";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 
-// {id, created_at, total_amount, payment_status, item_count, preview_items= {name, image, qty}}
 export default function MyOrders() {
   const {
     orders,
@@ -18,48 +17,58 @@ export default function MyOrders() {
     hasNextPage,
   } = useMyOrders();
 
-  // 다음 페이지를 불러올 감시용 DOM 요소
-  const loadMoreTriggerRef = useRef(null);
-  const hasNextPageRef = useRef(hasNextPage);
-  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+  const observerRef = useRef(null); // IntersectionObserver 객체를 저장
+
+  const hasNextPageRef = useRef(hasNextPage); // 첫 렌더 때 최신값 저장
+  const isFetchingNextPageRef = useRef(isFetchingNextPage); // 첫 렌더 때 최신값 저장
 
   useEffect(() => {
     document.title = "Orders | Foodie";
   }, []);
 
   // ref 동기화 전용 — 매 렌더마다 실행
-  // 매 렌더마다 최신값으로 동기화
-
+  // ref 는 자동으로 값이 안 변함, 따라서
+  // 매 렌더마다 최신값으로 동기화를 위해 dependency 없음
   useEffect(() => {
     hasNextPageRef.current = hasNextPage;
     isFetchingNextPageRef.current = isFetchingNextPage;
-  }); // dependency 없음
+  });
 
-  useEffect(() => {
-    const sentinelElement = loadMoreTriggerRef.current; // 감시용 div
-    if (!sentinelElement) return; // 아직 감시할 DOM 요소가 생성 안 됨.
+  // DOM이 생성될 때 React가 setBottomBoundaryRef 함수를 호출
+  // node: <div class="h-4"></div>
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
+  const setBottomBoundaryRef = useCallback(
+    (node) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      // 기존 Observer가 있으면 연결 해제
+      // 같은 DOM을 여러 Observer가 감시하는 상황 방지,
+      // fetchNextPage() 중복 실행 방지
 
-        if (
-          entry.isIntersecting &&
-          hasNextPageRef.current &&
-          !isFetchingNextPageRef.current
-        ) {
-          const result = fetchNextPage();
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "0px 0px 200px 0px",
-        // viewport 아래 200px 전에 미리 감지
-      },
-    );
-    observer.observe(sentinelElement); // 감시용 div를 관찰해
-    return () => observer.disconnect();
-  }, [fetchNextPage]);
+      if (!node) return; // DOM이 없으면 종료
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0]; // 현재 감시 중인 요소 정보
+
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            fetchNextPage();
+          }
+        },
+        {
+          rootMargin: "200px",
+        }, // 200px 전에 감지
+      );
+
+      observerRef.current.observe(node);
+    },
+    [fetchNextPage],
+  );
 
   if (isFetchingOrders) return <Spinner />;
   if (ordersFetchingError) return <PageError />;
@@ -81,7 +90,7 @@ export default function MyOrders() {
         ))}
 
         {/* 이 요소가 viewport에 들어오면 다음 페이지 fetch */}
-        <div ref={loadMoreTriggerRef} className="h-4" />
+        <div ref={setBottomBoundaryRef} className="h-4" />
 
         {isFetchingNextPage && (
           <div className="flex justify-center py-4">

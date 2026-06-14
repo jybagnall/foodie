@@ -19,7 +19,12 @@ export default function useServerCartActions() {
       const prevSelectedItemIds = new Set(selectedItemIds);
       const { nextCart, isNew, nextQty } = createNextCartAfterAdd(items, item);
       setItems(nextCart);
-      setSelectedItemIds((prev) => new Set([...prev, item.id]));
+      setSelectedItemIds((prev) => {
+        const next = new Set(prev);
+        next.add(item.id);
+        return next;
+      });
+
       syncCartToServer(createCartSyncPayload(nextCart), {
         onError: () => {
           setItems(prevCart);
@@ -35,11 +40,15 @@ export default function useServerCartActions() {
 
   const clearCart = useCallback(() => {
     const prevCart = [...items];
+    const prevSelectedItemIds = new Set(selectedItemIds);
+
     setItems([]);
+    setSelectedItemIds(new Set());
 
     syncCartToServer(createCartSyncPayload([]), {
       onError: () => {
         setItems(prevCart);
+        setSelectedItemIds(prevSelectedItemIds);
         toast.error("We couldn't clear your cart. Please try again.");
       },
     });

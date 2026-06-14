@@ -5,7 +5,7 @@ const selectStyle =
 
 export default function SelectFilter({ id, label, value, onChange, options }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-1">
       <label htmlFor={id} className="block text-sm/6 font-medium text-gray-900">
         {label}
       </label>

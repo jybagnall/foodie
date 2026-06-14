@@ -14,15 +14,16 @@ export async function clearDefaultAddress(client, userId) {
 export async function createUserAddress(client, payload, userId) {
   const { full_name, street, city, postal_code, phone, is_default } = payload;
   const q = `
-    INSERT INTO addresses (full_name, user_id, street, city, postal_code, phone, is_default)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, full_name, street, city, postal_code, phone, is_default
+    INSERT INTO addresses (full_name, user_id, street, city, state, postal_code, phone, is_default)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING id, full_name, street, city, state, postal_code, phone, is_default
     `;
   const values = [
     full_name,
     userId,
     street,
     city,
+    state,
     postal_code,
     phone,
     is_default,
@@ -44,7 +45,7 @@ export async function deleteAddress(userId, addressId) {
 
 export async function getAllAddresses(userId) {
   const q = `
-    SELECT id, street, postal_code, city, phone, full_name, is_default
+    SELECT id, street, postal_code, city, state, phone, full_name, is_default
     FROM addresses
     WHERE user_id = $1 AND deleted_at IS NULL
     `;
@@ -55,7 +56,7 @@ export async function getAllAddresses(userId) {
 
 export async function getDefaultAddress(userId) {
   const q = `
-  SELECT id, street, postal_code, city, phone, full_name, is_default
+  SELECT id, street, postal_code, city, state, phone, full_name, is_default
   FROM addresses
   WHERE user_id = $1
   AND is_default = TRUE 
@@ -86,9 +87,9 @@ export async function saveShippingInfo(client, userId, address) {
 
   // 이미 배송 정보가 있다면 is_default만 업데이트
   const q = `
-    INSERT INTO addresses (user_id, street, postal_code, city, phone, full_name, is_default)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    ON CONFLICT (user_id, street, postal_code, city, phone, full_name)
+    INSERT INTO addresses (user_id, street, postal_code, city, state, phone, full_name, is_default)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT (user_id, street, postal_code, city, state, phone, full_name)
     DO UPDATE SET is_default = EXCLUDED.is_default
     RETURNING id
     `;
@@ -98,6 +99,7 @@ export async function saveShippingInfo(client, userId, address) {
     address.street,
     address.postal_code,
     address.city,
+    address.state,
     address.phone,
     address.full_name,
     address.is_default ?? false,
@@ -108,23 +110,26 @@ export async function saveShippingInfo(client, userId, address) {
 }
 
 export async function updateUserAddress(client, payload, addressId, userId) {
-  const { full_name, street, city, postal_code, phone, is_default } = payload;
+  const { full_name, street, city, state, postal_code, phone, is_default } =
+    payload;
   const q = `
     UPDATE addresses 
     SET 
       full_name = $1, 
       street = $2,
       city = $3,
-      postal_code = $4,
-      phone = $5,
-      is_default = $6
-    WHERE user_id = $7
-    AND id = $8
+      state = $4
+      postal_code = $5,
+      phone = $6,
+      is_default = $7
+    WHERE user_id = $8
+    AND id = $9
     `;
   const values = [
     full_name,
     street,
     city,
+    state,
     postal_code,
     phone,
     is_default,

@@ -28,7 +28,7 @@ export function mapPaymentStatusToContent(status, paymentErr, orderId) {
   const viewReceiptPage = (
     <Link
       to={`/order/completed/${orderId}/receipt`}
-      className="text-orange-400 underline"
+      className="text-yellow-500 underline"
     >
       View Order
     </Link>

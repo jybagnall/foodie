@@ -1,27 +1,34 @@
 import pool from "../config/db.js";
 
-export async function createOrderId(
+export async function createOrder(
   client,
   userId,
   addressId,
+  subTotalAmount,
+  deliveryFee,
+  taxAmount,
   totalAmount,
   address,
 ) {
   const q = `
    INSERT INTO orders (
-    user_id, address_id, total_amount,
-    shipping_full_name, shipping_street, shipping_city, shipping_postal_code, shipping_phone)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    user_id, address_id, subtotal_amount, delivery_fee, tax_amount, total_amount,
+    shipping_full_name, shipping_street, shipping_city, shipping_state, shipping_postal_code, shipping_phone)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
    RETURNING id
     `;
 
   const values = [
     userId,
     addressId,
+    subTotalAmount,
+    deliveryFee,
+    taxAmount,
     totalAmount,
     address.full_name,
     address.street,
     address.city,
+    address.state,
     address.postal_code,
     address.phone,
   ];
@@ -118,9 +125,8 @@ export async function getOrderDetails(orderId, userId) {
   const q = `
     SELECT
       o.id, o.created_at, o.status,
-      o.total_amount, o.subtotal_amount, o.delivery_fee,
-      o.shipping_street, 
-      o.shipping_city, o.shipping_postal_code, 
+      o.total_amount, o.subtotal_amount, tax_amount, o.delivery_fee,
+      o.shipping_street, o.shipping_city, o.shipping_state, o.shipping_postal_code, 
       o.shipping_phone, o.shipping_full_name,
       p.payment_status, p.stripe_payment_method_id,
 
@@ -174,7 +180,8 @@ export async function insertOrderItems(client, orderId, order) {
 export async function updateOrderStatus(client, orderId, newStatus) {
   const ALLOWED_TRANSITIONS = {
     pending: ["paid"],
-    paid: ["cancelled"],
+    pending: ["canceled"],
+    paid: ["canceled"],
   };
 
   // 현재 상태 조회

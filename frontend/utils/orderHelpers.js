@@ -6,6 +6,7 @@ export function buildOrderDetails(shippingInfo, items, selectedItemIds) {
       full_name: shippingInfo.full_name.trim(),
       street: shippingInfo.street.trim(),
       city: shippingInfo.city.trim(),
+      state: shippingInfo.state,
       postal_code: String(shippingInfo.postal_code).trim(),
       phone: shippingInfo.phone.trim(),
       is_default: shippingInfo.is_default,
@@ -52,7 +53,7 @@ function formatOrderStatus(status) {
     paid: "Payment Confirmed",
     preparing: "Preparing",
     delivered: "Delivered",
-    cancelled: "Cancelled",
+    canceled: "Canceled",
   };
   return map[status] ?? status;
 }

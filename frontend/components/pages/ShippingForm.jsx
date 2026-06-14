@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, set, useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "../UI/Button";
 import CartContext from "../../contexts/CartContext";
@@ -15,22 +15,28 @@ import AddressSelector from "./userDashboard/address/AddressSelector";
 import useAccessToken from "../../hooks/useAccessToken";
 import useUserId from "../../hooks/useUserId";
 import { buildOrderDetails } from "../../utils/orderHelpers";
+import { ADDRESS_MODE } from "./userDashboard/address/address.constants";
 
 export default function ShippingForm() {
-  const { items, totalAmount, selectedItemIds } = useContext(CartContext);
+  const { items, totalAmount, subTotalAmount, deliveryFee, selectedItemIds } =
+    useContext(CartContext);
   const accessToken = useAccessToken();
   const userId = useUserId();
   const { addresses, isFetching, fetchingError, isDeleteError } =
     useAddressBook();
 
+  const [mode, setMode] = useState(ADDRESS_MODE.CREATE);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [editingAddressId, setEditingAddressId] = useState(null);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const methods = useForm();
   const abortControllerRef = useRef(null);
+  const methods = useForm();
+  const {
+    handleSubmit,
+    formState: { isValid, isDirty },
+  } = methods;
 
   useEffect(() => {
     document.title = "Shipping Form | Foodie";
@@ -40,12 +46,43 @@ export default function ShippingForm() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isFetching && addresses.length > 0) {
+      setMode(ADDRESS_MODE.SELECT);
+    }
+  }, [isFetching]);
+
+  useEffect(() => {
+    if (addresses.length === 1 && !selectedAddressId) {
+      setSelectedAddressId(addresses[0].id);
+    }
+  }, [addresses]);
+
+  const canSubmitSelect = mode === ADDRESS_MODE.SELECT && !!selectedAddressId;
+  const canSubmitEdit = mode === ADDRESS_MODE.EDIT && isDirty && isValid;
+  const canSubmitCreate = mode === ADDRESS_MODE.CREATE && isValid;
+  const isAddressReady = canSubmitSelect || canSubmitEdit || canSubmitCreate;
+
+  const handleCancel = () => {
+    if (mode === ADDRESS_MODE.EDIT) {
+      setMode(ADDRESS_MODE.SELECT);
+      setSelectedAddressId(null);
+    } else if (mode === ADDRESS_MODE.CREATE && addresses.length > 0) {
+      setMode(ADDRESS_MODE.SELECT);
+    } else {
+      navigate("/cart");
+    }
+  };
+
   const onAddressSubmit = async (formData) => {
     if (isOrderProcessing) return;
     if (
       items.length === 0 ||
       selectedItemIds.size === 0 ||
       !totalAmount ||
+      !subTotalAmount ||
+      deliveryFee === null ||
+      subTotalAmount <= 0 ||
       totalAmount <= 0
     ) {
       setErrorMsg(
@@ -54,11 +91,11 @@ export default function ShippingForm() {
       return;
     }
 
-    // 새 주소 입력 || 편집한 아이디면 폼 제출 : 선택한 주소 제출
+    // 선택 모드 ? 선택한 주소 제출 : 새 주소나 편집 주소 제출
     const shippingInfo =
-      !selectedAddressId || editingAddressId
-        ? formData
-        : addresses.find((a) => a.id === selectedAddressId);
+      mode === ADDRESS_MODE.SELECT
+        ? addresses.find((a) => a.id === selectedAddressId)
+        : formData;
 
     if (!shippingInfo) {
       setErrorMsg("Please select or enter a shipping address.");
@@ -141,16 +178,16 @@ export default function ShippingForm() {
         <FormProvider {...methods}>
           <form
             className="flex flex-col gap-5"
-            onSubmit={methods.handleSubmit(onAddressSubmit)}
+            onSubmit={handleSubmit(onAddressSubmit)}
           >
             {addresses.length > 0 ? (
               <AddressSelector
                 addresses={addresses}
                 selectedAddressId={selectedAddressId}
                 setSelectedAddressId={setSelectedAddressId}
+                mode={mode}
+                setMode={setMode}
                 onAddressSubmit={onAddressSubmit}
-                editingAddressId={editingAddressId}
-                setEditingAddressId={setEditingAddressId}
               />
             ) : (
               <AddressFields />
@@ -161,13 +198,16 @@ export default function ShippingForm() {
                 type="button"
                 textOnly
                 className="text-gray-300 hover:text-gray-400"
-                onClick={() => navigate("/")}
+                onClick={handleCancel}
               >
-                Cancel
+                {mode === ADDRESS_MODE.EDIT ||
+                (mode === ADDRESS_MODE.CREATE && addresses.length > 0)
+                  ? "Back"
+                  : "Cancel"}
               </Button>
               <Button
                 type="submit"
-                disabled={isOrderProcessing || !selectedAddressId}
+                disabled={isOrderProcessing || !isAddressReady}
                 className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
               >
                 {isOrderProcessing ? <SpinnerMini /> : "Next"}

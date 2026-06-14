@@ -25,6 +25,7 @@ class OrderService {
 
   async getMyOrders({ cursor, limit } = {}) {
     const params = new URLSearchParams({ limit: String(limit) });
+
     if (cursor != null) params.set("cursor", JSON.stringify(cursor));
 
     const data = await this.client.get(`/api/orders/my-orders?${params}`);

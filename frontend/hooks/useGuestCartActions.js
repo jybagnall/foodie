@@ -12,7 +12,11 @@ export default function useGuestCartActions() {
     (item) => {
       const { nextCart, isNew, nextQty } = createNextCartAfterAdd(items, item);
       setItems(nextCart);
-      setSelectedItemIds((prev) => new Set([...prev, item.id]));
+      setSelectedItemIds((prev) => {
+        const next = new Set(prev);
+        next.add(item.id);
+        return next;
+      });
 
       return { isNew, nextQty };
     },
@@ -21,6 +25,7 @@ export default function useGuestCartActions() {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setSelectedItemIds(new Set());
   }, [setItems]);
 
   const decreaseItem = useCallback(

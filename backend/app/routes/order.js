@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  createOrderId,
+  createOrder,
   getAllOrders,
   getOrderDetails,
   insertOrderItems,
@@ -11,7 +11,7 @@ import pool from "../config/db.js";
 import { validateOrderBody } from "../middleware/validateOrderBody.js";
 import {
   buildOrderWithPrices,
-  cancelOrderAndRefund,
+  cancelOrder,
 } from "../controllers/order.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 import { parseCursor } from "../utils/validators.js";
@@ -20,13 +20,12 @@ const router = express.Router();
 
 router.get("/my-orders", verifyUserAuth, async (req, res) => {
   try {
-    // "2024-01-15T10:30:00Z_42"
-    const cursor = parseCursor(req.query.cursor);
+    const cursor = parseCursor(req.query.cursor); // 다시 객체로 복원함
 
     if (req.query.cursor && !cursor) {
       return res.status(400).json({
         error: "Invalid cursor",
-      });
+      }); // 파싱 실패 (잘못된 cursor 가 들어옴)
     }
 
     const limit = Math.max(
@@ -58,10 +57,10 @@ router.get("/:orderId", verifyUserAuth, async (req, res) => {
 router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
-    await cancelOrderAndRefund(orderId, req.user);
-    res.status(200).json({ message: "Order cancelled and refunded." });
+    await cancelOrder(orderId, req.user);
+    res.status(200).json({ message: "Order canceled." });
   } catch (err) {
-    console.error("Refund failed:", err.message);
+    console.error("Order cancellation failed:", err.message);
     const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
     return res.status(status).json({
       error: "We failed to cancel order. Please try again.",
@@ -81,15 +80,22 @@ router.post(
       const { address, orderPayload } = req.body;
 
       await client.query("BEGIN");
-      const { totalAmount, completeOrder } = await buildOrderWithPrices(
-        client,
-        orderPayload,
-      );
+      const {
+        subTotalAmount,
+        deliveryFee,
+        taxAmount,
+        totalAmount,
+        completeOrder,
+      } = await buildOrderWithPrices(client, address, orderPayload);
+
       const addressId = await saveShippingInfo(client, req.user.id, address);
-      const orderId = await createOrderId(
+      const orderId = await createOrder(
         client,
         req.user.id,
         addressId,
+        subTotalAmount,
+        deliveryFee,
+        taxAmount,
         totalAmount,
         address,
       );

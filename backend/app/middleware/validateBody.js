@@ -1,5 +1,8 @@
-// rules.name === rules["name"]
+import { US_STATES } from "../constants/usState.js";
 
+const US_STATE_CODES = new Set(US_STATES.map((state) => state.value));
+
+// rules.name === rules["name"]
 const rules = {
   name: (v) => {
     if (!v || typeof v !== "string") return "Name is required.";
@@ -25,6 +28,15 @@ const rules = {
   },
   city: (v) => {
     if (!v || typeof v !== "string" || v.length < 2) return "City is required.";
+  },
+  state: (v) => {
+    if (!v || typeof v !== "string") {
+      return "State is required.";
+    }
+
+    if (!US_STATE_CODES.has(v.toUpperCase())) {
+      return "Invalid state code.";
+    }
   },
   postal_code: (v) => {
     if (!v || typeof v !== "string") return "Postal code is required.";

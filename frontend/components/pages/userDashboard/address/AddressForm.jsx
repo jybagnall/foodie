@@ -40,6 +40,7 @@ export default function AddressForm() {
         full_name: address.full_name,
         street: address.street,
         city: address.city,
+        state: address.state,
         postal_code: String(address.postal_code),
         phone: address.phone,
         is_default: address.is_default,
@@ -51,11 +52,20 @@ export default function AddressForm() {
     full_name,
     street,
     city,
+    state,
     postal_code,
     phone,
     is_default,
   }) => {
-    const payload = { full_name, street, city, postal_code, phone, is_default };
+    const payload = {
+      full_name,
+      street,
+      city,
+      state,
+      postal_code,
+      phone,
+      is_default,
+    };
 
     if (isEditMode) {
       updateAddress(

@@ -38,8 +38,8 @@ export default function AddressSelectableCard({
             )}
           </div>
           <p className="text-gray-300 text-sm">
-            {address.street}, {address.city} | {address.postal_code} |{" "}
-            {formatPhone(address.phone)}
+            {address.street}, {address.city}, {address.state} |{" "}
+            {address.postal_code} | {formatPhone(address.phone)}
           </p>
         </div>
       </label>

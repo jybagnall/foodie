@@ -12,16 +12,16 @@ export default function OrderSummary({ order }) {
 
       <div className="flex justify-between text-sm mb-2">
         <span>Shipping</span>
-        <span>Free</span>
-      </div>
-
-      <div className="flex justify-between text-sm mb-4">
-        <span>Tax</span>
         <span>
           {order.delivery_fee === 0
             ? "Free"
             : currencyFormatter.format(order.delivery_fee)}
         </span>
+      </div>
+
+      <div className="flex justify-between text-sm mb-4">
+        <span>Tax</span>
+        <span>{currencyFormatter.format(order.tax_amount)}</span>
       </div>
 
       <div className="border-t pt-3 flex justify-between font-semibold text-gray-200">

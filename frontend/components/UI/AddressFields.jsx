@@ -1,6 +1,8 @@
 import { useFormContext } from "react-hook-form";
 import Checkbox from "./Checkbox";
 import Input from "./Input";
+import { US_STATES } from "../../constants/usStates";
+import Select from "./Select";
 
 export default function AddressFields() {
   const {
@@ -113,12 +115,22 @@ export default function AddressFields() {
           })}
           error={errors.city}
         />
-        <Checkbox
-          label="Set as default address"
-          id="is_default"
-          register={register("is_default")}
-        />
       </div>
+      <Select
+        id="state"
+        label="State"
+        register={register("state", {
+          required: "State is required.",
+        })}
+        error={errors.state}
+        options={US_STATES}
+        placeholder="Select a state"
+      />
+      <Checkbox
+        label="Set as default address"
+        id="is_default"
+        register={register("is_default")}
+      />
     </>
   );
 }

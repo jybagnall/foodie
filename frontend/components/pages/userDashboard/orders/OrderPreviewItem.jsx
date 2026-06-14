@@ -20,7 +20,7 @@ export default function OrderPreviewItem({ item, showPrice = false }) {
   };
 
   return (
-    <div className="flex gap-4 mb-1">
+    <div className="flex gap-4 mb-4">
       <img src={item.image} className="w-30 h-30 object-cover" />
       <div className="flex-1">
         <p>{item.name}</p>
@@ -37,9 +37,6 @@ export default function OrderPreviewItem({ item, showPrice = false }) {
             className="border px-3 py-1 rounded whitespace-nowrap cursor-pointer"
           >
             Buy again
-          </button>
-          <button className="border px-3 py-1 rounded whitespace-nowrap cursor-pointer">
-            Write a Review
           </button>
         </div>
       </div>

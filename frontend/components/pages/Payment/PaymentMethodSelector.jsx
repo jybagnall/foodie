@@ -31,11 +31,17 @@ export default function PaymentMethodSelector({ order, orderId }) {
     if (savedCards.length === 0 || isFetchingError) {
       setUseNewCard(true);
     }
-  }, [isFetching]);
+  }, [isFetching, savedCards, isFetchingError]);
 
   useEffect(() => {
     return () => abortControllerRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (savedCards.length === 1 && !selectedCardId) {
+      setSelectedCardId(savedCards[0].id);
+    }
+  }, [savedCards]);
 
   const placeOrderWithSavedCard = async () => {
     if (isPayProcessing) return;

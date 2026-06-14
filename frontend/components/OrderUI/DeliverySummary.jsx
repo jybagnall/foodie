@@ -11,7 +11,8 @@ export default function DeliverySummary({ order }) {
         <div>
           <p className="font-semibold text-gray-200">Shipping address</p>
           <p className="text-sm text-gray-400">
-            {order.shipping_street}, {order.shipping_city}
+            {order.shipping_street}, {order.shipping_city},{" "}
+            {order.shipping_state}
             <br />
             {order.shipping_postal_code}
             <br />

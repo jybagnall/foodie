@@ -31,6 +31,7 @@ const CartContext = createContext({
 // setItems()가 실행되면 items가 바뀌고 →
 // 컴포넌트가 다시 렌더링됨 → 그 안의 함수들도 다시 만들어짐.
 // Context를 사용하는 모든 컴포넌트가 리렌더링됨 ⚠️
+
 export function CartContextProvider({ children }) {
   const [items, setItems] = useState(() => loadCart()); // once
   const [selectedItemIds, setSelectedItemIds] = useState(() => new Set());
@@ -86,6 +87,7 @@ export function CartContextProvider({ children }) {
   const toggleCheckedItem = useCallback((id) => {
     setSelectedItemIds((prev) => {
       const next = new Set(prev);
+
       if (next.has(id)) {
         next.delete(id);
       } else {

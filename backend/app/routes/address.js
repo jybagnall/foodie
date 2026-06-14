@@ -42,6 +42,7 @@ router.patch(
     "full_name",
     "street",
     "city",
+    "state",
     "postal_code",
     "phone",
     "is_default",

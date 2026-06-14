@@ -118,7 +118,7 @@ export async function handleRefundUpdated(client, refundObj) {
       refundStatus: refundObj.status, // succeeded, failed, canceled
       reason: refundObj.reason,
     });
-    await updateOrderStatus(client, orderId, "cancelled");
+    await updateOrderStatus(client, orderId, "canceled");
   } else {
     await markRefundAsCompleted(client, refundObj.status, refundObj.id);
   }

@@ -1,4 +1,5 @@
 import InfoBlockSkeleton from "../../../UI/InfoBlockSkeleton";
+import PaymentMethodStatus from "./PaymentMethodStatus";
 
 export default function PaymentMethodCard({
   paymentMethod,
@@ -6,6 +7,14 @@ export default function PaymentMethodCard({
   fetchingError,
 }) {
   if (isFetching) return <InfoBlockSkeleton />;
+
+  if (fetchingError)
+    return <PaymentMethodStatus statusMsg="Payment method unavailable." />;
+
+  if (!paymentMethod)
+    return (
+      <PaymentMethodStatus statusMsg="No payment method attached to this order." />
+    );
 
   const { brand, last4, exp_month, exp_year } = paymentMethod ?? {};
 
@@ -15,21 +24,16 @@ export default function PaymentMethodCard({
 
       <div className="flex items-center gap-3">
         <div className="text-2xl">💳</div>
-        {fetchingError ? (
-          <p className="text-gray-100 font-medium">
-            Payment method unavailable
-          </p>
-        ) : (
-          <div>
-            <p className="text-gray-100 font-medium">
-              {brand} •••• {last4}
-            </p>
 
-            <p className="text-sm text-gray-400">
-              Expires {exp_month}/{exp_year}
-            </p>
-          </div>
-        )}
+        <div>
+          <p className="text-gray-100 font-medium">
+            {brand} •••• {last4}
+          </p>
+
+          <p className="text-sm text-gray-400">
+            Expires {exp_month}/{exp_year}
+          </p>
+        </div>
       </div>
     </div>
   );

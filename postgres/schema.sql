@@ -28,12 +28,13 @@ CREATE TABLE addresses (
   street TEXT NOT NULL,
   postal_code VARCHAR(20) NOT NULL,
   city TEXT NOT NULL,
+  state CHAR(2) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   full_name VARCHAR(50) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
   deleted_at TIMESTAMP DEFAULT NULL
 
-  UNIQUE (user_id, street, postal_code, city, phone, full_name)
+  UNIQUE (user_id, street, postal_code, city, state, phone, full_name)
 );
 
 
@@ -67,15 +68,17 @@ CREATE TABLE orders (
   subtotal_amount NUMERIC(8,2) NOT NULL, 
   total_amount NUMERIC(8,2) NOT NULL,
   delivery_fee NUMERIC(8,2) NOT NULL DEFAULT 0,
+  tax_amount NUMERIC(8,2) NOT NULL DEFAULT 0,
   status VARCHAR(20) DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW(),
   shipping_street TEXT,
   shipping_postal_code VARCHAR(20),
   shipping_city TEXT,
+  shipping_state CHAR(2),
   shipping_phone VARCHAR(20),
   shipping_full_name VARCHAR(50)
 );
---status: pending, paid, cancelled, preparing, delivered
+--status: pending, paid, canceled, preparing, delivered
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
