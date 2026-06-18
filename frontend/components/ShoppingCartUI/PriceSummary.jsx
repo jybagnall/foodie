@@ -24,7 +24,9 @@ export default function PriceSummary({
 
         <div className="flex items-center justify-between text-sm text-gray-300">
           <span>Tax</span>
-          <span className="font-medium text-green-400">Free</span>
+          <span className="font-medium text-gray-400 italic">
+            Calculated at checkout
+          </span>
         </div>
       </div>
 

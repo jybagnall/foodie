@@ -1,18 +1,18 @@
 import { useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import useOrder from "../../../../hooks/useOrder";
+import { useEffect } from "react";
 import PageError from "../../../user_feedback/PageError";
 import BackToDash from "../../../UI/BackToDash";
 import Spinner from "../../../user_feedback/Spinner";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderHeader from "./OrderHeader";
-import { useEffect } from "react";
 import OrderSummary from "../../../OrderUI/OrderSummary";
 import DeliverySummary from "../../../OrderUI/DeliverySummary";
 import PaymentMethodCard from "./PaymentMethodCard";
 import usePaymentMethod from "../../../../hooks/usePaymentMethod";
 import useServerCartActions from "../../../../hooks/useServerCartActions";
 import useServerCart from "../../../../hooks/useServerCart";
+import useOrderDetails from "../../../../hooks/useOrderDetails";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -20,7 +20,8 @@ import useServerCart from "../../../../hooks/useServerCart";
 
 export default function OrderDetail() {
   const { orderId } = useParams();
-  const { order, orderFetchingError, isOrderFetching } = useOrder(orderId);
+  const { order, orderFetchingError, isOrderFetching } =
+    useOrderDetails(orderId);
   const { paymentMethod, isPaymentMethodFetching, paymentMethodFetchingError } =
     usePaymentMethod(order?.stripe_payment_method_id);
   const { reorderItemsAndSync } = useServerCartActions();

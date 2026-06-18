@@ -101,6 +101,33 @@ services:
     networks:
       - foodie-net
 
+  payment-cleanup-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-dev
+    working_dir: /app
+    command: npm run payment-cleanup
+    container_name: foodie-payment-cleanup-worker
+    ports:
+      - "9231:9231"
+    restart: on-failure
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=foodie-db
+      - DB_PORT=5432
+      - DB_SSL=false
+      - DOCKERIZED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./postgres/.env
+    networks:
+      - foodie-net
+
 volumes:
   pgdata:
 

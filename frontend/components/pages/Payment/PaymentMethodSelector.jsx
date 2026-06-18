@@ -13,6 +13,7 @@ import PaymentService from "../../../services/payment.service";
 import DeliverySummary from "../../OrderUI/DeliverySummary";
 import OrderSummary from "../../OrderUI/OrderSummary";
 import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
+import PaymentHeader from "./PaymentHeader";
 
 export default function PaymentMethodSelector({ order, orderId }) {
   const [useNewCard, setUseNewCard] = useState(false);
@@ -116,11 +117,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
           </div>
         )}
         <div className="w-full rounded-lg border-2 border-gray-500 p-6 text-left mt-5">
-          <h2
-            className={`text-2xl font-semibold text-gray-200 mb-6 pb-3 border-b`}
-          >
-            Payment method
-          </h2>
+          <PaymentHeader orderId={orderId} />
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* LEFT SIDE */}

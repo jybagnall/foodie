@@ -52,34 +52,24 @@ export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
     o.id, o.created_at, o.total_amount, o.status,
     p.payment_status,
     COUNT(DISTINCT oi.id) AS item_count,
-    (
-      SELECT JSON_AGG(
+    JSON_AGG(
         JSON_BUILD_OBJECT(
           'menu_id', m.id,
           'name', m.name,
           'image', m.image,
-          'price', oi2.price,
-          'qty', oi2.qty
+          'price', oi.price,
+          'qty', oi.qty
         )
-      )
-      FROM (
-        SELECT oi2.qty, oi2.menu_id, oi2.price
-        FROM order_items oi2
-        WHERE oi2.order_id = o.id
-        ORDER BY oi2.id
-      ) AS oi2
-      JOIN menus m 
-        ON oi2.menu_id = m.id
+        ORDER BY oi.id  
     ) AS preview_items
   FROM orders o
-  JOIN payments p 
-    ON p.order_id = o.id
-  JOIN order_items oi 
-    ON oi.order_id = o.id
+  JOIN payments p ON p.order_id = o.id
+  JOIN order_items oi ON oi.order_id = o.id
+  JOIN menus m ON m.id = oi.menu_id
   WHERE o.user_id = $1
-  ${cursorClause}
-  GROUP BY o.id, o.created_at, o.total_amount, o.status, 
-           p.payment_status
+    AND p.payment_status NOT IN ('requires_payment', 'canceled')
+    ${cursorClause}
+  GROUP BY o.id, o.created_at, o.total_amount, o.status, p.payment_status
   ORDER BY o.created_at DESC, o.id DESC 
   LIMIT $2
   `;
@@ -95,6 +85,19 @@ export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
     : null;
 
   return { orders, nextCursor };
+}
+
+export async function getExpiredPendingOrders() {
+  const q = `
+    SELECT o.id
+    FROM orders o
+    JOIN payments p ON p.order_id = o.id
+    WHERE o.status = 'pending' 
+      AND p.payment_status = 'requires_payment'
+      AND p.created_at <= NOW() - INTERVAL '30 minutes';
+  `;
+  const result = await pool.query(q);
+  return result.rows;
 }
 
 export async function getOrderById(orderId) {
@@ -125,7 +128,7 @@ export async function getOrderDetails(orderId, userId) {
   const q = `
     SELECT
       o.id, o.created_at, o.status,
-      o.total_amount, o.subtotal_amount, tax_amount, o.delivery_fee,
+      o.total_amount, o.subtotal_amount, o.tax_amount, o.delivery_fee,
       o.shipping_street, o.shipping_city, o.shipping_state, o.shipping_postal_code, 
       o.shipping_phone, o.shipping_full_name,
       p.payment_status, p.stripe_payment_method_id,
@@ -179,8 +182,7 @@ export async function insertOrderItems(client, orderId, order) {
 
 export async function updateOrderStatus(client, orderId, newStatus) {
   const ALLOWED_TRANSITIONS = {
-    pending: ["paid"],
-    pending: ["canceled"],
+    pending: ["paid", "canceled"],
     paid: ["canceled"],
   };
 

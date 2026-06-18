@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import OrderService from "../services/order.service";
 import useAccessToken from "./useAccessToken";
 import useUserId from "./useUserId";
 
-export default function useOrder(orderId) {
+export default function useOrderDetails(orderId) {
   const accessToken = useAccessToken();
   const userId = useUserId();
   const queryClient = useQueryClient(); // 기존 데이터에 접근 가능
@@ -33,26 +33,10 @@ export default function useOrder(orderId) {
 
   const paymentStatus = order?.payment_status ?? null;
 
-  const {
-    mutate: cancelOrder,
-    isPending: isCanceling,
-    isError: isCancelError,
-  } = useMutation({
-    mutationFn: (orderId) =>
-      new OrderService(null, () => accessToken).cancelOrder(orderId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
-      queryClient.invalidateQueries({ queryKey: ["orders", userId] });
-    },
-  });
-
   return {
     order,
     isOrderFetching,
     orderFetchingError,
-    cancelOrder,
-    isCanceling,
-    isCancelError,
     paymentStatus,
   };
 }

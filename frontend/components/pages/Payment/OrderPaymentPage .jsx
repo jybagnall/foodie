@@ -1,12 +1,12 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { ShoppingBagIcon } from "@heroicons/react/24/outline";
-import useOrder from "../../../hooks/useOrder";
 import StripePaymentSetup from "./StripePaymentSetup";
 import Spinner from "../../user_feedback/Spinner";
 import EmptyDataState from "../../UI/EmptyDataState";
 import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
 import { canRetryPayment } from "../../../utils/orderHelpers";
+import useOrderDetails from "../../../hooks/useOrderDetails";
 
 // 라우터 진입점, 3DS 복귀 처리, 주문 관련 데이터 fetch
 
@@ -16,7 +16,7 @@ export default function OrderPaymentPage() {
   const navigate = useNavigate();
   const redirectPaymentIntentId = searchParams.get("payment_intent");
   const { order, paymentStatus, isOrderFetching, orderFetchingError } =
-    useOrder(orderId);
+    useOrderDetails(orderId);
 
   useEffect(() => {
     document.title = "Payment | Foodie";

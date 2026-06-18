@@ -113,7 +113,7 @@ async function cancelPaidOrder(orderId) {
   }
 }
 
-async function cancelPendingOrder(orderId) {
+export async function cancelPendingOrder(orderId) {
   const payment = await findUniquePaymentByOrderId(orderId);
   if (!payment) throw new Error("PAYMENT_NOT_FOUND");
   if (!payment.stripe_payment_intent_id)

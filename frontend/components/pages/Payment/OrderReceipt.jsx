@@ -2,15 +2,16 @@
 
 import { useParams, Link } from "react-router-dom";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import useOrder from "../../../hooks/useOrder";
 import { useEffect } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import PageError from "../../user_feedback/PageError";
 import { currencyFormatter } from "../../../utils/format";
+import useOrderDetails from "../../../hooks/useOrderDetails";
 
 export default function OrderReceipt() {
   const { orderId } = useParams();
-  const { order, isOrderFetching, orderFetchingError } = useOrder(orderId);
+  const { order, isOrderFetching, orderFetchingError } =
+    useOrderDetails(orderId);
 
   useEffect(() => {
     document.title = "Order Receipt | Foodie";

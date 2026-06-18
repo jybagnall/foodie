@@ -15,6 +15,7 @@ export async function handleStripeEvent(client, event) {
     case "refund.updated":
       await handleRefundUpdated(client, event.data.object);
       return { ignored: false };
+
     default:
       return { ignored: true };
   }

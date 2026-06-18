@@ -3,10 +3,10 @@ import { useState } from "react";
 import OrderHeader from "./OrderHeader";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderActions from "./OrderActions";
-import useOrder from "../../../../hooks/useOrder";
+import useCancelOrder from "../../../../hooks/useCancelOrder";
 
 export default function OrderCard({ order }) {
-  const { cancelOrder, isCanceling, isCancelError } = useOrder(order.id);
+  const { cancelOrder, isCanceling, isCancelError } = useCancelOrder(order.id);
 
   const [expanded, setExpanded] = useState(false);
   const visibleItems = expanded

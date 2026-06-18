@@ -169,3 +169,9 @@ CREATE UNIQUE INDEX one_default_per_user
 ON addresses(user_id)  
 WHERE is_default = TRUE;
 
+-- 특정 주문에 대한 주문 아이템을 빨리 찾기 위한 인덱스
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+
+-- 사용자별 주문을 최신순으로 빠르게 찾고, 커서 페이지네이션도 빠르게 하기 위한 인덱스
+CREATE INDEX idx_orders_user_cursor
+ON orders(user_id, created_at DESC, id DESC);
