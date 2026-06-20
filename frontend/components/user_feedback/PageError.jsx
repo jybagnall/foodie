@@ -1,9 +1,12 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import useBrandAssets from "../../hooks/useBrandAssets";
 
 export default function PageError({
   title = "An unexpected error occured",
   message = "Please try refreshing the page or come back later.",
 }) {
+  const { assets } = useBrandAssets();
+
   return (
     <div className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 -translate-y-20">
       <div className="w-full max-w-xl p-6 sm:p-10">
@@ -16,7 +19,7 @@ export default function PageError({
         {/* 🔹 Image */}
         <div className="relative group mb-6">
           <img
-            src="/menu-failure.jpg"
+            src={assets.error_img_url || "/page_error.jpg"}
             alt="Error illustration"
             className="w-full max-w-md mx-auto 
             rounded-xl shadow-2xl opacity-95 

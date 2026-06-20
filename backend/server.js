@@ -17,6 +17,7 @@ import paymentRoutes from "./app/routes/payment.js";
 import paymentMethodsRoutes from "./app/routes/paymentMethods.js";
 import cartRoutes from "./app/routes/cart.js";
 import stripeRoutes from "./app/routes/stripe.js";
+import brandRoutes from "./app/routes/brand.js";
 import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js";
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/payment-methods", paymentMethodsRoutes);
 app.use("/api/carts", cartRoutes);
 app.use("/api/stripe", stripeRoutes);
+app.use("/api/brand", brandRoutes);
 
 app.use(
   cors({

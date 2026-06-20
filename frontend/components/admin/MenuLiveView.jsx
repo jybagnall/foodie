@@ -6,11 +6,7 @@ export default function MenuLiveView() {
     <div className="min-h-screen">
       <div className="flex p-6">
         <div className="mb-4">
-          <BackToDash
-            url="/admin"
-            dashboardName="Back to admin dashboard"
-            title="Send invite"
-          />
+          <BackToDash url="/admin" dashboardName="Back to admin dashboard" />
         </div>
       </div>
 

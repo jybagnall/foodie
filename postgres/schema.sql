@@ -78,7 +78,7 @@ CREATE TABLE orders (
   shipping_phone VARCHAR(20),
   shipping_full_name VARCHAR(50)
 );
---status: pending, paid, canceled, preparing, delivered
+--status: pending, paid, canceled, preparing, delivered, expired
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
@@ -89,7 +89,7 @@ CREATE TABLE order_items (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
--- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, succeeded, refunded, refund_pending, refund_failed
+-- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, succeeded, refunded, refund_pending, refund_failed, expired
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) UNIQUE,
@@ -145,6 +145,11 @@ CREATE TABLE stripe_events (
   notified_at TIMESTAMP NULL,
   resolved_at TIMESTAMP NULL,
   processing_at TIMESTAMP NULL
+);
+
+CREATE TABLE app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
 );
 
 -- partial index: dead 상태이고 아직 알림 안 간 이벤트만 DB가 모아둠

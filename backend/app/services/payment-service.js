@@ -1,14 +1,14 @@
 import pool from "../config/db.js";
 
-export async function cancelPendingPayment(client, orderId) {
+export async function updatePendingPayment(client, orderId, status) {
   const q = `
     UPDATE payments 
-    SET payment_status = 'canceled',
+    SET payment_status = $2,
         updated_at = NOW()
     WHERE order_id = $1
-    AND payment_status != 'canceled'
+    AND payment_status != $2
   `;
-  await client.query(q, [orderId]);
+  await client.query(q, [orderId, status]);
   return { success: true };
 }
 

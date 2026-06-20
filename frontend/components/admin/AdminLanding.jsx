@@ -11,28 +11,35 @@ import { useEffect } from "react";
 
 const actions = [
   {
-    title: "Upload a new menu",
+    title: "Upload New Menu",
     to: "/admin/new-menu",
     icon: CameraIcon,
     iconForeground: "text-purple-700",
     iconBackground: "bg-purple-200",
   },
   {
-    title: "View menu",
+    title: "Manage Brand Assets",
+    to: "/admin/settings/branding",
+    icon: CameraIcon,
+    iconForeground: "text-gray-700",
+    iconBackground: "bg-gray-200",
+  },
+  {
+    title: "View Menu",
     to: "/admin/menu-preview",
     icon: HomeIcon,
     iconForeground: "text-orange-700",
     iconBackground: "bg-orange-200",
   },
   {
-    title: "Manage your admin account",
+    title: "Manage Admin Account",
     to: "/admin/account",
     icon: UserIcon,
     iconForeground: "text-sky-700",
     iconBackground: "bg-sky-200",
   },
   {
-    title: "Invite a new admin",
+    title: "Invite Admin",
     to: "/admin/invite",
     icon: EnvelopeIcon,
     iconForeground: "text-green-700",

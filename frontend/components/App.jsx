@@ -14,6 +14,7 @@ import AdminAccount from "./admin/AdminAccount";
 import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import AddressBook from "../components/pages/userDashboard/address/AddressBook";
+import BrandingSettings from "./admin/BrandingSettings";
 import CartMergeHandler from "./system/CartMergeHandler";
 import DeleteAccount from "./pages/userDashboard/account/DeleteAccount";
 import EditProfile from "./pages/userDashboard/account/EditProfile";
@@ -117,6 +118,10 @@ export default function App() {
                     <Route path="new-menu" element={<UploadNewMenu />} />
                     <Route path="menu-preview" element={<MenuLiveView />} />
                     <Route path="invite" element={<AdminInvite />} />
+                    <Route
+                      path="settings/branding"
+                      element={<BrandingSettings />}
+                    />
                     <Route path="account" element={<AdminAccount />} />
                     <Route
                       path="events-monitor"

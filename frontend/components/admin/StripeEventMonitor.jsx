@@ -116,11 +116,7 @@ export default function StripeEventMonitor() {
           </div>
         )}
         <div className="mb-4">
-          <BackToDash
-            url="/admin"
-            dashboardName="Back to admin dashboard"
-            title="Send invite"
-          />
+          <BackToDash url="/admin" dashboardName="Back to admin dashboard" />
         </div>
 
         <section className="bg-white rounded-2xl shadow-lg p-4 sm:p-8">

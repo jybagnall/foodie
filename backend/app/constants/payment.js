@@ -1,5 +1,4 @@
-export const RETRYABLE_PAYMENT_STATUSES = [
-  "requires_payment",
+export const CANCELLABLE_PAYMENT_STATUSES = [
   "requires_confirmation",
   "requires_action",
   "failed",

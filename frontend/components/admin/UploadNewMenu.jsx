@@ -61,11 +61,7 @@ export default function UploadNewMenu() {
     <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <div className="w-full max-w-lg">
         <div className="mb-4">
-          <BackToDash
-            url="/admin"
-            dashboardName="Back to admin dashboard"
-            title="Send invite"
-          />
+          <BackToDash url="/admin" dashboardName="Back to admin dashboard" />
         </div>
         {isError && (
           <div className="mb-4">

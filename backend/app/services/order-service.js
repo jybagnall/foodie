@@ -36,6 +36,14 @@ export async function createOrder(
   return result.rows[0].id;
 }
 
+export async function expireOrderWithoutPayment(orderId) {
+  const q = `
+    UPDATE orders SET status = 'expired'
+    WHERE id = $1 AND status = 'pending'
+  `;
+  await pool.query(q, [orderId]);
+}
+
 export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
   let cursorClause = "";
   let values = [userId, limit + 1];
@@ -67,7 +75,7 @@ export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
   JOIN order_items oi ON oi.order_id = o.id
   JOIN menus m ON m.id = oi.menu_id
   WHERE o.user_id = $1
-    AND p.payment_status NOT IN ('requires_payment', 'canceled')
+    AND p.payment_status NOT IN ('requires_payment', 'expired')
     ${cursorClause}
   GROUP BY o.id, o.created_at, o.total_amount, o.status, p.payment_status
   ORDER BY o.created_at DESC, o.id DESC 
@@ -87,14 +95,25 @@ export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
   return { orders, nextCursor };
 }
 
+// AND (p.payment_status = 'requires_payment' OR p.id IS NULL)
+//       AND p.created_at <= NOW() - INTERVAL '30 minutes';
+
 export async function getExpiredPendingOrders() {
   const q = `
     SELECT o.id
     FROM orders o
-    JOIN payments p ON p.order_id = o.id
+    LEFT JOIN payments p ON p.order_id = o.id
     WHERE o.status = 'pending' 
-      AND p.payment_status = 'requires_payment'
-      AND p.created_at <= NOW() - INTERVAL '30 minutes';
+      AND (
+            (
+              p.payment_status = 'requires_payment' 
+              AND p.created_at <= NOW() - INTERVAL '30 minutes'
+            )
+            OR (
+            p.id IS NULL 
+            AND o.created_at <= NOW() - INTERVAL '24 hours'
+            )
+          );
   `;
   const result = await pool.query(q);
   return result.rows;
@@ -182,7 +201,7 @@ export async function insertOrderItems(client, orderId, order) {
 
 export async function updateOrderStatus(client, orderId, newStatus) {
   const ALLOWED_TRANSITIONS = {
-    pending: ["paid", "canceled"],
+    pending: ["paid", "canceled", "expired"],
     paid: ["canceled"],
   };
 

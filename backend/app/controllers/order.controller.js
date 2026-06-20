@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { getMenuPrices } from "../services/menu-service.js";
 import { getOrderById, updateOrderStatus } from "../services/order-service.js";
 import {
-  cancelPendingPayment,
+  updatePendingPayment,
   findUniquePaymentByOrderId,
   updatePaymentStatus,
 } from "../services/payment-service.js";
@@ -14,7 +14,7 @@ import {
 } from "../utils/orderCalculations.js";
 import { createRefundRecord } from "../services/refund-service.js";
 import pool from "../config/db.js";
-import { RETRYABLE_PAYMENT_STATUSES } from "../constants/payment.js";
+import { CANCELLABLE_PAYMENT_STATUSES } from "../constants/payment.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -118,7 +118,7 @@ export async function cancelPendingOrder(orderId) {
   if (!payment) throw new Error("PAYMENT_NOT_FOUND");
   if (!payment.stripe_payment_intent_id)
     throw new Error("PAYMENT_INTENT_NOT_FOUND");
-  if (!RETRYABLE_PAYMENT_STATUSES.includes(payment.payment_status))
+  if (!CANCELLABLE_PAYMENT_STATUSES.includes(payment.payment_status))
     throw new Error("ORDER_NOT_CANCELLABLE");
 
   await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
@@ -126,8 +126,33 @@ export async function cancelPendingOrder(orderId) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await cancelPendingPayment(client, orderId);
+    await updatePendingPayment(client, orderId, "canceled");
     await updateOrderStatus(client, orderId, "canceled");
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Order cancellation DB update failed:", err.message);
+    throw new Error("POST_DB_FAILURE");
+  } finally {
+    client.release();
+  }
+}
+
+export async function expirePendingOrder(orderId) {
+  const payment = await findUniquePaymentByOrderId(orderId);
+  if (!payment) throw new Error("PAYMENT_NOT_FOUND");
+  if (!payment.stripe_payment_intent_id)
+    throw new Error("PAYMENT_INTENT_NOT_FOUND");
+  if (payment.payment_status !== "requires_payment")
+    throw new Error("ORDER_NOT_EXPIRABLE");
+
+  await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await updatePendingPayment(client, orderId, "expired");
+    await updateOrderStatus(client, orderId, "expired");
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
