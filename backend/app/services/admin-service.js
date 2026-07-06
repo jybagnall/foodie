@@ -2,6 +2,18 @@ import bcrypt from "bcrypt";
 import pool from "../config/db.js";
 import { generateHashedToken } from "../utils/auth.js";
 
+export async function getAdmins() {
+  const q = `
+  SELECT id, name, email, created_at, last_login_at 
+  FROM users
+  WHERE role = 'admin'
+  ORDER BY created_at DESC
+  `;
+
+  const result = await pool.query(q);
+  return result.rows;
+}
+
 export async function verifyAdminInvitation(token, email) {
   const q = `
     SELECT * FROM admin_invites

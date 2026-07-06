@@ -32,8 +32,8 @@ const actions = [
     iconBackground: "bg-orange-200",
   },
   {
-    title: "Manage Admin Account",
-    to: "/admin/account",
+    title: "Admin Management",
+    to: "/admin/manage",
     icon: UserIcon,
     iconForeground: "text-sky-700",
     iconBackground: "bg-sky-200",

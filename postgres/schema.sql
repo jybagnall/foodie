@@ -11,6 +11,7 @@ CREATE TYPE role_enum AS ENUM ('user', 'admin');
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   created_at TIMESTAMP DEFAULT NOW(),
+  last_login_at TIMESTAMP,
   name VARCHAR(32) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password TEXT NOT NULL, 
@@ -32,7 +33,7 @@ CREATE TABLE addresses (
   phone VARCHAR(20) NOT NULL,
   full_name VARCHAR(50) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
-  deleted_at TIMESTAMP DEFAULT NULL
+  deleted_at TIMESTAMP DEFAULT NULL,
 
   UNIQUE (user_id, street, postal_code, city, state, phone, full_name)
 );
@@ -88,6 +89,18 @@ CREATE TABLE order_items (
   price NUMERIC(8,2) NOT NULL -- 유저가 실제로 결제했던 그 시점의 가격
 );
 
+CREATE TABLE payment_methods (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL, -- Stripe가 준 카드 ID
+  brand VARCHAR(20) NOT NULL,  
+  last4 VARCHAR(4) NOT NULL,
+  exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
+  exp_year SMALLINT NOT NULL,
+  is_default BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
 -- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, succeeded, refunded, refund_pending, refund_failed, expired
 CREATE TABLE payments (
@@ -104,8 +117,10 @@ CREATE TABLE payments (
   paid_at TIMESTAMP, --실제 결제 완료 시점
   created_at TIMESTAMP DEFAULT NOW(),
   failure_reason TEXT
-)
+);
 
+-- reason: duplicate, fraudulent, requested_by_customer 등
+-- refund_status: pending, succeeded, failed
 CREATE TABLE refunds (
   id SERIAL PRIMARY KEY,
   payment_id INT REFERENCES payments(id) ON DELETE CASCADE,
@@ -115,20 +130,6 @@ CREATE TABLE refunds (
   created_at TIMESTAMP DEFAULT NOW(),
   reason VARCHAR(100), 
   completed_at TIMESTAMP
-);
--- reason: duplicate, fraudulent, requested_by_customer 등
--- refund_status: pending, succeeded, failed
-
-CREATE TABLE payment_methods (
-  id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL, -- Stripe가 준 카드 ID
-  brand VARCHAR(20) NOT NULL,  
-  last4 VARCHAR(4) NOT NULL,
-  exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
-  exp_year SMALLINT NOT NULL,
-  is_default BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW(),
 );
 
 -- 이벤트 저장

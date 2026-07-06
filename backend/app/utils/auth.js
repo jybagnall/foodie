@@ -2,10 +2,14 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import crypto from "crypto";
+import {
+  ACCESS_TOKEN_EXPIRES_IN,
+  REFRESH_TOKEN_EXPIRES_IN,
+  BCRYPT_SALT_ROUNDS,
+} from "../constants/auth.js";
 
 export async function hashPassword(password) {
-  const saltRounds = 10;
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   return hashedPassword;
 }
 
@@ -47,12 +51,12 @@ export function generateTokens(account) {
     accessToken: jwt.sign(
       { ...data, tokenType: "access" },
       process.env.JWT_SECRET,
-      { expiresIn: "5m" },
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
     ),
     refreshToken: jwt.sign(
       { ...data, tokenType: "refresh" },
       process.env.JWT_SECRET,
-      { expiresIn: "14d" },
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN },
     ), // 서버가 토큰 검증을 할 때 사용함. 신뢰할 날짜인가
   };
 }
@@ -73,8 +77,8 @@ export async function verifyRefreshToken(token) {
 
     return user;
   } catch (e) {
-    console.error("Access token invalid:", e.message);
-    throw new Error("Invalid access token");
+    console.error("Refresh token invalid:", e.message);
+    throw new Error("Invalid refresh token");
   }
 }
 

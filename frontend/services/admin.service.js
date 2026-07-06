@@ -5,6 +5,11 @@ class AdminService {
     this.client = new Client(signal, getAccessToken);
   }
 
+  async getAdmins() {
+    const data = await this.client.get("/api/admins");
+    return data;
+  }
+
   async createAdminAccount(name, email, password, inviteToken) {
     const data = await this.client.post("/api/admins/admin-signup", {
       name,

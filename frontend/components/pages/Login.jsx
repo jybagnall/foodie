@@ -30,6 +30,7 @@ export default function Login() {
     if (isLoginProcessing) return;
 
     abortControllerRef.current = new AbortController();
+
     const accountService = new AccountService(
       abortControllerRef.current.signal,
     );

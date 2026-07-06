@@ -15,7 +15,7 @@ export default function UserName() {
   const abortControllerRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useMyProfile();
-  const { items, setItems, switchToGuestMode, mode } = useContext(CartContext);
+  const { items, setItems, switchToGuestMode } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
   const { syncCartToServer, isUpdatingServerCart } = useServerCart();

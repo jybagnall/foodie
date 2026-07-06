@@ -7,6 +7,26 @@ import { defineConfig, globalIgnores } from "eslint/config";
 export default defineConfig([
   globalIgnores(["dist"]),
 
+  {
+    files: ["backend/**/*.js"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: globals.node,
+    },
+    extends: [js.configs.recommended],
+    rules: {
+      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+      "no-multi-spaces": "error",
+      "space-infix-ops": "error",
+      "space-before-blocks": "error",
+      "keyword-spacing": ["error", { before: true, after: true }],
+      "object-curly-spacing": ["error", "always"],
+      "array-bracket-spacing": ["error", "never"],
+      "comma-spacing": ["error", { before: false, after: true }],
+    },
+  },
+
   // JS
   {
     files: ["frontend/**/*.js"],
@@ -56,7 +76,7 @@ export default defineConfig([
       "object-curly-spacing": ["error", "always"],
       "array-bracket-spacing": ["error", "never"],
       "comma-spacing": ["error", { before: false, after: true }],
-      "no-unused-vars": "off",
+      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
     },
   },
 ]);

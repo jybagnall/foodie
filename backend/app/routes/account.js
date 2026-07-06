@@ -1,6 +1,5 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
 import {
   findUserByEmail,
@@ -13,6 +12,7 @@ import {
   createPasswordResetToken,
   findUserByPasswordResetToken,
   clearPasswordResetToken,
+  updateLastLogin,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -41,6 +41,7 @@ router.get("/my-profile", verifyUserAuth, async (req, res) => {
 
     res.status(200).json(profile);
   } catch (err) {
+    console.error("User data fetching error,", err.message);
     res.status(500).json({
       error: "We're having trouble verifying your account right now.",
     });
@@ -68,6 +69,7 @@ router.get("/user", verifyUserAuth, async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("User data fetching error,", err.message);
     res.status(500).json({
       error: "We're having trouble verifying your account right now.",
     });
@@ -86,6 +88,7 @@ router.post("/forgot-password", validateBody("email"), async (req, res) => {
 
     res.status(200).json({ message: "A reset link has been sent." });
   } catch (err) {
+    console.error("Password reset error,", err.message);
     res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
@@ -122,6 +125,7 @@ router.post("/login", validateBody("email", "password"), async (req, res) => {
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 10);
     await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
+    await updateLastLogin(loggedInUser.id);
     setRefreshTokenCookie(res, refreshToken);
 
     res.status(200).json({
@@ -142,16 +146,26 @@ router.post("/logout", async (req, res) => {
 
   if (refreshToken) {
     try {
-      const decoded = jwt.decode(refreshToken);
-      if (decoded?.id) {
-        await updateUserRefreshToken(decoded.id, null);
+      const decoded = await verifyRefreshToken(refreshToken);
+      const dbUser = await findUserById(decoded.id);
+
+      if (dbUser?.current_refresh_token) {
+        // DB에 저장된 refreshToken과 일치 여부 확인
+        const isMatch = await bcrypt.compare(
+          refreshToken,
+          dbUser.current_refresh_token,
+        );
+
+        if (isMatch) {
+          await updateUserRefreshToken(decoded.id, null);
+        }
       }
     } catch (err) {
-      console.error("Token decode failed during logout", err);
+      console.error("Refresh token verification failed during logout", err);
     }
   }
 
-  // jwt.decode가 실패해도, 브라우저 쿠키 저장소에서 refreshToken 제거
+  //  토큰 검증 결과와 관계없이 브라우저 쿠키 저장소에서 refreshToken 제거
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -256,6 +270,7 @@ router.post("/reset-password", validateBody("password"), async (req, res) => {
       accessToken,
     });
   } catch (err) {
+    console.error("Password update error,", err.message);
     await client.query("ROLLBACK");
     res
       .status(500)
@@ -272,7 +287,6 @@ router.post(
     const client = await pool.connect();
     try {
       const { name, email, password } = req.body;
-
       const existingUser = await findUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ error: "Email already in use." });
@@ -285,8 +299,8 @@ router.post(
         password,
         client,
       );
-
       await client.query("COMMIT");
+
       setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
 
       res.status(201).json({

@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import bcrypt from "bcrypt";
 import {
   createAccount,
+  updateLastLogin,
   updateUserRefreshToken,
   updateUserStripeId,
 } from "../services/account-service.js";
@@ -11,6 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function createUserWithStripe(name, email, password, client) {
   const createdUser = await createAccount(name, email, password, client);
+  await updateLastLogin(createdUser.id, client);
 
   let stripeCustomer;
   try {

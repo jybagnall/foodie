@@ -115,6 +115,16 @@ export async function updatePassword(password, userId, db = pool) {
   return { success: true };
 }
 
+export async function updateLastLogin(userId, db = pool) {
+  const q = `
+    UPDATE users
+    SET last_login_at = NOW()
+    WHERE id = $1
+  `;
+  await db.query(q, [userId]);
+  return { success: true };
+}
+
 export async function updateUserName(userId, name) {
   const q = `
     UPDATE users

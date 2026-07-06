@@ -37,6 +37,7 @@ import UploadNewMenu from "./admin/UploadNewMenu";
 import UserLanding from "./pages/Home/UserLanding";
 import ViewCart from "./pages/ViewCart";
 import ResetPassword from "./pages/ResetPassword";
+import AdminManagement from "./admin/AdminManagement";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 // 모달을 Route로 렌더링하려 하면 안됨
@@ -122,7 +123,7 @@ export default function App() {
                       path="settings/branding"
                       element={<BrandingSettings />}
                     />
-                    <Route path="account" element={<AdminAccount />} />
+                    <Route path="manage" element={<AdminManagement />} />
                     <Route
                       path="events-monitor"
                       element={<StripeEventMonitor />}

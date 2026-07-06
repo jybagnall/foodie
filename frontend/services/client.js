@@ -16,15 +16,13 @@ class Client {
     this.refreshedToken = null;
     this.axios = axios.create({
       ...(signal && { signal }),
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
 
     // 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
     this.axios.interceptors.request.use((config) => {
       if (!config.skipAuth && this.getAccessToken) {
         const token = this.refreshedToken ?? this.getAccessToken();
+
         if (token) config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
@@ -53,10 +51,21 @@ class Client {
     }
   }
 
+  // 공통 요청 함수
   async request(method, endpoint, payload, options = {}) {
-    const res = await this.makeRequest(() =>
-      this.axios[method](endpoint, payload, { ...options }),
-    );
+    const requestFn =
+      method === "delete"
+        ? () =>
+            this.axios.delete(endpoint, {
+              ...options,
+              ...(payload && { data: payload }),
+            })
+        : () =>
+            this.axios[method](endpoint, payload, {
+              ...options,
+            });
+
+    const res = await this.makeRequest(requestFn);
     return res.data;
   }
 
@@ -101,8 +110,8 @@ class Client {
     return res.data;
   }
 
-  async get(endpoint) {
-    return this.request("get", endpoint);
+  async get(endpoint, options = {}) {
+    return this.request("get", endpoint, undefined, options);
   }
 
   // ❗axios.post(url, body, config)
@@ -111,18 +120,14 @@ class Client {
   }
 
   // ❗axios.patch(url, body, config)
-  async patch(endpoint, payload) {
+  async patch(endpoint, payload, options = {}) {
     return this.request("patch", endpoint, payload);
   }
 
   // ❗Axios의 DELETE에는 body 자리가 없음. axios.delete(url, config)
   // body를 보내려면 config.data로!
-  async delete(endpoint, payload) {
-    const config = payload ? { data: payload } : undefined;
-    const res = await this.makeRequest(
-      async () => await this.axios.delete(endpoint, config),
-    );
-    return res.data;
+  async delete(endpoint, payload, options = {}) {
+    return this.request("delete", endpoint, payload, options);
   }
 }
 

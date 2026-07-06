@@ -3,6 +3,7 @@ import {
   verifyAdminInvitation,
   invalidateAdminInvitation,
   createAdminInvitation,
+  getAdmins,
 } from "../services/admin-service.js";
 import { createAccount, findUserByEmail } from "../services/account-service.js";
 import { generateTokens } from "../utils/auth.js";
@@ -12,6 +13,18 @@ import { validateBody } from "../middleware/validateBody.js";
 import pool from "../config/db.js";
 
 const router = express.Router();
+
+router.get("/", verifyAdminAuth, async (req, res) => {
+  try {
+    const admins = await getAdmins();
+    res.status(200).json(admins);
+  } catch (err) {
+    console.error("getAdmins error:", err);
+    res.status(500).json({
+      error: "An unexpected error occurred while retrieving the admin list.",
+    });
+  }
+});
 
 router.post(
   "/admin-signup",
