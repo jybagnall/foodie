@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import BackToDash from "../UI/BackToDash";
-import useMenuMutations from "../../hooks/useMenuMutations";
+import useMenusMutations from "../../hooks/useMenusMutations";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 
 export default function UploadNewMenu() {
-  const { createMenu, isError, isUploading } = useMenuMutations();
+  const { createMenu, isError, isUploading } = useMenusMutations();
   const navigate = useNavigate();
   const {
     register,
@@ -52,7 +52,7 @@ export default function UploadNewMenu() {
     createMenu(formData, {
       onSuccess: () => {
         reset(); // 모든 input 필드 값을 초기 상태로
-        navigate("/admin/menu-preview", { replace: true });
+        navigate("/", { replace: true });
       },
     });
   };

@@ -6,12 +6,27 @@ class MenuService {
   }
 
   async createMenu(formData) {
-    const data = await this.client.post("/api/menu/create-menu", formData);
+    const data = await this.client.post("/api/menu/create-menus", formData);
     return data;
   }
 
-  async getMenu() {
-    const data = await this.client.rawGet("/api/menu/get-menu");
+  async getMenus() {
+    const data = await this.client.rawGet("/api/menu/get-menus");
+    return data;
+  }
+
+  async getMenuDetail(id) {
+    const data = await this.client.get(`/api/menu/single-menu-detail/${id}`);
+    return data;
+  }
+
+  async updateImage(menuId, formData) {
+    const data = await this.client.patch(`/api/menu/${menuId}/image`, formData);
+    return data;
+  }
+
+  async updateTextField(menuId, field) {
+    const data = await this.client.patch(`/api/menu/${menuId}/image`, field);
     return data;
   }
 }

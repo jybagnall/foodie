@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import {
-  CameraIcon,
   UserIcon,
   ArrowUpRightIcon,
   EnvelopeIcon,
-  HomeIcon,
+  PhotoIcon,
+  DocumentArrowUpIcon,
   ExclamationTriangleIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 
@@ -13,21 +14,21 @@ const actions = [
   {
     title: "Upload New Menu",
     to: "/admin/new-menu",
-    icon: CameraIcon,
+    icon: DocumentArrowUpIcon,
     iconForeground: "text-purple-700",
     iconBackground: "bg-purple-200",
   },
   {
     title: "Manage Brand Assets",
     to: "/admin/settings/branding",
-    icon: CameraIcon,
+    icon: PhotoIcon,
     iconForeground: "text-gray-700",
     iconBackground: "bg-gray-200",
   },
   {
-    title: "View Menu",
-    to: "/admin/menu-preview",
-    icon: HomeIcon,
+    title: "Edit Menu",
+    to: "/admin/edit-menu",
+    icon: PencilSquareIcon,
     iconForeground: "text-orange-700",
     iconBackground: "bg-orange-200",
   },

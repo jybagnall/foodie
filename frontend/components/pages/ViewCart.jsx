@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import CartContext from "../../contexts/CartContext";
 import EmptyCart from "../top_layout/header/cart/EmptyCart";
 import Button from "../UI/Button";
-import { currencyFormatter } from "../../utils/format";
 import useServerCart from "../../hooks/useServerCart";
 import useServerCartActions from "../../hooks/useServerCartActions";
 import useGuestCartActions from "../../hooks/useGuestCartActions";

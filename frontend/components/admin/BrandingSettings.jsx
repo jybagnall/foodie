@@ -1,13 +1,10 @@
-import { useNavigate } from "react-router-dom";
-import { useForm, useWatch } from "react-hook-form";
-import { useEffect, useMemo } from "react";
-import useBrandAssetsMutations from "../../hooks/useBrandAssetsMutations";
+import { useEffect } from "react";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import BackToDash from "../UI/BackToDash";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
-import ImageAssetField from "./ImageAssetField";
+import BrandImageUploader from "./BrandImageUploader";
 
 export default function BrandingSettings() {
   useEffect(() => {
@@ -26,9 +23,9 @@ export default function BrandingSettings() {
             Manage Brand Assets
           </h2>
 
-          <ImageAssetField label="Logo" assetType="logo" />
+          <BrandImageUploader label="Logo" assetType="logo" />
           <div className="mb-8" />
-          <ImageAssetField label="Error Image" assetType="error_image" />
+          <BrandImageUploader label="Error Image" assetType="error_image" />
         </section>
       </div>
     </main>

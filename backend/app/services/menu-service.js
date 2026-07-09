@@ -10,11 +10,18 @@ export async function createMenu(data) {
   await pool.query(q, values);
 }
 
-export async function getMenu() {
+export async function getMenus() {
   const q = `SELECT * FROM menus`;
 
   const result = await pool.query(q);
   return result.rows ?? [];
+}
+
+export async function getSingleMenuDetail(id) {
+  const q = `SELECT * FROM menus WHERE id = $1`;
+
+  const result = await pool.query(q, [id]);
+  return result.rows[0];
 }
 
 export async function getMenuPrices(client, menuIds) {
@@ -25,4 +32,16 @@ export async function getMenuPrices(client, menuIds) {
   `;
   const result = await client.query(q, [menuIds]);
   return result.rows;
+}
+
+export async function updateMenuImage(menuId, imgSrc) {
+  const q = `
+  UPDATE menus
+  SET image = $1
+  WHERE id = $2
+  `;
+  const values = [imgSrc, menuId];
+
+  await pool.query(q, values);
+  return { success: true };
 }

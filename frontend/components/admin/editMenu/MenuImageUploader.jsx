@@ -1,17 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import useBrandAssetsMutations from "../../hooks/useBrandAssetsMutations";
 import { useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo } from "react";
-import SpinnerMini from "../user_feedback/SpinnerMini";
-import BackToDash from "../UI/BackToDash";
-import ErrorAlert from "../user_feedback/ErrorAlert";
-import Input from "../UI/Input";
-import Button from "../UI/Button";
+import useAdminMenuMutations from "../../../hooks/useAdminMenuMutations";
+import SpinnerMini from "../../user_feedback/SpinnerMini";
+import Button from "../../UI/Button";
+import ErrorAlert from "../../user_feedback/ErrorAlert";
+import Input from "../../UI/Input";
 
-// "logo", "error_image"
-export default function ImageAssetField({ label, assetType }) {
-  const { uploadImgAsset, isError, isUploading } = useBrandAssetsMutations();
-  const navigate = useNavigate();
+export default function MenuImageUploader({ menuId, onCancel }) {
+  const { updateImage, isImageUpdateError, isImageUpdating } =
+    useAdminMenuMutations(menuId);
+
   const {
     register,
     handleSubmit,
@@ -21,7 +19,7 @@ export default function ImageAssetField({ label, assetType }) {
   } = useForm();
 
   // register()로 등록된 값을 지켜보고 file 변수로 저장
-  const watchFiles = useWatch({ control, name: assetType });
+  const watchFiles = useWatch({ control, name: "image" });
   const file = watchFiles?.[0] ?? null;
 
   const previewUrl = useMemo(() => {
@@ -40,12 +38,12 @@ export default function ImageAssetField({ label, assetType }) {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("assetType", assetType);
     formData.append("image", file);
 
-    uploadImgAsset(formData, {
+    updateImage(formData, {
       onSuccess: () => {
         reset();
+        onCancel();
       },
     });
   };
@@ -56,11 +54,11 @@ export default function ImageAssetField({ label, assetType }) {
       onSubmit={handleSubmit(onUploadSubmit)}
     >
       <Input
-        label={label}
+        label="Choose a new menu image"
         type="file"
-        id={assetType}
+        id="image"
         accept="image/jpeg,image/png"
-        register={register(assetType, {
+        register={register("image", {
           validate: {
             required: (files) => files?.length > 0 || "Please select a file.",
             fileType: (files) => {
@@ -74,7 +72,7 @@ export default function ImageAssetField({ label, assetType }) {
             },
           },
         })}
-        error={errors[assetType]}
+        error={errors.image}
       />
 
       {previewUrl && (
@@ -91,13 +89,13 @@ export default function ImageAssetField({ label, assetType }) {
         <Button
           type="submit"
           className="py-1 px-3 bg-gray-400 hover:bg-gray-500 text-white"
-          disabled={isUploading}
+          disabled={!file || isImageUpdating}
         >
-          {isUploading ? <SpinnerMini /> : "Upload a new image"}
+          {isImageUpdating ? <SpinnerMini /> : "Upload Image"}
         </Button>
       </div>
 
-      {isError && (
+      {isImageUpdateError && (
         <div className="mb-4">
           <ErrorAlert
             title="There was a problem with your request"

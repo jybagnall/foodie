@@ -2,7 +2,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import MenuService from "../services/menu.service";
 import useAccessToken from "./useAccessToken";
 
-export default function useMenuMutations() {
+export default function useMenusMutations() {
   const accessToken = useAccessToken();
   const queryClient = useQueryClient();
 
@@ -16,7 +16,7 @@ export default function useMenuMutations() {
       new MenuService(null, () => accessToken).createMenu(formData),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["menu"],
+        queryKey: ["menus"],
       }); // 기존 데이터 stale 처리, 자동 fetch
     },
   });

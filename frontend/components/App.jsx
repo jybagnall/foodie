@@ -18,12 +18,12 @@ import BrandingSettings from "./admin/BrandingSettings";
 import CartMergeHandler from "./system/CartMergeHandler";
 import DeleteAccount from "./pages/userDashboard/account/DeleteAccount";
 import EditProfile from "./pages/userDashboard/account/EditProfile";
+import EditMenuPage from "./admin/editMenu/EditMenuPage";
 import MyAccount from "../components/pages/userDashboard/account/MyAccount";
 import MyOrders from "../components/pages/userDashboard/orders/MyOrders";
 import ForgotPassword from "./pages/ForgotPassword";
 import Header from "./top_layout/header/Header";
 import Login from "./pages/Login";
-import MenuLiveView from "./admin/MenuLiveView";
 import OrderConfirmation from "./pages/Payment/OrderConfirmation";
 import OrderDetail from "../components/pages/userDashboard/orders/OrderDetail";
 import OrderPaymentPage from "./pages/Payment/OrderPaymentPage ";
@@ -38,6 +38,7 @@ import UserLanding from "./pages/Home/UserLanding";
 import ViewCart from "./pages/ViewCart";
 import ResetPassword from "./pages/ResetPassword";
 import AdminManagement from "./admin/AdminManagement";
+import EditMenuDetails from "./admin/editMenu/EditMenuDetails";
 
 // 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 // 모달을 Route로 렌더링하려 하면 안됨
@@ -117,7 +118,11 @@ export default function App() {
                   >
                     <Route index element={<AdminLanding />} />
                     <Route path="new-menu" element={<UploadNewMenu />} />
-                    <Route path="menu-preview" element={<MenuLiveView />} />
+                    <Route path="edit-menu" element={<EditMenuPage />} />
+                    <Route
+                      path="edit-menu/:menuId"
+                      element={<EditMenuDetails />}
+                    />
                     <Route path="invite" element={<AdminInvite />} />
                     <Route
                       path="settings/branding"
