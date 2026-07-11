@@ -104,6 +104,7 @@ router.post(
         .status(200)
         .json({ message: "Admin invitation email sent successfully." });
     } catch (err) {
+      console.error("Admin invitation error,", err);
       res.status(500).json({ error: "Failed to send admin invite." });
     }
   },

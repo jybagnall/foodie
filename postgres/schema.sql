@@ -45,7 +45,8 @@ CREATE TABLE menus (
   name VARCHAR(32) UNIQUE NOT NULL,
   price NUMERIC(5,2) NOT NULL, -- 지금 현재 판매 가격 (바뀔 수 있음)
   description TEXT NOT NULL,
-  image TEXT NOT NULL
+  image TEXT NOT NULL,  -- Cloudinary URL
+  image_public_id TEXT NOT NULL   -- Cloudinary public_id
 );
 
 -- one cart per user, 

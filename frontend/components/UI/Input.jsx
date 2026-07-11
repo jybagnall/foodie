@@ -17,7 +17,6 @@ export default function Input({ label, id, type, register, error, ...props }) {
       <div className="relative">
         <input
           id={id}
-          name={id}
           {...register}
           {...props}
           type={isPassword ? (showPassword ? "text" : "password") : type}
@@ -33,6 +32,7 @@ export default function Input({ label, id, type, register, error, ...props }) {
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
               <EyeSlashIcon className="h-5 w-5" />

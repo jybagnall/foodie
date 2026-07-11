@@ -38,7 +38,7 @@ router.get("/my-orders", verifyUserAuth, async (req, res) => {
     });
     res.status(200).json({ orders, nextCursor });
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -49,7 +49,7 @@ router.get("/:orderId", verifyUserAuth, async (req, res) => {
     const orderInfo = await getOrderDetails(orderId, req.user.id);
     res.status(200).json(orderInfo);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -60,7 +60,7 @@ router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
     await cancelOrder(orderId, req.user);
     res.status(200).json({ message: "Order canceled." });
   } catch (err) {
-    console.error("Order cancellation failed:", err.message);
+    console.error("Order cancellation failed:", err);
     const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
     return res.status(status).json({
       error: "We failed to cancel order. Please try again.",
@@ -105,7 +105,7 @@ router.post(
       res.status(201).json({ message: "Order info is saved.", orderId });
     } catch (err) {
       await client.query("ROLLBACK").catch(() => {});
-      console.error("Order error,", err.message);
+      console.error("Order error,", err);
 
       if (err.message === "ITEMS_UNAVAILABLE") {
         return res

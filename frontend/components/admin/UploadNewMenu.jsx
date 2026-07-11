@@ -7,6 +7,7 @@ import BackToDash from "../UI/BackToDash";
 import useMenusMutations from "../../hooks/useMenusMutations";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import ErrorAlert from "../user_feedback/ErrorAlert";
+import { menuFieldConfigs, menuValidationRules } from "../../constants/menu";
 
 export default function UploadNewMenu() {
   const { createMenu, isError, isUploading } = useMenusMutations();
@@ -81,93 +82,15 @@ export default function UploadNewMenu() {
             className="flex flex-col gap-5"
             onSubmit={handleSubmit(onUploadSubmit)}
           >
-            <Input
-              label="Menu Name"
-              type="text"
-              id="name"
-              register={register("name", {
-                required: "Menu name is required.",
-                minLength: {
-                  value: 2,
-                  message: "Menu name must be at least 2 characters long.",
-                },
-                maxLength: {
-                  value: 50,
-                  message: "Menu name must be under 50 characters.",
-                },
-                validate: {
-                  noSpacesOnly: (value) =>
-                    value.trim().length > 0 ||
-                    "Menu name cannot be blank or spaces only.",
-                },
-              })}
-              error={errors.name}
-            />
-            <Input
-              label="Price"
-              type="number"
-              id="price"
-              step="0.01"
-              register={register("price", {
-                required: "Price is required.",
-                min: {
-                  value: 1,
-                  message: "Price must be greater than 0.",
-                },
-                validate: {
-                  isNumber: (value) =>
-                    !isNaN(value) || "Price must be a number.",
-                },
-                pattern: {
-                  value: /^\d+(\.\d{1,2})?$/,
-                  message: "Price can have up to 2 decimal places.",
-                },
-              })}
-              error={errors.price}
-            />
-            <Input
-              label="Description"
-              type="text"
-              id="description"
-              register={register("description", {
-                required: "Please enter a description.",
-                minLength: {
-                  value: 5,
-                  message: "Description must be at least 5 characters long.",
-                },
-                maxLength: {
-                  value: 200,
-                  message: "Description cannot exceed 200 characters.",
-                },
-                validate: {
-                  noSpacesOnly: (value) =>
-                    value.trim().length > 0 ||
-                    "Description cannot be blank or spaces only.",
-                },
-              })}
-              error={errors.description}
-            />
-
-            <Input
-              label="Image"
-              type="file"
-              id="image"
-              accept="image/*"
-              register={register("image", {
-                validate: {
-                  fileType: (value) => {
-                    if (!value[0]) return "Please select a file.";
-
-                    const type = value[0].type;
-                    if (!["image/jpeg", "image/png"].includes(type)) {
-                      return "Only JPEG and PNG files are allowed.";
-                    }
-                    return true; // 유효성 검사 통과
-                  },
-                },
-              })}
-              error={errors.image}
-            />
+            {Object.entries(menuFieldConfigs).map(([key, config]) => (
+              <Input
+                key={key}
+                id={key}
+                {...config}
+                register={register(key, menuValidationRules[key])}
+                error={errors[key]}
+              />
+            ))}
 
             {previewUrl && (
               <div className="mt-8 flex justify-center">
@@ -183,7 +106,7 @@ export default function UploadNewMenu() {
               <Button
                 type="submit"
                 className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={isUploading}
+                disabled={!file || isUploading}
               >
                 {isUploading ? <SpinnerMini /> : "Create a new menu"}
               </Button>

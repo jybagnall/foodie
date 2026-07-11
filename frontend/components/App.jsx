@@ -40,7 +40,6 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminManagement from "./admin/AdminManagement";
 import EditMenuDetails from "./admin/editMenu/EditMenuDetails";
 
-// 로고 이미지를 public 폴더에 넣고, Cloudinary에 백업 저장해두는 방법을 쓸 것
 // 모달을 Route로 렌더링하려 하면 안됨
 export default function App() {
   return (

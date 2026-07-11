@@ -72,7 +72,7 @@ export default function EditMenuDetails() {
 
           {["name", "price", "description"].includes(editingField) && (
             <EditTextModal
-              modalIsOpen={editingField !== "image"}
+              modalIsOpen={true}
               onCancel={() => setEditingField(null)}
               menu={menu}
               editingField={editingField}

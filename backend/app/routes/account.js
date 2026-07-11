@@ -41,7 +41,7 @@ router.get("/my-profile", verifyUserAuth, async (req, res) => {
 
     res.status(200).json(profile);
   } catch (err) {
-    console.error("User data fetching error,", err.message);
+    console.error("User data fetching error,", err);
     res.status(500).json({
       error: "We're having trouble verifying your account right now.",
     });
@@ -69,7 +69,7 @@ router.get("/user", verifyUserAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("User data fetching error,", err.message);
+    console.error("User data fetching error,", err);
     res.status(500).json({
       error: "We're having trouble verifying your account right now.",
     });
@@ -88,7 +88,7 @@ router.post("/forgot-password", validateBody("email"), async (req, res) => {
 
     res.status(200).json({ message: "A reset link has been sent." });
   } catch (err) {
-    console.error("Password reset error,", err.message);
+    console.error("Password reset error,", err);
     res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
@@ -133,7 +133,7 @@ router.post("/login", validateBody("email", "password"), async (req, res) => {
       accessToken,
     });
   } catch (err) {
-    console.error("Login error,", err.message);
+    console.error("Login error,", err);
     res
       .status(500)
       .json({ error: "A server error occurred. Please try again later." });
@@ -226,7 +226,7 @@ router.post("/refresh-access-token", async (req, res) => {
     });
   } catch (err) {
     if (err instanceof RefreshTokenExpiredError) {
-      console.error("Refresh token expired:", err.message);
+      console.error("Refresh token expired:", err);
     } else {
       console.error("Unexpected refresh error:", err);
     }
@@ -270,7 +270,7 @@ router.post("/reset-password", validateBody("password"), async (req, res) => {
       accessToken,
     });
   } catch (err) {
-    console.error("Password update error,", err.message);
+    console.error("Password update error,", err);
     await client.query("ROLLBACK");
     res
       .status(500)
@@ -309,7 +309,7 @@ router.post(
       });
     } catch (err) {
       await client.query("ROLLBACK");
-      console.error("user registration error,", err.message);
+      console.error("user registration error,", err);
       if (err.type === "stripe_error") {
         res
           .status(500)
@@ -337,7 +337,7 @@ router.patch(
       await updateUserName(req.user.id, name);
       res.status(200).json({ success: true });
     } catch (err) {
-      console.error("DB update error,", err.message);
+      console.error("DB update error,", err);
       res
         .status(500)
         .json({ error: "Something went wrong while uploading the name." });
@@ -379,7 +379,7 @@ router.patch(
       await updatePassword(password, req.user.id);
       res.status(200).json({ success: true });
     } catch (err) {
-      console.error("DB update error,", err.message);
+      console.error("DB update error,", err);
       res
         .status(500)
         .json({ error: "Something went wrong while uploading the password." });

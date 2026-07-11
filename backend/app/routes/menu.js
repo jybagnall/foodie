@@ -5,10 +5,13 @@ import {
   createMenu,
   getMenus,
   getSingleMenuDetail,
+  updateMenuField,
   updateMenuImage,
 } from "../services/menu-service.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
-import { validateMenuBody } from "../middleware/validateMenuBody.js";
+import { validateCreateMenu } from "../middleware/validateCreateMenu.js";
+import { validateUpdateMenu } from "../middleware/validateUpdateMenu.js";
+import { cloudinary } from "../config/cloudinary.js";
 
 const router = express.Router();
 const upload = multer({ storage });
@@ -18,10 +21,10 @@ router.get("/get-menus", async (req, res) => {
     const menu = await getMenus();
     res.status(200).json(menu);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res
       .status(500)
-      .json({ error: "Something went wrong while loading the menu." });
+      .json({ message: "Something went wrong while loading the menu." });
   }
 });
 
@@ -34,9 +37,38 @@ router.get("/single-menu-detail/:id", async (req, res) => {
     console.error("fetching error,", err.message);
     res
       .status(500)
-      .json({ error: "Something went wrong while loading the menu." });
+      .json({ message: "Something went wrong while loading the menu." });
   }
 });
+
+router.patch(
+  "/:menuId",
+  verifyAdminAuth,
+  validateUpdateMenu,
+  async (req, res) => {
+    try {
+      const { menuId } = req.params;
+      const column = Object.keys(req.body)[0];
+      const value = req.body[column];
+
+      const result = await updateMenuField(menuId, column, value);
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({
+          message: "Menu not found.",
+        });
+      }
+
+      res.status(200).json({ success: true });
+    } catch (err) {
+      console.error("DB update error:", err);
+      res.status(500).json({
+        message:
+          "Something went wrong while updating the requested menu field.",
+      });
+    }
+  },
+);
 
 router.patch(
   "/:menuId/image",
@@ -50,15 +82,42 @@ router.patch(
 
       const { menuId } = req.params;
       const imgSrc = req.file.path;
-      await updateMenuImage(menuId, imgSrc);
+      const imgPublicId = req.file.filename;
+
+      const menuInfo = await getSingleMenuDetail(menuId);
+
+      if (!menuInfo) {
+        await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
+        return res.status(404).json({ message: "Menu not found." });
+      } // DB에 존재하지 않는 메뉴라면 클라우드에 올려진 이미지 삭제
+
+      const result = await updateMenuImage(menuId, imgSrc, imgPublicId);
+
+      if (result.rowCount === 0) {
+        await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
+        return res.status(404).json({
+          message: "Menu not found.",
+        });
+      } // DB 업데이트 중, 없는 메뉴였다면 클라우드에 올려진 이미지 삭제
+
+      if (menuInfo.image_public_id) {
+        await cloudinary.uploader
+          .destroy(menuInfo.image_public_id)
+          .catch(() => {});
+      } // 새 이미지가 올라갔으므로 기존 이미지는 삭제
+
       res
         .status(200)
         .json({ message: "A new image is uploaded successfully." });
     } catch (err) {
-      console.error("Menu image upload error,", err.message);
+      if (req.file?.filename) {
+        await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
+      }
+
+      console.error("Menu update error:", err);
       res
         .status(500)
-        .json({ error: "Something went wrong while uploading the image." });
+        .json({ message: "Something went wrong while uploading the image." });
     }
   },
 );
@@ -69,22 +128,29 @@ router.post(
   "/create-menu",
   verifyAdminAuth,
   upload.single("image"),
-  validateMenuBody,
+  validateCreateMenu,
   async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "Image is required" });
-      }
-
       const { name, price, description } = req.body;
       const imgSrc = req.file.path;
-      await createMenu({ name, price, description, imgSrc });
+      const imgPublicId = req.file.filename;
+      await createMenu({ name, price, description, imgSrc, imgPublicId });
       res.status(200).json({ message: "A new menu is uploaded successfully." });
     } catch (err) {
-      console.error("Menu upload error,", err.message);
+      if (req.file?.filename) {
+        await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
+      }
+
+      if (err.code === "23505") {
+        return res
+          .status(409)
+          .json({ message: "A menu with this name already exists." });
+      }
+
+      console.error("Menu upload error,", err);
       res
         .status(500)
-        .json({ error: "Something went wrong while uploading the menu." });
+        .json({ message: "Something went wrong while uploading the menu." });
     }
   },
 );

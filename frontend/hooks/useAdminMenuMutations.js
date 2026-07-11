@@ -21,12 +21,12 @@ export default function useAdminMenuMutations(menuId) {
   });
 
   const {
-    mutate: updateTextField,
-    isError: isTextUpdateError,
-    isPending: isTextUpdating,
+    mutate: updateMenuField,
+    isError: isMenuUpdateError,
+    isPending: isMenuUpdating,
   } = useMutation({
     mutationFn: (payload) =>
-      new MenuService(null, () => accessToken).updateTextField(menuId, payload),
+      new MenuService(null, () => accessToken).updateMenuField(menuId, payload),
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["menu", menuId] });
       queryClient.invalidateQueries({ queryKey: ["menus"] });
@@ -37,8 +37,8 @@ export default function useAdminMenuMutations(menuId) {
     updateImage,
     isImageUpdateError,
     isImageUpdating,
-    updateTextField,
-    isTextUpdateError,
-    isTextUpdating,
+    updateMenuField,
+    isMenuUpdateError,
+    isMenuUpdating,
   };
 }

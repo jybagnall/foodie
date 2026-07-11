@@ -25,8 +25,8 @@ class MenuService {
     return data;
   }
 
-  async updateTextField(menuId, field) {
-    const data = await this.client.patch(`/api/menu/${menuId}/image`, field);
+  async updateMenuField(menuId, updatePayload) {
+    const data = await this.client.patch(`/api/menu/${menuId}`, updatePayload);
     return data;
   }
 }

@@ -6,6 +6,7 @@ import BackToDash from "../UI/BackToDash";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
+import { menuValidationRules } from "../../constants/menu";
 
 // "logo", "error_image"
 export default function BrandImageUploader({ label, assetType }) {
@@ -59,20 +60,7 @@ export default function BrandImageUploader({ label, assetType }) {
         type="file"
         id={assetType}
         accept="image/jpeg,image/png"
-        register={register(assetType, {
-          validate: {
-            required: (files) => files?.length > 0 || "Please select a file.",
-            fileType: (files) => {
-              if (!files[0]) return true;
-
-              const type = files[0].type;
-              if (!["image/jpeg", "image/png"].includes(type)) {
-                return "Only JPEG and PNG files are allowed.";
-              }
-              return true; // 유효성 검사 통과
-            },
-          },
-        })}
+        register={register(assetType, menuValidationRules.image)}
         error={errors[assetType]}
       />
 
@@ -86,15 +74,13 @@ export default function BrandImageUploader({ label, assetType }) {
         </div>
       )}
 
-      <div className="">
-        <Button
-          type="submit"
-          className="py-1 px-3 bg-gray-400 hover:bg-gray-500 text-white"
-          disabled={!file || isUploading}
-        >
-          {isUploading ? <SpinnerMini /> : "Upload Image"}
-        </Button>
-      </div>
+      <Button
+        type="submit"
+        className="py-1 px-3 bg-gray-400 hover:bg-gray-500 text-white"
+        disabled={!file || isUploading}
+      >
+        {isUploading ? <SpinnerMini /> : "Upload Image"}
+      </Button>
 
       {isError && (
         <div className="mb-4">

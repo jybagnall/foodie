@@ -5,6 +5,7 @@ import SpinnerMini from "../../user_feedback/SpinnerMini";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import Input from "../../UI/Input";
+import { menuValidationRules } from "../../../constants/menu";
 
 export default function MenuImageUploader({ menuId, onCancel }) {
   const { updateImage, isImageUpdateError, isImageUpdating } =
@@ -58,20 +59,7 @@ export default function MenuImageUploader({ menuId, onCancel }) {
         type="file"
         id="image"
         accept="image/jpeg,image/png"
-        register={register("image", {
-          validate: {
-            required: (files) => files?.length > 0 || "Please select a file.",
-            fileType: (files) => {
-              if (!files[0]) return true;
-
-              const type = files[0].type;
-              if (!["image/jpeg", "image/png"].includes(type)) {
-                return "Only JPEG and PNG files are allowed.";
-              }
-              return true; // 유효성 검사 통과
-            },
-          },
-        })}
+        register={register("image", menuValidationRules.image)}
         error={errors.image}
       />
 
