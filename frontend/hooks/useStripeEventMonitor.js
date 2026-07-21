@@ -35,10 +35,8 @@ export default function useStripeEventMonitor() {
   ); // 불필요한 refetch 방지
 
   const { mutate: confirmDeadEvents } = useMutation({
-    mutationFn: (time) =>
-      new StripeService(null, () => accessToken).markStripeEventsAsNotified(
-        time,
-      ),
+    mutationFn: (id) =>
+      new StripeService(null, () => accessToken).markStripeEventsAsNotified(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: stripeKeys.deadCounts(),
@@ -115,7 +113,7 @@ export default function useStripeEventMonitor() {
   });
 
   const {
-    data: deadSummary = { count: 0, lastSeenTime: null },
+    data: deadSummary = { count: 0, lastSeenId: null },
     isLoading: isFetchingDeadCount,
     error: deadEventsCountError,
   } = useQuery({

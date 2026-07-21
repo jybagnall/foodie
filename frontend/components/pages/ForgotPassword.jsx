@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import ErrorAlert from "../user_feedback/ErrorAlert";
+import { signupValidationRules } from "../../constants/auth";
 
 export default function ForgotPassword() {
   const abortControllerRef = useRef(null);
@@ -95,13 +96,7 @@ export default function ForgotPassword() {
             label="Email"
             type="email"
             id="email"
-            register={register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /^\S+@\S+$/i,
-                message: "Please enter a valid email address.",
-              },
-            })}
+            register={register("email", signupValidationRules.email)}
             error={errors.email}
           />
           <div className="flex items-center gap-4 mt-1">

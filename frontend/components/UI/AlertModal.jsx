@@ -6,6 +6,7 @@ import {
 } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import SpinnerMini from "../user_feedback/SpinnerMini";
+import Button from "./Button";
 
 export default function AlertModal({
   activateFn,
@@ -52,21 +53,21 @@ export default function AlertModal({
 
               <div className="mt-5 flex justify-center">
                 <div className="mt-5 flex gap-3">
-                  <button
+                  <Button
                     onClick={activateFn}
                     disabled={isActivating}
                     className="inline-flex justify-center rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-rose-700"
                   >
                     {isActivating ? <SpinnerMini /> : userIntentionText}
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={onCancel}
                     className="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             </DialogPanel>

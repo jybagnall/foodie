@@ -8,17 +8,15 @@ import { menuFieldConfigs, menuValidationRules } from "../../../constants/menu";
 
 export default function MenuDetailsForm({ menu, onCancel, editingField }) {
   const fieldConfig = menuFieldConfigs[editingField];
-
   const { updateMenuField, isMenuUpdateError, isMenuUpdating } =
     useAdminMenuMutations(menu.id);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isDirty, isValid, touchedFields, isSubmitted },
   } = useForm({
-    mode: "onChange", // 입력할 때마다 유효성 검사해서 isValid를 갱신
+    mode: "onChange",
     defaultValues: {
       [editingField]: menu[editingField],
     },
@@ -27,7 +25,6 @@ export default function MenuDetailsForm({ menu, onCancel, editingField }) {
   const onNewTextSubmit = async (data) => {
     updateMenuField(data, {
       onSuccess: () => {
-        reset(); // 지워도 무방?
         onCancel();
       },
     });
@@ -50,10 +47,8 @@ export default function MenuDetailsForm({ menu, onCancel, editingField }) {
           onSubmit={handleSubmit(onNewTextSubmit)}
         >
           <Input
-            label={fieldConfig.label}
-            type={fieldConfig.type}
-            step={fieldConfig.step}
             id={editingField}
+            {...fieldConfig}
             register={register(editingField, menuValidationRules[editingField])}
             error={
               touchedFields[editingField] || isSubmitted

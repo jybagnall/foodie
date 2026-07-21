@@ -68,18 +68,13 @@ export function verifyAccessToken(token) {
 const verifyToken = promisify(jwt.verify);
 
 export async function verifyRefreshToken(token) {
-  try {
-    const user = await verifyToken(token, process.env.JWT_SECRET);
+  const user = await verifyToken(token, process.env.JWT_SECRET);
 
-    if (user.tokenType !== "refresh") {
-      throw new Error("Invalid token type");
-    }
-
-    return user;
-  } catch (e) {
-    console.error("Refresh token invalid:", e.message);
-    throw new Error("Invalid refresh token");
+  if (user.tokenType !== "refresh") {
+    throw new Error("Invalid token type.");
   }
+
+  return user;
 }
 
 // user:

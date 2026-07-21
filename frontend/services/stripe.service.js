@@ -33,14 +33,12 @@ class StripeService {
     return data;
   }
 
-  async markStripeEventsAsNotified(lastSeenTime) {
+  async markStripeEventsAsNotified(lastSeenId) {
     const data = await this.client.post("/api/stripe/events/dead/acknowledge", {
-      lastSeenTime,
+      lastSeenId,
     });
     return data;
   }
 }
 
 export default StripeService;
-
-// getFailedEvents(), retryEvent(id), replayEvent(id)

@@ -6,7 +6,7 @@ const US_STATE_CODES = new Set(US_STATES.map((state) => state.value));
 const rules = {
   name: (v) => {
     if (!v || typeof v !== "string") return "Name is required.";
-    if (v.length < 5 || v.length > 20) return "Name must be 5–20 characters.";
+    if (v.length < 2 || v.length > 32) return "Name must be 2–32 characters.";
   },
   email: (v) => {
     if (!v || typeof v !== "string") return "Email is required.";
@@ -19,8 +19,8 @@ const rules = {
     if (v.length < 6) return "Password must be at least 6 characters.";
   },
   full_name: (v) => {
-    if (!v || typeof v !== "string" || v.length < 2)
-      return "Full name is required.";
+    if (!v || typeof v !== "string") return "Name is required.";
+    if (v.length < 2 || v.length > 32) return "Name must be 2–32 characters.";
   },
   street: (v) => {
     if (!v || typeof v !== "string" || v.length < 2)
@@ -81,7 +81,7 @@ export function validateBody(...fields) {
 
       next();
     } catch (err) {
-      console.error("Validation error:", err.message);
+      console.error("Validation error:", err);
       res
         .status(500)
         .json({ error: "Something went wrong while validating your request." });

@@ -18,7 +18,7 @@ export default function StripeEventFilters({
     draftFilters.timeRange !== (filters.timeRange ?? "");
 
   return (
-    <div className="mt-6 bg-gray-50 rounded-xl p-4 sm:p-6 w-full flex flex-col">
+    <div className="mt-6 bg-gray-600 rounded-xl p-4 sm:p-6 w-full flex flex-col">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <SelectFilter
           id="event_type"
@@ -47,21 +47,22 @@ export default function StripeEventFilters({
         <button
           onClick={() => applyFilters()}
           disabled={!filtersChanged}
-          className={`w-full sm:w-auto text-white px-4 py-2 rounded-md text-sm ${
+          className={`w-full sm:w-auto px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             filtersChanged
-              ? "bg-gray-700 hover:bg-gray-500 cursor-pointer"
-              : "bg-gray-400 cursor-not-allowed"
+              ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           Apply
         </button>
+
         <button
           onClick={onReset}
           disabled={!filtersChanged}
-          className={`w-full sm:w-auto text-white px-4 py-2 rounded-md text-sm ${
+          className={`w-full sm:w-auto px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             filtersChanged
-              ? "bg-gray-700 hover:bg-gray-500 cursor-pointer"
-              : "bg-gray-400 cursor-not-allowed"
+              ? "bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 cursor-pointer"
+              : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
           }`}
         >
           Reset

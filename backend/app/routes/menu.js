@@ -1,8 +1,11 @@
 import express from "express";
 import multer from "multer";
 import { storage } from "../config/cloudinary.js";
+import pool from "../config/db.js";
+import { cloudinary } from "../config/cloudinary.js";
 import {
   createMenu,
+  deleteMenu,
   getMenus,
   getSingleMenuDetail,
   updateMenuField,
@@ -11,7 +14,6 @@ import {
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { validateCreateMenu } from "../middleware/validateCreateMenu.js";
 import { validateUpdateMenu } from "../middleware/validateUpdateMenu.js";
-import { cloudinary } from "../config/cloudinary.js";
 
 const router = express.Router();
 const upload = multer({ storage });
@@ -34,7 +36,7 @@ router.get("/single-menu-detail/:id", async (req, res) => {
     const menuDetail = await getSingleMenuDetail(id);
     res.status(200).json(menuDetail);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res
       .status(500)
       .json({ message: "Something went wrong while loading the menu." });
@@ -50,7 +52,6 @@ router.patch(
       const { menuId } = req.params;
       const column = Object.keys(req.body)[0];
       const value = req.body[column];
-
       const result = await updateMenuField(menuId, column, value);
 
       if (result.rowCount === 0) {
@@ -125,7 +126,7 @@ router.patch(
 // req.file.path: Cloudinary의 최종 URL
 // req.file.filename 혹은 req.file.public_id 삭제시 필요
 router.post(
-  "/create-menu",
+  "/create-menus",
   verifyAdminAuth,
   upload.single("image"),
   validateCreateMenu,
@@ -154,5 +155,42 @@ router.post(
     }
   },
 );
+
+router.delete("/delete/:menuId", verifyAdminAuth, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const { menuId } = req.params;
+    const menuInfo = await getSingleMenuDetail(menuId, client);
+
+    if (!menuInfo) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Menu not found." });
+    }
+
+    const deletedCount = await deleteMenu(menuId, client);
+
+    if (deletedCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ message: "Menu could not be deleted." });
+    }
+
+    await client.query("COMMIT");
+    await cloudinary.uploader.destroy(menuInfo.image_public_id).catch((err) => {
+      console.error(`Cloudinary cleanup failed for menu ${menuId}:`, err);
+    });
+
+    res.status(200).json({ message: "Menu deleted successfully." });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Menu delete error,", err);
+    res
+      .status(500)
+      .json({ message: "Something went wrong while deleting the menu." });
+  } finally {
+    client.release();
+  }
+});
 
 export default router;

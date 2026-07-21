@@ -51,7 +51,22 @@ async function createAndStoreStripePaymentIntent(
       });
       throw new Error("PAYMENT_INTENT_CANCELLATION_FAILURE");
     }
-    throw new Error("PAYMENT_INTENT_FAILURE");
+    throw new Error("POST_PAYMENT_INTENT_DB_FAILURE");
+  }
+}
+
+async function updateUserStripeIdWithRetry(
+  userId,
+  stripeCustomerId,
+  attempts = 3,
+) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await updateUserStripeId(userId, stripeCustomerId);
+    } catch (err) {
+      if (i === attempts - 1) throw err;
+      await new Promise((r) => setTimeout(r, 200 * (i + 1)));
+    }
   }
 }
 
@@ -78,14 +93,25 @@ async function ensureStripeCustomerId(user) {
   }
 
   if (!customerId) {
-    const newCustomer = await stripe.customers.create({
-      name: user.name,
-      email: user.email,
-      metadata: { userId: user.id },
-    });
-
-    await updateUserStripeId(user.id, newCustomer.id);
-    customerId = newCustomer.id;
+    const newCustomer = await stripe.customers.create(
+      {
+        name: user.name,
+        email: user.email,
+        metadata: { userId: user.id },
+      },
+      { idempotencyKey: `stripe-customer-for-user-${user.id}` },
+      // 생성 API가 여러 번 호출되어도 Stripe는 하나만 생성
+    );
+    try {
+      await updateUserStripeIdWithRetry(user.id, newCustomer.id);
+      customerId = newCustomer.id;
+    } catch (dbErr) {
+      console.error(
+        `Failed to save stripe customer ${newCustomer.id} for user ${user.id}`,
+        dbErr,
+      );
+      throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
+    }
   }
 
   return customerId;

@@ -1,30 +1,29 @@
 import pool from "../config/db.js";
 
-export async function acknowledgeFailures(lastSeenTime) {
+export async function acknowledgeFailures(lastSeenTimeId) {
   const q = `
     UPDATE stripe_events
     SET notified_at = NOW()
     WHERE status = 'dead'
     AND notified_at IS NULL
-    AND created_at <= ($1::timestamptz + interval '1 millisecond')
+    AND AND id <= $1
   `;
 
-  await pool.query(q, [lastSeenTime]);
-  return { success: true };
+  await pool.query(q, [lastSeenTimeId]);
 }
 
 export async function getDeadEventsCount() {
   const q = `
     SELECT COUNT(*)::int AS count,
-    MAX(created_at) AS last_seen_time
+    MAX(created_at) AS last_seen_id
     FROM stripe_events
     WHERE status = 'dead'
     AND notified_at IS NULL
     `;
   const result = await pool.query(q);
   const count = result.rows[0]?.count ?? 0;
-  const lastSeenTime = result.rows[0]?.last_seen_time ?? null;
-  return { count, lastSeenTime };
+  const lastSeenId = result.rows[0]?.last_seen_id ?? null;
+  return { count, lastSeenId };
 }
 
 export async function getEventTypes() {
@@ -44,7 +43,7 @@ export async function getEventTypes() {
 }
 // 결과값: [{ event_type: 'customer.created' }, ..]
 
-const LIMIT = 6;
+const LIMIT = 5;
 export async function getUnprocessedEvents({
   event_type,
   status,

@@ -37,7 +37,7 @@ export function AuthContextProvider({ children }) {
       setDecodedUser(decoded);
       return decoded;
     } catch (err) {
-      console.error("applyAccessToken error:", err.message);
+      console.error("applyAccessToken error:", err);
       setDecodedUser(null);
       return null;
     }

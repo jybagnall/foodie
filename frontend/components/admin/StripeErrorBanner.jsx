@@ -4,7 +4,7 @@ import {
 } from "@heroicons/react/24/outline";
 import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
 
-//deadSummary = { count: 0, lastSeenTime: null }
+//deadSummary = { count: 0, lastSeenId: null }
 export default function StripeErrorBanner() {
   const { deadSummary, confirmDeadEvents } = useStripeEventMonitor();
 
@@ -23,7 +23,7 @@ export default function StripeErrorBanner() {
       <div className="flex gap-3 cursor-pointer">
         <button
           onClick={() => {
-            confirmDeadEvents(deadSummary.lastSeenTime);
+            confirmDeadEvents(deadSummary.lastSeenId);
           }}
           className="font-bold cursor-pointer"
         >

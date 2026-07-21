@@ -1,9 +1,5 @@
 import { useEffect } from "react";
-import SpinnerMini from "../user_feedback/SpinnerMini";
 import BackToDash from "../UI/BackToDash";
-import ErrorAlert from "../user_feedback/ErrorAlert";
-import Input from "../UI/Input";
-import Button from "../UI/Button";
 import BrandImageUploader from "./BrandImageUploader";
 
 export default function BrandingSettings() {

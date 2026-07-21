@@ -64,7 +64,7 @@ export function verifyAdminAuth(req, res, next) {
 
     next();
   } catch (err) {
-    console.error("Admin auth failed:", err.message);
+    console.error("Admin auth failed:", err);
     if (err.name === "TokenExpiredError") {
       return res
         .status(401)

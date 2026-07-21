@@ -17,6 +17,16 @@ export async function createMenu(data) {
   await pool.query(q, values);
 }
 
+export async function deleteMenu(menuId, client) {
+  const q = `
+    DELETE FROM menus
+    WHERE id = $1
+  `;
+
+  const result = await client.query(q, [menuId]);
+  return result.rowCount;
+}
+
 export async function getMenus() {
   const q = `SELECT * FROM menus`;
 
@@ -24,10 +34,10 @@ export async function getMenus() {
   return result.rows ?? [];
 }
 
-export async function getSingleMenuDetail(id) {
+export async function getSingleMenuDetail(id, db = pool) {
   const q = `SELECT * FROM menus WHERE id = $1`;
 
-  const result = await pool.query(q, [id]);
+  const result = await db.query(q, [id]);
   return result.rows[0];
 }
 
@@ -51,8 +61,8 @@ export async function updateMenuField(menuId, column, value) {
     SET ${column} = $1
     WHERE id = $2
     `;
-  const values = [value, menuId];
 
+  const values = [value, menuId];
   const result = await pool.query(q, values);
   return result;
 }

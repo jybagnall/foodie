@@ -27,6 +27,7 @@ export default function Input({ label, id, type, register, error, ...props }) {
               : "border-gray-300 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
           }`}
         />
+
         {isPassword && (
           <button
             type="button"
@@ -51,4 +52,3 @@ export default function Input({ label, id, type, register, error, ...props }) {
     </div>
   );
 }
-// {errors.mail && <p role="alert">{errors.mail.message}</p>}

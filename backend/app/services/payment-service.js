@@ -8,8 +8,11 @@ export async function updatePendingPayment(client, orderId, status) {
     WHERE order_id = $1
     AND payment_status != $2
   `;
-  await client.query(q, [orderId, status]);
-  return { success: true };
+  const result = await client.query(q, [orderId, status]);
+
+  if (result.rowCount === 0) {
+    throw new Error("PAYMENT_STATUS_CONFLICT");
+  }
 }
 
 export async function createPaymentRecord(
@@ -25,7 +28,6 @@ export async function createPaymentRecord(
   const values = [orderId, paymentIntentId, amount, currency];
 
   await pool.query(q, values);
-  return { success: true };
 }
 
 export async function findUniquePaymentByOrderId(orderId) {
@@ -66,8 +68,13 @@ export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
     `;
   const values = [failureMsg, paymentIntentId];
 
-  await client.query(q, values);
-  return { success: true };
+  const result = await client.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(
+      `No payment record found for PaymentIntent ${paymentIntentId}`,
+    );
+  }
 }
 
 export async function updatePaymentMethod(client, paymentMethodId, orderId) {
@@ -77,8 +84,13 @@ export async function updatePaymentMethod(client, paymentMethodId, orderId) {
     WHERE order_id = $2
   `;
   const values = [paymentMethodId, orderId];
-  await client.query(q, values);
-  return { success: true };
+  const result = await client.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(
+      `No payment record found for order ${orderId} when saving payment method`,
+    );
+  }
 }
 
 export async function updatePaymentStatus(client, newStatus, stripeChargeId) {
@@ -90,8 +102,8 @@ export async function updatePaymentStatus(client, newStatus, stripeChargeId) {
     AND payment_status != $1
   `;
   const values = [newStatus, stripeChargeId];
-  await client.query(q, values);
-  return { success: true };
+  const result = await client.query(q, values);
+  return result.rowCount;
 }
 
 // 📍webhook 상태 저장
@@ -135,5 +147,4 @@ export async function upsertPaymentFromIntent(client, paymentDetails) {
   ];
 
   await client.query(q, values);
-  return { success: true };
 }

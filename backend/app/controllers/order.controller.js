@@ -97,16 +97,21 @@ async function cancelPaidOrder(orderId) {
     });
     // 대부분 "succeeded" 상태임
 
-    await updatePaymentStatus(
+    const updatedCount = await updatePaymentStatus(
       client,
       "refund_pending",
       payment.stripe_charge_id,
     );
+
+    if (updatedCount === 0) {
+      throw new Error("PAYMENT_STATUS_CONFLICT");
+    }
+
     await updateOrderStatus(client, orderId, "canceled");
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    console.error("Post-refund DB update failed:", err.message);
+    console.error("Post-refund DB update failed:", err);
     throw new Error("POST_REFUND_DB_FAILURE");
   } finally {
     client.release();
@@ -131,7 +136,7 @@ export async function cancelPendingOrder(orderId) {
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    console.error("Order cancellation DB update failed:", err.message);
+    console.error("Order cancellation DB update failed:", err);
     throw new Error("POST_DB_FAILURE");
   } finally {
     client.release();
@@ -146,7 +151,18 @@ export async function expirePendingOrder(orderId) {
   if (payment.payment_status !== "requires_payment")
     throw new Error("ORDER_NOT_EXPIRABLE");
 
-  await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
+  try {
+    await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
+  } catch (stripeErr) {
+    const current = await stripe.paymentIntents.retrieve(
+      payment.stripe_payment_intent_id,
+    );
+
+    // 결제가 완료됐거나 다른 상태로 넘어감 - 만료 처리하면 안 됨
+    if (current.status !== "canceled") {
+      throw stripeErr;
+    }
+  }
 
   const client = await pool.connect();
   try {
@@ -156,7 +172,7 @@ export async function expirePendingOrder(orderId) {
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    console.error("Order cancellation DB update failed:", err.message);
+    console.error("Order expiration DB update failed:", err);
     throw new Error("POST_DB_FAILURE");
   } finally {
     client.release();

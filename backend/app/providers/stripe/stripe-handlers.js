@@ -37,6 +37,11 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
     throw new Error(
       `Missing orderId. intentId: ${paymentIntent.id}, metadata: ${JSON.stringify(paymentIntent.metadata)}`,
     );
+  if (saveCard && !userId) {
+    throw new Error(
+      `Missing userId while saveCard is true. intentId: ${paymentIntent.id}`,
+    );
+  }
 
   await upsertPaymentFromIntent(client, {
     order_id: orderId,
@@ -51,26 +56,40 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
   await updateOrderStatus(client, orderId, "paid");
 
   if (saveCard) {
-    const stripePaymentMethod = await stripe.paymentMethods.retrieve(
-      paymentIntent.payment_method,
-    );
-    // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
+    try {
+      const stripePaymentMethod = await stripe.paymentMethods.retrieve(
+        paymentIntent.payment_method,
+      );
+      // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
 
-    if (setAsDefault) {
-      await clearDefaultCard(client, userId);
+      if (setAsDefault) {
+        await clearDefaultCard(client, userId);
+      }
+
+      const paymentMethodId = await saveCardToDb(
+        client,
+        stripePaymentMethod,
+        userId,
+        setAsDefault,
+      );
+
+      await updatePaymentMethod(client, paymentMethodId, orderId);
+    } catch (err) {
+      console.error(
+        `Failed to save card for order ${orderId}, user ${userId}:`,
+        err,
+      );
     }
-
-    const paymentMethodId = await saveCardToDb(
-      client,
-      stripePaymentMethod,
-      userId,
-      setAsDefault,
-    );
-
-    await updatePaymentMethod(client, paymentMethodId, orderId); //
   }
 
-  await sendOrderConfirmationEmail(client, orderId, paymentIntent);
+  try {
+    await sendOrderConfirmationEmail(client, orderId, paymentIntent);
+  } catch (err) {
+    console.error(
+      `Failed to send confirmation email for order ${orderId}:`,
+      err,
+    );
+  }
 }
 
 export async function handlePaymentIntentFailed(client, paymentIntent) {

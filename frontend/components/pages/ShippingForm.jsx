@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FormProvider, set, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "../UI/Button";
 import CartContext from "../../contexts/CartContext";
@@ -32,7 +32,9 @@ export default function ShippingForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const abortControllerRef = useRef(null);
+
   const methods = useForm();
+
   const {
     handleSubmit,
     formState: { isValid, isDirty },

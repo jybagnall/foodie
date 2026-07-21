@@ -159,6 +159,6 @@ export async function sendOrderConfirmationEmail(
       html,
     });
   } catch (err) {
-    console.error("❌ Failed to send email:", err.message);
+    console.error("❌ Failed to send email:", err);
   }
 }

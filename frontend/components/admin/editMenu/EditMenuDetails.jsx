@@ -7,14 +7,23 @@ import PageError from "../../user_feedback/PageError";
 import MenuImage from "./MenuImage";
 import MenuPrice from "./MenuPrice";
 import MenuDescription from "./MenuDescription";
-import EditImageModal from "./EditImageModal";
-import EditTextModal from "./EditTextModal";
 import BackToDash from "../../UI/BackToDash";
+import useAdminMenuMutations from "../../../hooks/useAdminMenuMutations";
+import Button from "../../UI/Button";
+import AlertModal from "../../UI/AlertModal";
+import ErrorAlert from "../../user_feedback/ErrorAlert";
+import EditMenuModal from "./EditMenuModal";
+import MenuImageUploader from "./MenuImageUploader";
+import MenuDetailsForm from "./MenuDetailsForm";
 
 export default function EditMenuDetails() {
-  const { menuId } = useParams();
+  const { menuId: stringMenuId } = useParams();
+  const menuId = Number(stringMenuId);
   const { menu, fetchingError, isFetchingMenu } = useAdminMenu(menuId);
+  const { deleteMenu, isMenuDeleteError, isMenuDeleting } =
+    useAdminMenuMutations(menuId);
   const [editingField, setEditingField] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Edit Menu | Foodie";
@@ -59,25 +68,68 @@ export default function EditMenuDetails() {
                   editable={true}
                   onEdit={() => setEditingField("description")}
                 />
+
+                <div className="mt-4">
+                  {isMenuDeleteError && (
+                    <div className="mb-4">
+                      <ErrorAlert
+                        title="There was a problem with your request"
+                        message="Something went wrong while deleting this menu"
+                      />
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="py-1 px-3 bg-red-500 text-gray-100 border-red-300 hover:bg-red-600"
+                  >
+                    Delete Menu
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-          {editingField === "image" && (
-            <EditImageModal
-              modalIsOpen={editingField === "image"}
-              onCancel={() => setEditingField(null)}
-              menuId={menuId}
-            />
-          )}
 
-          {["name", "price", "description"].includes(editingField) && (
-            <EditTextModal
-              modalIsOpen={true}
-              onCancel={() => setEditingField(null)}
-              menu={menu}
-              editingField={editingField}
-            />
-          )}
+            {editingField === "image" && (
+              <EditMenuModal
+                modalIsOpen={true}
+                onCancel={() => setEditingField(null)}
+              >
+                <MenuImageUploader
+                  menuId={menuId}
+                  onCancel={() => setEditingField(null)}
+                />
+              </EditMenuModal>
+            )}
+
+            {["name", "price", "description"].includes(editingField) && (
+              <EditMenuModal
+                modalIsOpen={true}
+                onCancel={() => setEditingField(null)}
+              >
+                <MenuDetailsForm
+                  menu={menu}
+                  onCancel={() => setEditingField(null)}
+                  editingField={editingField}
+                />
+              </EditMenuModal>
+            )}
+
+            {isDeleteModalOpen && (
+              <AlertModal
+                activateFn={() =>
+                  deleteMenu(null, {
+                    onSuccess: () => setIsDeleteModalOpen(false),
+                    onError: () => setIsDeleteModalOpen(false),
+                  })
+                }
+                isActivating={isMenuDeleting}
+                modalIsOpen={isDeleteModalOpen}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                title={`Are you sure you want to permanently delete "${menu.name}"?`}
+                userIntentionText="Delete"
+              />
+            )}
+          </div>
         </div>
       </div>
     </main>

@@ -7,6 +7,7 @@ import Button from "../../../UI/Button";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import useMyProfileMutations from "../../../../hooks/useMyProfileMutations";
+import { signupValidationRules } from "../../../../constants/auth";
 
 export default function EditNameForm() {
   const navigate = useNavigate();
@@ -65,13 +66,10 @@ export default function EditNameForm() {
             label="Full Name"
             type="text"
             id="name"
-            register={register("name", {
-              required: true,
-              minLength: 5,
-              maxLength: 20,
-            })}
+            register={register("name", signupValidationRules.name)}
             error={errors.name}
           />
+
           <div className="flex items-center gap-4 mt-1">
             <Button
               type="button"

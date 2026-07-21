@@ -15,8 +15,8 @@ const timeout = parseInt(process.env.STRIPE_WORKER_TIMEOUT_MINUTES) || 10;
 
 let isShuttingDown = false;
 
-// 나중에 컨테이너 종료 명령 → OS가 SIGTERM 신호 전송 →
-// 현재 루프 트랜잭션 끝나면 while 조건 false → 루프 종료
+// 나중에 컨테이너 종료 명령 → OS가 SIGTERM 신호 전송 →
+// 현재 루프 트랜잭션 끝나면 while 조건 false → 루프 종료
 process.on("SIGTERM", () => {
   console.log("SIGTERM received, finishing current job...");
   isShuttingDown = true;
@@ -32,7 +32,8 @@ async function startStripeWorker() {
       try {
         await client.query("BEGIN");
 
-        const { rows } = await client.query(`
+        const { rows } = await client.query(
+          `
           UPDATE stripe_events
           SET status = 'processing',
               processing_at = NOW()
@@ -42,15 +43,20 @@ async function startStripeWorker() {
             WHERE 
             (
               status = 'pending'
-              OR (status = 'processing' AND processing_at < NOW() - interval '${timeout} minutes')
+              OR (
+                  status = 'processing' 
+                  AND processing_at < NOW() - ($1 * interval '1 minute')
               )
+            )
             AND retry_count < 5
             ORDER BY created_at
             FOR UPDATE SKIP LOCKED
             LIMIT 1
-            )
+          )
           RETURNING *
-        `);
+        `,
+          [timeout],
+        );
         // pending 이벤트 & worker가 죽어서 멈춘 이벤트 먼저 가져옴, 즉
         // worker가 죽었다고 가정하고 다른 (혹은 같은) worker가 다시 처리
 

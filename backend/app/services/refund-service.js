@@ -1,5 +1,3 @@
-import pool from "../config/db.js";
-
 export async function createRefundRecord(
   client,
   { paymentId, stripeRefundId, amount, refundStatus, reason },
@@ -16,6 +14,7 @@ export async function createRefundRecord(
         completed_at
     )
     VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT (stripe_refund_id) DO NOTHING
   `;
   const values = [
     paymentId,
@@ -27,21 +26,23 @@ export async function createRefundRecord(
   ];
 
   await client.query(q, values);
-  return { success: true };
 }
 
+// 이미 succeeded가 된 환불은 절대 다시 변경하지 않는다.
 export async function markRefundAsCompleted(client, newStatus, stripeRefundId) {
+  const completedAt = newStatus === "succeeded" ? new Date() : null;
+
   const q = `
     UPDATE refunds 
     SET 
       refund_status = $1, 
-      completed_at = NOW()
-    WHERE stripe_refund_id = $2
+      completed_at = $2
+    WHERE stripe_refund_id = $3
+    AND refund_status <> 'succeeded'
   `;
-  const values = [newStatus, stripeRefundId];
+  const values = [newStatus, completedAt, stripeRefundId];
 
   await client.query(q, values);
-  return { success: true };
 }
 
 export async function refundRecordExists(client, refundId) {

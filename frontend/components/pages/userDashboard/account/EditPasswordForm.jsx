@@ -7,6 +7,8 @@ import Input from "../../../UI/Input";
 import Button from "../../../UI/Button";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import { getUserErrorMessage } from "../../../../utils/getUserErrorMsg";
+import { PASSWORD_RULES } from "../../../../constants/passwordRules";
+import PasswordStrengthBar from "../../../UI/PasswordStrengthBar";
 
 export default function EditPasswordForm() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function EditPasswordForm() {
   const {
     register,
     getValues,
+    watch,
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm();
@@ -23,6 +26,15 @@ export default function EditPasswordForm() {
   useEffect(() => {
     document.title = "Change Password | Foodie";
   }, []);
+
+  const password = watch("password", "");
+
+  const passwordValidationRules = Object.fromEntries(
+    PASSWORD_RULES.map((rule) => [
+      rule.key,
+      (value) => rule.validate(value) || rule.message,
+    ]),
+  );
 
   const onPasswordSubmit = async ({ currentPassword, password }) => {
     updatePassword(
@@ -72,16 +84,18 @@ export default function EditPasswordForm() {
             id="password"
             register={register("password", {
               required: "Please enter new password.",
-              validate: (value) =>
-                value !== getValues("currentPassword") ||
-                "New password must be different from current password.",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters long.",
+              validate: {
+                ...passwordValidationRules,
+                isDifferentFromCurrent: (value) =>
+                  value !== getValues("currentPassword") ||
+                  "New password must be different from current password.",
               },
             })}
             error={errors.password}
           />
+
+          {password && <PasswordStrengthBar password={password} />}
+
           <Input
             label="Confirm new password"
             type="password"

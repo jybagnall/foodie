@@ -18,6 +18,7 @@ import { useSearchParams } from "react-router-dom";
 // order_id 검색, payment_intent_id 검색
 
 // URL = single source of truth
+
 export default function StripeEventMonitor() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -105,7 +106,7 @@ export default function StripeEventMonitor() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 py-10 px-4 sm:px-6">
+    <main className="min-h-screen bg-gray-700 py-10 px-4 sm:px-6">
       <div className="w-full max-w-5xl mx-auto">
         {errors.length > 0 && (
           <div className="mb-4">
@@ -119,7 +120,7 @@ export default function StripeEventMonitor() {
           <BackToDash url="/admin" dashboardName="Back to admin dashboard" />
         </div>
 
-        <section className="bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+        <section className="bg-gray-700 rounded-2xl shadow-lg p-4 sm:p-8">
           <StatusEventSummary statusSummary={statusSummary} />
           <StripeEventFilters
             draftFilters={draftFilters}

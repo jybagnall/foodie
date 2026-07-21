@@ -8,8 +8,11 @@ export async function clearPasswordResetToken(userId, client) {
         password_reset_expires_at = NULL
     WHERE id = $1
   `;
-  await client.query(q, [userId]);
-  return { success: true };
+  const result = await client.query(q, [userId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`No user found with id ${userId} to clear reset token.`);
+  }
 }
 
 export async function createAccount(
@@ -111,8 +114,10 @@ export async function updatePassword(password, userId, db = pool) {
     `;
   const values = [hashedPw, userId];
 
-  await db.query(q, values);
-  return { success: true };
+  const result = await db.query(q, values);
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update password for user ${userId}.`);
+  }
 }
 
 export async function updateLastLogin(userId, db = pool) {
@@ -122,7 +127,6 @@ export async function updateLastLogin(userId, db = pool) {
     WHERE id = $1
   `;
   await db.query(q, [userId]);
-  return { success: true };
 }
 
 export async function updateUserName(userId, name) {
@@ -134,7 +138,6 @@ export async function updateUserName(userId, name) {
   const values = [name, userId];
 
   await pool.query(q, values);
-  return { success: true };
 }
 
 export async function updateUserRefreshToken(
@@ -149,7 +152,6 @@ export async function updateUserRefreshToken(
     `;
   const values = [hashedNewRefresh, userId];
   await db.query(q, values);
-  return { success: true };
 }
 
 export async function updateUserStripeId(
@@ -165,5 +167,4 @@ export async function updateUserStripeId(
   const values = [newStripeCustomerId, userId];
 
   await db.query(q, values);
-  return { success: true };
 }

@@ -40,9 +40,14 @@ export const menuValidationRules = {
     validate: {
       required: (value) => !Number.isNaN(value) || "Price is required.",
       positive: (value) => value > 0 || "Price must be greater than 0.",
-      decimalPlaces: (value) =>
-        Number.isInteger(value * 100) ||
-        "Price can have at most 2 decimal places.",
+      decimalPlaces: (value) => {
+        const decimalPart = value.toString().split(".")[1];
+        return (
+          !decimalPart ||
+          decimalPart.length <= 2 ||
+          "Price can have at most 2 decimal places."
+        );
+      },
     },
   },
   description: {

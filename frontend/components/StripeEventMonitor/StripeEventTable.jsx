@@ -19,8 +19,8 @@ const columns = [
   // { key: "", label: "Actions" },
 ];
 
-const thClass = "py-3.5 px-3 text-left text-sm font-semibold text-gray-900";
-const tdClass = "px-3 py-3 whitespace-nowrap text-gray-800";
+const thClass = "py-3.5 px-3 text-left text-sm font-semibold text-gray-100";
+const tdClass = "px-3 py-3 whitespace-nowrap text-gray-200";
 
 export default function StripeEventTable({ events }) {
   return (

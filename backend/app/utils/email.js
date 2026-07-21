@@ -11,7 +11,7 @@ export async function sendAdminInvitationEmail(to, inviteLink) {
       html: `<p>You’ve been invited to become an admin of <strong>Foodie</strong>. Click <a href="${inviteLink}">here</a> to create your account.</p>`,
     });
   } catch (err) {
-    console.error("Resend Error:", err.message);
+    console.error("Resend Error:", err);
     throw err;
   }
 }
@@ -31,7 +31,7 @@ export async function sendPasswordResetEmail(to, resetLink) {
       `,
     });
   } catch (err) {
-    console.error("Resend Error:", err.message);
+    console.error("Resend Error:", err);
     throw err;
   }
 }

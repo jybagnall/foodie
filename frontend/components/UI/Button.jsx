@@ -6,7 +6,7 @@ export default function Button({
   className = "",
   ...props
 }) {
-  let baseStyle = textOnly
+  const baseStyle = textOnly
     ? "cursor-pointer bg-transparent border-0 transition-colors"
     : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200 py-1 px-3";
 
@@ -27,6 +27,7 @@ export default function Button({
     </button>
   );
 }
+
 // text-only 일 때 넘겨야 하는 값:
 //  text-yellow-300 hover:text-yellow-400
 

@@ -14,7 +14,7 @@ router.get("/assets", async (req, res) => {
     const imgUrls = await getImages();
     res.status(200).json(imgUrls);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res
       .status(500)
       .json({ error: "Something went wrong while loading brand assets." });
@@ -48,7 +48,7 @@ router.post(
         .status(200)
         .json({ message: "A new image is uploaded successfully." });
     } catch (err) {
-      console.error("Brand asset upload error,", err.message);
+      console.error("Brand asset upload error,", err);
       res
         .status(500)
         .json({ error: "Something went wrong while uploading the image." });

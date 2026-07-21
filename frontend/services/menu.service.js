@@ -5,8 +5,13 @@ class MenuService {
     this.client = new Client(signal, getAccessToken);
   }
 
-  async createMenu(formData) {
+  async createMenus(formData) {
     const data = await this.client.post("/api/menu/create-menus", formData);
+    return data;
+  }
+
+  async deleteSingleMenu(menuId) {
+    const data = await this.client.delete(`/api/menu/delete/${menuId}`);
     return data;
   }
 

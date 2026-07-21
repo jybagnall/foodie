@@ -17,7 +17,7 @@ router.get("/", verifyUserAuth, async (req, res) => {
     const cards = await getCardsInfo(req.user.id);
     return res.status(200).json(cards);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res
       .status(500)
       .json({ error: "Something went wrong while loading the cards data." });
@@ -38,7 +38,7 @@ router.get("/:stripePaymentMethodId", verifyUserAuth, async (req, res) => {
       exp_year: paymentMethod.card.exp_year,
     });
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
     res
       .status(status)
@@ -58,7 +58,7 @@ router.delete("/delete/:cardId", verifyUserAuth, async (req, res) => {
     await deleteCard(cardId, req.user.id);
     res.status(200).json({ message: "Requested card deleted" });
   } catch (err) {
-    console.error("update error,", err.message);
+    console.error("update error,", err);
     res.status(500).json({ error: "Failed to delete payment method." });
   }
 });

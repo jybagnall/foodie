@@ -1,5 +1,4 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import AddressFields from "../../../UI/AddressFields";
 import AddressSelectableCard from "../../userDashboard/address/AddressSelectableCard";
@@ -26,12 +25,7 @@ export default function AddressSelector({
   setMode,
   onAddressSubmit,
 }) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useFormContext();
+  const { handleSubmit, reset } = useFormContext();
 
   const sortedAddresses = [...addresses].sort(
     (a, b) => Number(b.is_default) - Number(a.is_default),
@@ -98,7 +92,7 @@ export default function AddressSelector({
           onSubmit={handleSubmit(onAddressSubmit)}
           className={`border rounded-lg p-4 transition border-blue-600 ring-2 ring-blue-100 flex flex-col gap-5`}
         >
-          <AddressFields register={register} errors={errors} />
+          <AddressFields />
         </form>
       )}
     </div>

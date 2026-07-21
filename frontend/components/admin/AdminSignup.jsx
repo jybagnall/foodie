@@ -8,6 +8,11 @@ import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import {
+  signupFieldConfigs,
+  signupValidationRules,
+} from "../../constants/auth";
+import PasswordField from "../UI/PasswordField";
 
 export default function AdminSignup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
@@ -20,6 +25,7 @@ export default function AdminSignup() {
     register,
     getValues,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
 
@@ -93,7 +99,7 @@ export default function AdminSignup() {
   }
 
   return (
-    <main className="min-h-screen flex justify-center items-start bg-gray-50 py-20 px-4">
+    <main className="min-h-screen flex justify-center items-start bg-gray-700 py-20 px-4">
       <div className="w-full max-w-lg">
         {errorMsg && (
           <div className="mb-4">
@@ -101,8 +107,8 @@ export default function AdminSignup() {
           </div>
         )}
 
-        <section className="w-full max-w-lg bg-white shadow-xl rounded-xl p-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+        <section className="w-full max-w-lg bg-gray-600 shadow-xl rounded-xl p-8">
+          <h2 className="text-2xl font-semibold text-gray-200 mb-6 border-b pb-3">
             Create account
           </h2>
 
@@ -110,58 +116,21 @@ export default function AdminSignup() {
             className="flex flex-col gap-5"
             onSubmit={handleSubmit(onSignupSubmit)}
           >
-            <Input
-              label="Your Name"
-              type="text"
-              id="name"
-              register={register("name", {
-                required: true,
-                minLength: 5,
-                maxLength: 20,
-              })}
-              error={errors.name}
-            />
-            <Input
-              label="Email"
-              type="email"
-              id="email"
-              register={register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Please enter a valid email address.",
-                },
-              })}
-              error={errors.email}
-            />
-            <Input
-              label="Password"
-              type="password"
-              id="password"
-              register={register("password", {
-                required: "Please enter password.",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters long.",
-                },
-                maxLength: {
-                  value: 12,
-                  message: "Password must not exceed 12 characters.",
-                },
-              })}
-              error={errors.password}
-            />
+            {Object.entries(signupFieldConfigs).map(([key, config]) => (
+              <Input
+                key={key}
+                id={key}
+                {...config}
+                register={register(key, signupValidationRules[key])}
+                error={errors[key]}
+              />
+            ))}
 
-            <Input
-              label="Re-enter Password"
-              type="password"
-              id="confirmPassword"
-              register={register("confirmPassword", {
-                required: "Please confirm your password.",
-                validate: (value) =>
-                  value === getValues("password") || "Passwords do not match.",
-              })}
-              error={errors.confirmPassword}
+            <PasswordField
+              register={register}
+              errors={errors}
+              watch={watch}
+              getValues={getValues}
             />
 
             <div className="mt-8">

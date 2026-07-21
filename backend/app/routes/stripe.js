@@ -1,5 +1,4 @@
 import express from "express";
-
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import {
   acknowledgeFailures,
@@ -13,8 +12,8 @@ const router = express.Router();
 
 router.get("/events/dead/count", verifyAdminAuth, async (req, res) => {
   try {
-    const { count, lastSeenTime } = await getDeadEventsCount();
-    res.status(200).json({ count, lastSeenTime });
+    const { count, lastSeenId } = await getDeadEventsCount();
+    res.status(200).json({ count, lastSeenId });
   } catch (err) {
     console.error("Stripe dead events count error:", err);
     return res.status(500).json({
@@ -72,12 +71,12 @@ router.get("/events/unprocessed/count", verifyAdminAuth, async (req, res) => {
 
 router.post("/events/dead/acknowledge", verifyAdminAuth, async (req, res) => {
   try {
-    const { lastSeenTime } = req.body;
+    const { lastSeenId } = req.body;
 
-    if (!lastSeenTime) {
+    if (!lastSeenId) {
       return res.status(200).json({ success: true }); // 업데이트할 게 없음
     }
-    await acknowledgeFailures(lastSeenTime);
+    await acknowledgeFailures(lastSeenId);
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error("Acknowledge error:", err);

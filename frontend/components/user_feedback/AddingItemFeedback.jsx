@@ -1,5 +1,6 @@
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Button from "../UI/Button";
 
 export default function AddingItemFeedback({ t, item, isNew, nextQty }) {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function AddingItemFeedback({ t, item, isNew, nextQty }) {
         <p className="font-semibold">{item.name}</p>
         <p className="text-sm text-gray-500">{msg}</p>
       </div>
-      <button
+      <Button
         onClick={() => {
           navigate("/cart");
           toast.dismiss(t.id);
@@ -30,7 +31,7 @@ export default function AddingItemFeedback({ t, item, isNew, nextQty }) {
         className="ml-3 text-sm font-medium text-gray-600 cursor-pointer"
       >
         View the cart
-      </button>
+      </Button>
     </div>
   );
 }

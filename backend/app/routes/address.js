@@ -19,7 +19,7 @@ router.get("/all", verifyUserAuth, async (req, res) => {
     const addresses = await getAllAddresses(req.user.id);
     res.status(200).json(addresses);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -30,7 +30,7 @@ router.get("/default", verifyUserAuth, async (req, res) => {
     const address = await getDefaultAddress(req.user.id);
     res.status(200).json(address);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -63,7 +63,7 @@ router.patch(
         .status(200)
         .json({ message: "User's address is successfully updated" });
     } catch (err) {
-      console.error("update error,", err.message);
+      console.error("update error,", err);
       await client.query("ROLLBACK").catch(() => {});
       res.status(500).json({ error: err.message });
     } finally {
@@ -82,7 +82,7 @@ router.patch("/set-default/:addressId", verifyUserAuth, async (req, res) => {
     await client.query("COMMIT");
     res.status(200).json({ message: "Default is updated" });
   } catch (err) {
-    console.error("update error,", err.message);
+    console.error("update error,", err);
     await client.query("ROLLBACK").catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
@@ -114,7 +114,7 @@ router.post(
       await client.query("COMMIT");
       res.status(201).json({ message: "Address created" });
     } catch (err) {
-      console.error("create error,", err.message);
+      console.error("create error,", err);
       await client.query("ROLLBACK").catch(() => {});
       res.status(500).json({ error: err.message });
     } finally {
@@ -129,7 +129,7 @@ router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
     await deleteAddress(req.user.id, addressId);
     res.status(200).json({ message: "Address deleted" });
   } catch (err) {
-    console.error("delete error,", err.message);
+    console.error("delete error,", err);
     res.status(500).json({ error: "Failed to delete requested method." });
   }
 });

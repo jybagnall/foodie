@@ -13,7 +13,7 @@ export default function useMenusMutations() {
     isPending: isUploading,
   } = useMutation({
     mutationFn: (formData) =>
-      new MenuService(null, () => accessToken).createMenu(formData),
+      new MenuService(null, () => accessToken).createMenus(formData),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["menus"],

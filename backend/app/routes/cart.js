@@ -14,7 +14,7 @@ router.get("/get-cart", verifyUserAuth, async (req, res) => {
     const items = await getCartItemsByUserId(req.user.id);
     res.status(200).json(items);
   } catch (err) {
-    console.error("fetching error,", err.message);
+    console.error("fetching error,", err);
     res
       .status(500)
       .json({ error: "Something went wrong while loading the cart." });
@@ -40,7 +40,7 @@ router.post("/save-cart", verifyUserAuth, async (req, res) => {
     res.status(201).json(updateCarttems);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {}); // BEGIN 이후 작업 전부 취소, 전부 실패!
-    console.error("Save cart error:", err.message);
+    console.error("Save cart error:", err);
     res
       .status(500)
       .json({ error: "Some changes may not be available next time." });

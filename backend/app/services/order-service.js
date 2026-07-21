@@ -218,7 +218,7 @@ export async function updateOrderStatus(client, orderId, newStatus) {
 
   const currentStatus = rows[0].status; // 'pending', 'paid'
 
-  if (currentStatus === newStatus) return { success: true };
+  if (currentStatus === newStatus) return;
 
   const allowed = ALLOWED_TRANSITIONS[currentStatus] ?? [];
   if (!allowed.includes(newStatus)) {
@@ -238,6 +238,4 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   if (result.rowCount === 0) {
     throw new Error("ORDER_STATUS_CONFLICT"); // 이미 paid였거나, orderId가 잘못됐거나
   }
-
-  return { success: true };
 }

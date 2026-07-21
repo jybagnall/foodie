@@ -8,6 +8,7 @@ import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import { signupValidationRules } from "../../constants/auth";
 
 export default function Login() {
   const authContext = useContext(AuthContext);
@@ -85,13 +86,7 @@ export default function Login() {
               label="Email"
               type="email"
               id="email"
-              register={register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Please enter a valid email address.",
-                },
-              })}
+              register={register("email", signupValidationRules.email)}
               error={errors.email}
             />
             <Input
@@ -100,10 +95,6 @@ export default function Login() {
               id="password"
               register={register("password", {
                 required: "Please enter password.",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters long.",
-                },
               })}
               error={errors.password}
             />

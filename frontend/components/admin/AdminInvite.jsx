@@ -9,6 +9,7 @@ import AdminFeedback from "./AdminFeedback";
 import BackToDash from "../UI/BackToDash";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import useAccessToken from "../../hooks/useAccessToken";
+import { signupValidationRules } from "../../constants/auth";
 
 export default function AdminInvite() {
   const {
@@ -96,13 +97,7 @@ export default function AdminInvite() {
               label="New admin's email address"
               type="email"
               id="email"
-              register={register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Please enter a valid email address.",
-                },
-              })}
+              register={register("email", signupValidationRules.email)}
               error={errors.email}
             />
 

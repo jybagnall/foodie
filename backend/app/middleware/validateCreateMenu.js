@@ -10,7 +10,7 @@ export async function validateCreateMenu(req, res, next) {
     const imgSrc = req.file?.path;
 
     if (!imgSrc) {
-      return res.status(400).json({ error: "Image upload failed." });
+      return res.status(400).json({ error: "Image is required." });
     }
 
     req.body.name = validateName(req.body.name);
@@ -23,7 +23,7 @@ export async function validateCreateMenu(req, res, next) {
       await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
     }
 
-    console.error("Menu validation error:", err.message);
+    console.error("Menu validation error:", err);
     res
       .status(500)
       .json({ error: "Something went wrong while validating your request." });

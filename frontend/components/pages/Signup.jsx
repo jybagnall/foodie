@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import AuthContext from "../../contexts/AuthContext";
@@ -7,17 +8,24 @@ import Input from "../UI/Input";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
+import {
+  signupFieldConfigs,
+  signupValidationRules,
+} from "../../constants/auth";
+import PasswordField from "../UI/PasswordField";
 
 export default function Signup() {
   const [isSignupProcessing, setIsSignupProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const authContext = useContext(AuthContext);
   const abortControllerRef = useRef(null);
+  const navigate = useNavigate();
 
   const {
     register,
     getValues,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
 
@@ -44,7 +52,13 @@ export default function Signup() {
         email,
         password,
       );
-      authContext.handleLoginSuccess(accessToken);
+
+      if (!accessToken) {
+        navigate("/login");
+        return;
+      }
+
+      await authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);
@@ -80,54 +94,21 @@ export default function Signup() {
             className="flex flex-col gap-5"
             onSubmit={handleSubmit(onSignupSubmit)}
           >
-            <Input
-              label="Your Name"
-              type="text"
-              id="name"
-              register={register("name", {
-                required: true,
-                minLength: 2,
-                maxLength: 20,
-              })}
-              error={errors.name}
-            />
-            <Input
-              label="Email"
-              type="email"
-              id="email"
-              register={register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Please enter a valid email address.",
-                },
-              })}
-              error={errors.email}
-            />
-            <Input
-              label="Password"
-              type="password"
-              id="password"
-              register={register("password", {
-                required: "Please enter password.",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters long.",
-                },
-              })}
-              error={errors.password}
-            />
+            {Object.entries(signupFieldConfigs).map(([key, config]) => (
+              <Input
+                key={key}
+                id={key}
+                {...config}
+                register={register(key, signupValidationRules[key])}
+                error={errors[key]}
+              />
+            ))}
 
-            <Input
-              label="Re-enter Password"
-              type="password"
-              id="confirmPassword"
-              register={register("confirmPassword", {
-                required: "Please confirm your password.",
-                validate: (value) =>
-                  value === getValues("password") || "Passwords do not match.",
-              })}
-              error={errors.confirmPassword}
+            <PasswordField
+              register={register}
+              errors={errors}
+              watch={watch}
+              getValues={getValues}
             />
 
             <div className="mt-8">

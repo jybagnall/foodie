@@ -9,6 +9,7 @@ import Button from "../UI/Button";
 import Input from "../UI/Input";
 import { Link } from "react-router-dom";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import PasswordField from "../UI/PasswordField";
 
 export default function ResetPassword() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -21,6 +22,7 @@ export default function ResetPassword() {
     register,
     getValues,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm();
 
@@ -100,32 +102,13 @@ export default function ResetPassword() {
       <div className="mx-auto max-w-3xl">
         <form
           className="flex flex-col gap-5 mt-20"
-          // className="flex flex-col gap-5"
           onSubmit={handleSubmit(onPasswordSubmit)}
         >
-          <Input
-            label="New Password"
-            type="password"
-            id="password"
-            register={register("password", {
-              required: "Please enter new password.",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters long.",
-              },
-            })}
-            error={errors.password}
-          />
-          <Input
-            label="Confirm new password"
-            type="password"
-            id="confirmPassword"
-            register={register("confirmPassword", {
-              required: "Please confirm your password.",
-              validate: (value) =>
-                value === getValues("password") || "Passwords do not match.",
-            })}
-            error={errors.confirmPassword}
+          <PasswordField
+            register={register}
+            errors={errors}
+            watch={watch}
+            getValues={getValues}
           />
 
           <div className="flex items-center gap-4 mt-1">

@@ -15,13 +15,6 @@ export default function useServerCartActions() {
 
   const addItem = useCallback(
     (item) => {
-      console.log({
-        time: Date.now(),
-        menuId: item.id,
-        currentQty: items.find((i) => i.id === item.id)?.qty,
-        stack: new Error().stack,
-      });
-
       const prevCart = [...items];
       const prevSelectedItemIds = new Set(selectedItemIds);
       const { nextCart, isNew, nextQty } = createNextCartAfterAdd(items, item);

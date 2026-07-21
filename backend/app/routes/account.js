@@ -13,6 +13,7 @@ import {
   findUserByPasswordResetToken,
   clearPasswordResetToken,
   updateLastLogin,
+  createAccount,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -25,7 +26,7 @@ import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
 import { sendPasswordResetEmail } from "../utils/email.js";
 import pool from "../config/db.js";
-import { createUserWithStripe } from "../controllers/account.controller.js";
+import { createStripeCustomerId } from "../controllers/account.controller.js";
 
 const router = express.Router();
 
@@ -125,8 +126,16 @@ router.post("/login", validateBody("email", "password"), async (req, res) => {
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 10);
     await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
-    await updateLastLogin(loggedInUser.id);
     setRefreshTokenCookie(res, refreshToken);
+
+    try {
+      await updateLastLogin(loggedInUser.id);
+    } catch (err) {
+      console.error(
+        `Failed to update last_login for user ${loggedInUser.id}:`,
+        err,
+      );
+    } // 부가 정보라 실패해도 로그인 응답을 막지 않음
 
     res.status(200).json({
       message: "You have successfully logged in! Welcome back.",
@@ -157,7 +166,14 @@ router.post("/logout", async (req, res) => {
         );
 
         if (isMatch) {
-          await updateUserRefreshToken(decoded.id, null);
+          try {
+            await updateUserRefreshToken(decoded.id, null);
+          } catch (err) {
+            console.error(
+              `Failed to invalidate refresh token for user ${decoded.id}`,
+              err,
+            );
+          }
         }
       }
     } catch (err) {
@@ -192,6 +208,13 @@ router.post("/refresh-access-token", async (req, res) => {
         error: "We couldn’t verify your account. Please log in again.",
       });
 
+    if (!dbUser.current_refresh_token) {
+      return res.status(403).json({
+        error:
+          "For your security, you've been logged out. Please sign in again.",
+      });
+    }
+
     // DB에 저장된 refreshToken과 일치 여부 확인
     const isMatch = await bcrypt.compare(
       refreshToken,
@@ -225,8 +248,10 @@ router.post("/refresh-access-token", async (req, res) => {
       accessToken: newTokens.accessToken,
     });
   } catch (err) {
-    if (err instanceof RefreshTokenExpiredError) {
-      console.error("Refresh token expired:", err);
+    if (err.name === "TokenExpiredError") {
+      console.warn("Refresh token expired (normal):", err.message);
+    } else if (err.name === "JsonWebTokenError") {
+      console.warn("Invalid refresh token");
     } else {
       console.error("Unexpected refresh error:", err);
     }
@@ -265,13 +290,13 @@ router.post("/reset-password", validateBody("password"), async (req, res) => {
     // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
     setRefreshTokenCookie(res, refreshToken);
 
-    res.status(201).json({
+    res.status(200).json({
       message: "Password changed successfully",
       accessToken,
     });
   } catch (err) {
     console.error("Password update error,", err);
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK").catch(() => {});
     res
       .status(500)
       .json({ error: "Something went wrong while updating the password." });
@@ -293,28 +318,53 @@ router.post(
       }
 
       await client.query("BEGIN");
-      const { accessToken, refreshToken } = await createUserWithStripe(
-        name,
-        email,
-        password,
-        client,
-      );
+      const createdUser = await createAccount(name, email, password, client);
+      await updateLastLogin(createdUser.id, client).catch((err) => {
+        console.error(
+          `Failed to update last_login for user ${createdUser.id}:`,
+          err,
+        );
+      });
       await client.query("COMMIT");
 
-      setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
+      const stripeCustomerId = await createStripeCustomerId(
+        createdUser,
+        name,
+        email,
+      );
+
+      const { accessToken, refreshToken } = generateTokens({
+        id: createdUser.id,
+        role: createdUser.role,
+        name: createdUser.name,
+        email: createdUser.email,
+        stripe_customer_id: stripeCustomerId,
+      });
+
+      try {
+        const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+        await updateUserRefreshToken(createdUser.id, hashedRefresh, client);
+        setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
+      } catch (refreshErr) {
+        // 계정은 이미 만들어졌음, 가입 실패가 아니라 가입은 됐는데 세션 발급 실패
+        console.error(
+          `Account ${createdUser.id} created but failed to persist refresh token:`,
+          refreshErr,
+        );
+        return res.status(201).json({
+          message: "Account created, but please log in to continue.",
+          accountCreated: true,
+        });
+      }
 
       res.status(201).json({
         message: "Account created successfully",
-        accessToken, // Signup 페이지에서 받아야 함
+        accessToken, // Signup 페이지에서 받음
       });
     } catch (err) {
       await client.query("ROLLBACK");
       console.error("user registration error,", err);
-      if (err.type === "stripe_error") {
-        res
-          .status(500)
-          .json({ error: "Something went wrong while creating your account." });
-      } else if (err.code === "23505") {
+      if (err.code === "23505") {
         res.status(400).json({ error: "Email already registered." });
       } else {
         res

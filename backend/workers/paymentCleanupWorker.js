@@ -11,7 +11,7 @@ async function cancelExpiredPayments() {
   try {
     expiredOrders = await getExpiredPendingOrders();
   } catch (err) {
-    console.error("Failed to fetch expired orders:", err.message);
+    console.error("Failed to fetch expired orders:", err);
     return;
   }
 
@@ -22,7 +22,7 @@ async function cancelExpiredPayments() {
       if (err.message === "PAYMENT_NOT_FOUND") {
         await expireOrderWithoutPayment(order.id); // 유저가 결제창도 안 띄움
       } else {
-        console.error(`Failed to expire order ${order.id}`, err.message);
+        console.error(`Failed to expire order ${order.id}`, err);
       }
     }
   }

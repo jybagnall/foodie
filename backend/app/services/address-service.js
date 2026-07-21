@@ -12,7 +12,8 @@ export async function clearDefaultAddress(client, userId) {
 }
 
 export async function createUserAddress(client, payload, userId) {
-  const { full_name, street, city, postal_code, phone, is_default } = payload;
+  const { full_name, street, city, state, postal_code, phone, is_default } =
+    payload;
   const q = `
     INSERT INTO addresses (full_name, user_id, street, city, state, postal_code, phone, is_default)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

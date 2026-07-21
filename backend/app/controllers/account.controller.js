@@ -1,47 +1,22 @@
 import Stripe from "stripe";
-import bcrypt from "bcrypt";
-import {
-  createAccount,
-  updateLastLogin,
-  updateUserRefreshToken,
-  updateUserStripeId,
-} from "../services/account-service.js";
-import { generateTokens } from "../utils/auth.js";
+import { updateUserStripeId } from "../services/account-service.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export async function createUserWithStripe(name, email, password, client) {
-  const createdUser = await createAccount(name, email, password, client);
-  await updateLastLogin(createdUser.id, client);
+export async function createStripeCustomerId(createdUser, name, email) {
+  let stripeCustomerId = null;
 
-  let stripeCustomer;
   try {
-    stripeCustomer = await stripe.customers.create({
+    const stripeCustomer = await stripe.customers.create({
       name,
       email,
       metadata: { userId: createdUser.id },
     });
+
+    stripeCustomerId = stripeCustomer.id;
+    await updateUserStripeId(createdUser.id, stripeCustomerId);
   } catch (stripeErr) {
-    const error = new Error("Stripe customer creation failed");
-    error.type = "stripe_error";
-    throw error;
+    console.error(`Stripe customer creation failed for ${email}:`, stripeErr);
   }
-
-  await updateUserStripeId(createdUser.id, stripeCustomer.id, client);
-
-  const { accessToken, refreshToken } = generateTokens({
-    id: createdUser.id,
-    role: createdUser.role,
-    name: createdUser.name,
-    email: createdUser.email,
-    stripe_customer_id: stripeCustomer.id,
-  });
-
-  const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-  await updateUserRefreshToken(createdUser.id, hashedRefresh, client);
-
-  return {
-    accessToken,
-    refreshToken,
-  };
+  return stripeCustomerId;
 }

@@ -38,10 +38,10 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+    <div className="flex items-center justify-between border-t border-gray-200 bg-gray-700 px-4 py-3 sm:px-6">
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-200">
             Showing <span className="font-medium">{startPage}</span>
             {startPage !== endPage && (
               <>
@@ -73,7 +73,7 @@ export default function Pagination({
                 return (
                   <span
                     key={`...-${index}`}
-                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700"
+                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-200"
                   >
                     ...
                   </span>
@@ -91,7 +91,7 @@ export default function Pagination({
               ${
                 isActive
                   ? "bg-indigo-500 text-white cursor-default"
-                  : "text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  : "text-gray-200 hover:bg-gray-400 cursor-pointer"
               }`}
                 >
                   {page}
