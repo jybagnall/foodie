@@ -27,7 +27,7 @@ router.get("/get-cart", verifyUserAuth, async (req, res) => {
 // ]
 
 // 서로 다른 커넥션은 서로의 성공/실패를 ‘전혀 모른다’.
-router.post("/save-cart", verifyUserAuth, async (req, res) => {
+router.post("/save-cart", verifyUserAuth, async (req, res, next) => {
   const { items = [] } = req.body;
   const client = await pool.connect(); // pool (DB 연결 관리자)에서 커넥션을 한개 픽.
 
@@ -40,10 +40,7 @@ router.post("/save-cart", verifyUserAuth, async (req, res) => {
     res.status(201).json(updateCarttems);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {}); // BEGIN 이후 작업 전부 취소, 전부 실패!
-    console.error("Save cart error:", err);
-    res
-      .status(500)
-      .json({ error: "Some changes may not be available next time." });
+    return next(err);
   } finally {
     client.release();
   }

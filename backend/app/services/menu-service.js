@@ -24,7 +24,10 @@ export async function deleteMenu(menuId, client) {
   `;
 
   const result = await client.query(q, [menuId]);
-  return result.rowCount;
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to delete menu ID: ${menuId}.`);
+  }
 }
 
 export async function getMenus() {

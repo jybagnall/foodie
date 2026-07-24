@@ -38,10 +38,26 @@ app.post(
   stripeWebhookHandler,
 );
 
+// 공통 미들웨어
+app.use(
+  cors({
+    origin: process.env.FRONTEND_INTERNAL_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+// 요청 로그
+app.use((req, res, next) => {
+  console.log(
+    `🚩req at [${new Date().toISOString()}]: ${req.method} ${req.url}`,
+  );
+  next();
+});
 
 app.use("/api/accounts", accountRoutes);
 app.use("/api/addresses", addressRoutes);
@@ -54,28 +70,27 @@ app.use("/api/carts", cartRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/brand", brandRoutes);
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_INTERNAL_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE"],
-  }),
-);
-
-app.use((req, res, next) => {
-  console.log(
-    `🚩req at [${new Date().toISOString()}]: ${req.method} ${req.url}`,
-  );
-  next();
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: "Not Found" });
 });
 
 app.use((err, req, res, next) => {
-  console.error("❌error:", err.message);
-  if (process.env.NODE_ENV === "development") {
-    res.status(500).json({ error: err.message });
-  } else {
-    res.status(500).json({ error: "Internal Server Error" });
+  console.error("❌error:", err);
+
+  // 이미 응답이 시작된 경우 Express 기본 에러 핸들러에 위임
+  if (res.headersSent) {
+    return next(err);
   }
+
+  const status = err.status || 500;
+  let message = err.message;
+
+  if (process.env.NODE_ENV !== "development" && status >= 500) {
+    message = "Internal Server Error";
+  }
+
+  res.status(status).json({ error: message });
 });
 
 server.listen(PORT, host, () => {

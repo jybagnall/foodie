@@ -1,24 +1,26 @@
-const requiredFields = ["street", "postal_code", "city", "phone", "full_name"];
+const REQUIRED_ADDRESS_FIELDS = [
+  "street",
+  "postal_code",
+  "city",
+  "state",
+  "phone",
+  "full_name",
+];
 
 export function validateOrderBody(req, res, next) {
-  try {
-    const { address, orderPayload } = req.body;
+  const { address, orderPayload } = req.body;
 
-    if (!address || !orderPayload?.items?.length) {
-      return res.status(400).json({ error: "Invalid order data." });
-    }
-
-    const missingField = requiredFields.filter((f) => !address[f]);
-    if (missingField.length > 0) {
-      return res.status(400).json({
-        error: `Missing address fields: ${missingField.join(", ")}`,
-      });
-    }
-
-    next();
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Something went wrong while validating your request." });
+  if (!address || typeof address !== "object" || !orderPayload?.items?.length) {
+    return res.status(400).json({ error: "Invalid order data." });
   }
+
+  const missingField = REQUIRED_ADDRESS_FIELDS.filter((f) => !address[f]);
+
+  if (missingField.length > 0) {
+    return res.status(400).json({
+      error: `Missing address fields: ${missingField.join(", ")}`,
+    });
+  }
+
+  next();
 }

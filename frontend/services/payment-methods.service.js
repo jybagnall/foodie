@@ -6,7 +6,7 @@ class PaymentMethodsService {
   }
 
   async deletePaymentMethod(id) {
-    const data = await this.client.delete(`/api/payment-methods/delete/${id}`);
+    const data = await this.client.delete(`/api/payment-methods/${id}`);
     return data;
   }
 

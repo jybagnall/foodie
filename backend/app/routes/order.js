@@ -18,7 +18,7 @@ import { parseCursor } from "../utils/validators.js";
 
 const router = express.Router();
 
-router.get("/my-orders", verifyUserAuth, async (req, res) => {
+router.get("/my-orders", verifyUserAuth, async (req, res, next) => {
   try {
     const cursor = parseCursor(req.query.cursor); // 다시 객체로 복원함
 
@@ -38,19 +38,17 @@ router.get("/my-orders", verifyUserAuth, async (req, res) => {
     });
     res.status(200).json({ orders, nextCursor });
   } catch (err) {
-    console.error("fetching error,", err);
-    res.status(500).json({ error: err.message });
+    return next(err);
   }
 });
 
-router.get("/:orderId", verifyUserAuth, async (req, res) => {
+router.get("/:orderId", verifyUserAuth, async (req, res, next) => {
   try {
     const { orderId } = req.params;
     const orderInfo = await getOrderDetails(orderId, req.user.id);
     res.status(200).json(orderInfo);
   } catch (err) {
-    console.error("fetching error,", err);
-    res.status(500).json({ error: err.message });
+    return next(err);
   }
 });
 
@@ -70,11 +68,12 @@ router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
 
 // orderPayload: [{ menu_name, menu_id, qty }, {}]
 // 트랜잭션 써야함.
+
 router.post(
   "/initialize-order",
   verifyUserAuth,
   validateOrderBody,
-  async (req, res) => {
+  async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { address, orderPayload } = req.body;
@@ -113,9 +112,7 @@ router.post(
           .json({ error: "Some items are no longer available." });
       }
 
-      res
-        .status(500)
-        .json({ error: "Something went wrong while placing an order." });
+      return next(err);
     } finally {
       client.release();
     }

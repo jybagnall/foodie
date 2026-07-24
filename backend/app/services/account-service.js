@@ -31,6 +31,11 @@ export async function createAccount(
 
   const values = [name, email, hashedPw, role];
   const result = await client.query(q, values);
+
+  if (!result.rows[0]) {
+    throw new Error("createAccount: Failed to create account.");
+  }
+
   return result.rows[0];
 }
 
@@ -126,7 +131,11 @@ export async function updateLastLogin(userId, db = pool) {
     SET last_login_at = NOW()
     WHERE id = $1
   `;
-  await db.query(q, [userId]);
+  const result = await db.query(q, [userId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update login info for user ${userId}.`);
+  }
 }
 
 export async function updateUserName(userId, name) {
@@ -137,7 +146,11 @@ export async function updateUserName(userId, name) {
     `;
   const values = [name, userId];
 
-  await pool.query(q, values);
+  const result = await pool.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update user name ${userId}.`);
+  }
 }
 
 export async function updateUserRefreshToken(
@@ -151,7 +164,11 @@ export async function updateUserRefreshToken(
     WHERE id = $2
     `;
   const values = [hashedNewRefresh, userId];
-  await db.query(q, values);
+  const result = await db.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update refresh token for user ${userId}.`);
+  }
 }
 
 export async function updateUserStripeId(
@@ -166,5 +183,8 @@ export async function updateUserStripeId(
     `;
   const values = [newStripeCustomerId, userId];
 
-  await db.query(q, values);
+  const result = await db.query(q, values);
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update Stripe customer id for user ${userId}.`);
+  }
 }

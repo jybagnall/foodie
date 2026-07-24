@@ -10,31 +10,25 @@ import {
 
 const router = express.Router();
 
-router.get("/events/dead/count", verifyAdminAuth, async (req, res) => {
+router.get("/events/dead/count", verifyAdminAuth, async (req, res, next) => {
   try {
     const { count, lastSeenId } = await getDeadEventsCount();
     res.status(200).json({ count, lastSeenId });
   } catch (err) {
-    console.error("Stripe dead events count error:", err);
-    return res.status(500).json({
-      error: "Failed to get failed Stripe events count.",
-    });
+    return next(err);
   }
 });
 
-router.get("/events/types", verifyAdminAuth, async (req, res) => {
+router.get("/events/types", verifyAdminAuth, async (req, res, next) => {
   try {
     const eventTypes = await getEventTypes();
     res.status(200).json(eventTypes);
   } catch (err) {
-    console.error("Stripe event_types fetching error:", err);
-    return res.status(500).json({
-      error: "Failed to get Stripe event_types.",
-    });
+    return next(err);
   }
 });
 
-router.get("/events/unprocessed", verifyAdminAuth, async (req, res) => {
+router.get("/events/unprocessed", verifyAdminAuth, async (req, res, next) => {
   try {
     const filters = {
       event_type: req.query.event_type || null,
@@ -50,41 +44,40 @@ router.get("/events/unprocessed", verifyAdminAuth, async (req, res) => {
       .status(200)
       .json({ events, totalMatchingEvents, pageLimit, totalPages });
   } catch (err) {
-    console.error("fetching error:", err);
-    return res.status(500).json({
-      error: "Failed to get unprocessed Stripe events.",
-    });
+    return next(err);
   }
 });
 
-router.get("/events/unprocessed/count", verifyAdminAuth, async (req, res) => {
-  try {
-    const { failedCount, deadCount } = await getUnprocessedEventsCount();
-    return res.status(200).json({ failedCount, deadCount });
-  } catch (err) {
-    console.error("fetching error:", err);
-    return res.status(500).json({
-      error: "Failed to get unprocessed Stripe events.",
-    });
-  }
-});
-
-router.post("/events/dead/acknowledge", verifyAdminAuth, async (req, res) => {
-  try {
-    const { lastSeenId } = req.body;
-
-    if (!lastSeenId) {
-      return res.status(200).json({ success: true }); // 업데이트할 게 없음
+router.get(
+  "/events/unprocessed/count",
+  verifyAdminAuth,
+  async (req, res, next) => {
+    try {
+      const { failedCount, deadCount } = await getUnprocessedEventsCount();
+      return res.status(200).json({ failedCount, deadCount });
+    } catch (err) {
+      return next(err);
     }
-    await acknowledgeFailures(lastSeenId);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("Acknowledge error:", err);
-    return res.status(500).json({
-      error: "Failed to acknowledge failures.",
-    });
-  }
-});
+  },
+);
+
+router.post(
+  "/events/dead/acknowledge",
+  verifyAdminAuth,
+  async (req, res, next) => {
+    try {
+      const { lastSeenId } = req.body;
+
+      if (!lastSeenId) {
+        return res.status(200).json({ success: true }); // 업데이트할 게 없음
+      }
+      await acknowledgeFailures(lastSeenId);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      return next(err);
+    }
+  },
+);
 
 export default router;
 

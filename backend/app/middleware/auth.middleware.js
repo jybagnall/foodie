@@ -29,14 +29,13 @@ export function verifyUserAuth(req, res, next) {
 
     next();
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ error: "Your session has expired. Please sign in again." });
+    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        error: "Your session has expired. Please sign in again.",
+      });
     }
-    return res
-      .status(401)
-      .json({ error: "Your session has expired. Please sign in again." });
+
+    return next(err);
   }
 }
 
@@ -65,14 +64,12 @@ export function verifyAdminAuth(req, res, next) {
     next();
   } catch (err) {
     console.error("Admin auth failed:", err);
-    if (err.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ error: "Token expired. Please log in again." });
-    } // jsonwebtoken 라이브러리에서 자동으로 생성된 에러 객체
-    if (err.name === "JsonWebTokenError") {
-      return res.status(401).json({ error: "Invalid token." });
+
+    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        error: "Invalid or expired token. Please log in again.",
+      });
     }
-    return res.status(401).json({ error: "Unauthorized access." });
+    return next(err); // 전역 에러 핸들러로 넘김
   }
 }

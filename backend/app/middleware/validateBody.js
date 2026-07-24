@@ -51,40 +51,34 @@ const rules = {
 };
 
 // return (req, res, next) => { ... 미들웨어를 생성함
+
 export function validateBody(...fields) {
   return (req, res, next) => {
-    try {
-      const errors = {};
+    const errors = {};
 
-      for (const field of fields) {
-        let value = req.body[field]; // "Jiyoung"
+    for (const field of fields) {
+      let value = req.body[field]; // "Jiyoung"
 
-        if (typeof value === "string") {
-          value = value.trim();
-          if (field === "email") value = value.toLowerCase();
-          req.body[field] = value; // req.body 값을 수정
-        }
-
-        if (!rules[field]) {
-          throw new Error(`No validation rule for field: ${field}`);
-        } // catch에서 잡음
-
-        const error = rules[field](value);
-        if (error) {
-          errors[field] = error; // 에러 모음 모음
-        }
+      if (typeof value === "string") {
+        value = value.trim();
+        if (field === "email") value = value.toLowerCase();
+        req.body[field] = value; // req.body 값을 수정
       }
 
-      if (Object.keys(errors).length > 0) {
-        return res.status(400).json({ errors });
-      } // 모든 검사 끝난 후 한 번에 반환
+      if (!rules[field]) {
+        throw new Error(`validateBody: No validation rule for field: ${field}`);
+      }
 
-      next();
-    } catch (err) {
-      console.error("Validation error:", err);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while validating your request." });
+      const error = rules[field](value);
+      if (error) {
+        errors[field] = error; // 에러 모음 모음
+      }
     }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ errors });
+    } // 모든 검사 끝난 후 한 번에 반환
+
+    next();
   };
 }

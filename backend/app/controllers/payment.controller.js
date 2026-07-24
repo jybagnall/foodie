@@ -65,7 +65,7 @@ async function updateUserStripeIdWithRetry(
       return await updateUserStripeId(userId, stripeCustomerId);
     } catch (err) {
       if (i === attempts - 1) throw err;
-      await new Promise((r) => setTimeout(r, 200 * (i + 1)));
+      await new Promise((resolve) => setTimeout(resolve, 200 * (i + 1)));
     }
   }
 }

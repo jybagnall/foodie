@@ -18,28 +18,23 @@ import { validateUpdateMenu } from "../middleware/validateUpdateMenu.js";
 const router = express.Router();
 const upload = multer({ storage });
 
-router.get("/get-menus", async (req, res) => {
+router.get("/get-menus", async (req, res, next) => {
   try {
     const menu = await getMenus();
     res.status(200).json(menu);
   } catch (err) {
     console.error("fetching error,", err);
-    res
-      .status(500)
-      .json({ message: "Something went wrong while loading the menu." });
+    return next(err);
   }
 });
 
-router.get("/single-menu-detail/:id", async (req, res) => {
+router.get("/single-menu-detail/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const menuDetail = await getSingleMenuDetail(id);
     res.status(200).json(menuDetail);
   } catch (err) {
-    console.error("fetching error,", err);
-    res
-      .status(500)
-      .json({ message: "Something went wrong while loading the menu." });
+    return next(err);
   }
 });
 
@@ -47,7 +42,7 @@ router.patch(
   "/:menuId",
   verifyAdminAuth,
   validateUpdateMenu,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { menuId } = req.params;
       const column = Object.keys(req.body)[0];
@@ -56,17 +51,13 @@ router.patch(
 
       if (result.rowCount === 0) {
         return res.status(404).json({
-          message: "Menu not found.",
+          error: "Menu not found.",
         });
       }
 
       res.status(200).json({ success: true });
     } catch (err) {
-      console.error("DB update error:", err);
-      res.status(500).json({
-        message:
-          "Something went wrong while updating the requested menu field.",
-      });
+      return next(err);
     }
   },
 );
@@ -75,7 +66,7 @@ router.patch(
   "/:menuId/image",
   verifyAdminAuth,
   upload.single("image"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Image is required" });
@@ -89,7 +80,7 @@ router.patch(
 
       if (!menuInfo) {
         await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
-        return res.status(404).json({ message: "Menu not found." });
+        return res.status(404).json({ error: "Menu not found." });
       } // DB에 존재하지 않는 메뉴라면 클라우드에 올려진 이미지 삭제
 
       const result = await updateMenuImage(menuId, imgSrc, imgPublicId);
@@ -97,7 +88,7 @@ router.patch(
       if (result.rowCount === 0) {
         await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
         return res.status(404).json({
-          message: "Menu not found.",
+          error: "Menu not found.",
         });
       } // DB 업데이트 중, 없는 메뉴였다면 클라우드에 올려진 이미지 삭제
 
@@ -115,10 +106,7 @@ router.patch(
         await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
       }
 
-      console.error("Menu update error:", err);
-      res
-        .status(500)
-        .json({ message: "Something went wrong while uploading the image." });
+      return next(err);
     }
   },
 );
@@ -130,7 +118,7 @@ router.post(
   verifyAdminAuth,
   upload.single("image"),
   validateCreateMenu,
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { name, price, description } = req.body;
       const imgSrc = req.file.path;
@@ -145,18 +133,16 @@ router.post(
       if (err.code === "23505") {
         return res
           .status(409)
-          .json({ message: "A menu with this name already exists." });
+          .json({ error: "A menu with this name already exists." });
       }
 
-      console.error("Menu upload error,", err);
-      res
-        .status(500)
-        .json({ message: "Something went wrong while uploading the menu." });
+      console.error("Menu upload error:", err);
+      return next(err);
     }
   },
 );
 
-router.delete("/delete/:menuId", verifyAdminAuth, async (req, res) => {
+router.delete("/:menuId", verifyAdminAuth, async (req, res, next) => {
   const client = await pool.connect();
 
   try {
@@ -166,15 +152,10 @@ router.delete("/delete/:menuId", verifyAdminAuth, async (req, res) => {
 
     if (!menuInfo) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ message: "Menu not found." });
+      return res.status(404).json({ error: "Menu not found." });
     }
 
-    const deletedCount = await deleteMenu(menuId, client);
-
-    if (deletedCount === 0) {
-      await client.query("ROLLBACK");
-      return res.status(409).json({ message: "Menu could not be deleted." });
-    }
+    await deleteMenu(menuId, client);
 
     await client.query("COMMIT");
     await cloudinary.uploader.destroy(menuInfo.image_public_id).catch((err) => {
@@ -184,10 +165,7 @@ router.delete("/delete/:menuId", verifyAdminAuth, async (req, res) => {
     res.status(200).json({ message: "Menu deleted successfully." });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    console.error("Menu delete error,", err);
-    res
-      .status(500)
-      .json({ message: "Something went wrong while deleting the menu." });
+    return next(err);
   } finally {
     client.release();
   }

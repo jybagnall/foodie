@@ -14,24 +14,22 @@ import { validateBody } from "../middleware/validateBody.js";
 
 const router = express.Router();
 
-router.get("/all", verifyUserAuth, async (req, res) => {
+router.get("/all", verifyUserAuth, async (req, res, next) => {
   try {
     const addresses = await getAllAddresses(req.user.id);
     res.status(200).json(addresses);
   } catch (err) {
-    console.error("fetching error,", err);
-    res.status(500).json({ error: err.message });
+    return next(err);
   }
 });
 
 // 기본 배송지가 있을 수도, 없을 수도 있고 없다해도 에러는 아님. 그래서 200
-router.get("/default", verifyUserAuth, async (req, res) => {
+router.get("/default", verifyUserAuth, async (req, res, next) => {
   try {
     const address = await getDefaultAddress(req.user.id);
     res.status(200).json(address);
   } catch (err) {
-    console.error("fetching error,", err);
-    res.status(500).json({ error: err.message });
+    return next(err);
   }
 });
 
@@ -47,7 +45,7 @@ router.patch(
     "phone",
     "is_default",
   ),
-  async (req, res) => {
+  async (req, res, next) => {
     const client = await pool.connect();
     try {
       const payload = req.body;
@@ -65,30 +63,34 @@ router.patch(
     } catch (err) {
       console.error("update error,", err);
       await client.query("ROLLBACK").catch(() => {});
-      res.status(500).json({ error: err.message });
+      return next(err);
     } finally {
       client.release();
     }
   },
 );
 
-router.patch("/set-default/:addressId", verifyUserAuth, async (req, res) => {
-  const client = await pool.connect();
-  try {
-    const { addressId } = req.params;
-    await client.query("BEGIN");
-    await clearDefaultAddress(client, req.user.id);
-    await setAddressAsDefault(client, req.user.id, addressId);
-    await client.query("COMMIT");
-    res.status(200).json({ message: "Default is updated" });
-  } catch (err) {
-    console.error("update error,", err);
-    await client.query("ROLLBACK").catch(() => {});
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
-  }
-});
+router.patch(
+  "/set-default/:addressId",
+  verifyUserAuth,
+  async (req, res, next) => {
+    const client = await pool.connect();
+    try {
+      const { addressId } = req.params;
+      await client.query("BEGIN");
+      await clearDefaultAddress(client, req.user.id);
+      await setAddressAsDefault(client, req.user.id, addressId);
+      await client.query("COMMIT");
+      res.status(200).json({ message: "Default is updated" });
+    } catch (err) {
+      console.error("update error,", err);
+      await client.query("ROLLBACK").catch(() => {});
+      return next(err);
+    } finally {
+      client.release();
+    }
+  },
+);
 
 router.post(
   "/create",
@@ -97,11 +99,12 @@ router.post(
     "full_name",
     "street",
     "city",
+    "state",
     "postal_code",
     "phone",
     "is_default",
   ),
-  async (req, res) => {
+  async (req, res, next) => {
     const client = await pool.connect();
     try {
       const payload = req.body;
@@ -116,21 +119,20 @@ router.post(
     } catch (err) {
       console.error("create error,", err);
       await client.query("ROLLBACK").catch(() => {});
-      res.status(500).json({ error: err.message });
+      return next(err);
     } finally {
       client.release();
     }
   },
 );
 
-router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
+router.patch("/delete/:addressId", verifyUserAuth, async (req, res, next) => {
   const { addressId } = req.params;
   try {
     await deleteAddress(req.user.id, addressId);
     res.status(200).json({ message: "Address deleted" });
   } catch (err) {
-    console.error("delete error,", err);
-    res.status(500).json({ error: "Failed to delete requested method." });
+    return next(err);
   }
 });
 

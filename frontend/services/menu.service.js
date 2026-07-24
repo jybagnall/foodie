@@ -11,7 +11,7 @@ class MenuService {
   }
 
   async deleteSingleMenu(menuId) {
-    const data = await this.client.delete(`/api/menu/delete/${menuId}`);
+    const data = await this.client.delete(`/api/menu/${menuId}`);
     return data;
   }
 

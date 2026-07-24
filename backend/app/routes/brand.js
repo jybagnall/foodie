@@ -9,15 +9,13 @@ const router = express.Router();
 const upload = multer({ storage });
 
 // { logo_url: '...', error_img_url: '...' }
-router.get("/assets", async (req, res) => {
+router.get("/assets", async (req, res, next) => {
   try {
     const imgUrls = await getImages();
     res.status(200).json(imgUrls);
   } catch (err) {
     console.error("fetching error,", err);
-    res
-      .status(500)
-      .json({ error: "Something went wrong while loading brand assets." });
+    return next(err);
   }
 });
 
@@ -27,7 +25,7 @@ router.post(
   "/assets",
   verifyAdminAuth,
   upload.single("image"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Image is required" });
@@ -48,10 +46,7 @@ router.post(
         .status(200)
         .json({ message: "A new image is uploaded successfully." });
     } catch (err) {
-      console.error("Brand asset upload error,", err);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while uploading the image." });
+      return next(err);
     }
   },
 );

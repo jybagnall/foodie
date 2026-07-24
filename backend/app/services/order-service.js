@@ -33,6 +33,11 @@ export async function createOrder(
     address.phone,
   ];
   const result = await client.query(q, values);
+
+  if (!result.rows[0]) {
+    throw new Error("createOrder: Failed to create order");
+  }
+
   return result.rows[0].id;
 }
 

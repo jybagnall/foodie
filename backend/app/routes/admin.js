@@ -14,22 +14,19 @@ import pool from "../config/db.js";
 
 const router = express.Router();
 
-router.get("/", verifyAdminAuth, async (req, res) => {
+router.get("/", verifyAdminAuth, async (req, res, next) => {
   try {
     const admins = await getAdmins();
     res.status(200).json(admins);
   } catch (err) {
-    console.error("getAdmins error:", err);
-    res.status(500).json({
-      error: "An unexpected error occurred while retrieving the admin list.",
-    });
+    return next(err);
   }
 });
 
 router.post(
   "/admin-signup",
   validateBody("name", "email", "password"),
-  async (req, res) => {
+  async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { name, email, password, inviteToken } = req.body;
@@ -60,7 +57,7 @@ router.post(
         email: newAdmin.email,
         role: newAdmin.role,
       });
-      await invalidateAdminInvitation(inviteToken, client); // 토큰 무효화
+      await invalidateAdminInvitation(invitedRecord.id, client); // 토큰 무효화
       await client.query("COMMIT");
       res.status(201).json({
         message: "Admin account created successfully",
@@ -72,9 +69,7 @@ router.post(
         // PostgreSQL unique_violation
         return res.status(400).json({ error: "Email already registered." });
       } else {
-        return res
-          .status(500)
-          .json({ error: "Something went wrong while creating your account." });
+        return next(err);
       }
     } finally {
       client.release();
@@ -86,14 +81,9 @@ router.post(
   "/invite",
   verifyAdminAuth,
   validateBody("email"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { email } = req.body;
-      const admin = req.user; // JWT에서 추출된 로그인 관리자 (id, role)
-
-      if (admin.role !== "admin") {
-        return res.status(403).json({ error: "Unauthorized" });
-      }
 
       // 초대 토큰 생성
       const rawToken = await createAdminInvitation(email);
@@ -104,8 +94,7 @@ router.post(
         .status(200)
         .json({ message: "Admin invitation email sent successfully." });
     } catch (err) {
-      console.error("Admin invitation error,", err);
-      res.status(500).json({ error: "Failed to send admin invite." });
+      return next(err);
     }
   },
 );

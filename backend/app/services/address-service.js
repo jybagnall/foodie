@@ -31,6 +31,11 @@ export async function createUserAddress(client, payload, userId) {
   ];
 
   const result = await client.query(q, values);
+
+  if (!result.rows[0]) {
+    throw new Error("createUserAddress: Failed to create user address");
+  }
+
   return result.rows[0];
 }
 
@@ -41,7 +46,11 @@ export async function deleteAddress(userId, addressId) {
     WHERE (user_id = $1 AND id = $2)
   `;
 
-  await pool.query(q, [userId, addressId]);
+  const result = await pool.query(q, [userId, addressId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to delete address for user ${userId}.`);
+  }
 }
 
 export async function getAllAddresses(userId) {
@@ -78,7 +87,11 @@ export async function setAddressAsDefault(client, userId, addressId) {
     `;
 
   const values = [userId, addressId];
-  await client.query(q, values);
+  const result = await client.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update default address for user ${userId}.`);
+  }
 }
 
 export async function saveShippingInfo(client, userId, address) {
@@ -107,6 +120,11 @@ export async function saveShippingInfo(client, userId, address) {
   ];
 
   const result = await client.query(q, values);
+
+  if (!result.rows[0]) {
+    throw new Error("saveShippingInfo: Failed to save shipping address");
+  }
+
   return result.rows[0].id;
 }
 
@@ -119,7 +137,7 @@ export async function updateUserAddress(client, payload, addressId, userId) {
       full_name = $1, 
       street = $2,
       city = $3,
-      state = $4
+      state = $4,
       postal_code = $5,
       phone = $6,
       is_default = $7
@@ -137,5 +155,9 @@ export async function updateUserAddress(client, payload, addressId, userId) {
     userId,
     addressId,
   ];
-  await client.query(q, values);
+  const result = await client.query(q, values);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Failed to update address for user ${userId}.`);
+  }
 }

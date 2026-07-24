@@ -126,7 +126,20 @@ export async function cancelPendingOrder(orderId) {
   if (!CANCELLABLE_PAYMENT_STATUSES.includes(payment.payment_status))
     throw new Error("ORDER_NOT_CANCELLABLE");
 
-  await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
+  try {
+    // 미완료 PaymentIntent를 취소
+    await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
+  } catch (stripeErr) {
+    // Stripe에 저장된 PaymentIntent를 조회
+    const current = await stripe.paymentIntents.retrieve(
+      payment.stripe_payment_intent_id,
+    );
+
+    // 이미 취소된 PaymentIntent 가 아니라면 에러를 상위로 전달
+    if (current.status !== "canceled") {
+      throw stripeErr;
+    }
+  }
 
   const client = await pool.connect();
   try {
@@ -152,8 +165,10 @@ export async function expirePendingOrder(orderId) {
     throw new Error("ORDER_NOT_EXPIRABLE");
 
   try {
+    // 미완료 PaymentIntent를 취소
     await stripe.paymentIntents.cancel(payment.stripe_payment_intent_id);
   } catch (stripeErr) {
+    // Stripe에 저장된 PaymentIntent를 조회
     const current = await stripe.paymentIntents.retrieve(
       payment.stripe_payment_intent_id,
     );

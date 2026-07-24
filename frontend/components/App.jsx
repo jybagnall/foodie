@@ -41,6 +41,7 @@ import AdminManagement from "./admin/AdminManagement";
 import EditMenuDetails from "./admin/editMenu/EditMenuDetails";
 
 // 모달을 Route로 렌더링하려 하면 안됨
+
 export default function App() {
   return (
     <BrowserRouter>

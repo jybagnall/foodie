@@ -14,28 +14,6 @@ export async function getAdmins() {
   return result.rows;
 }
 
-export async function verifyAdminInvitation(token, email) {
-  const q = `
-    SELECT * FROM admin_invites
-    WHERE email = $1
-    AND used = FALSE
-    AND expires_at > NOW()
-  `;
-
-  const result = await pool.query(q, [email]);
-  const inviteRecord = result.rows[0];
-
-  if (!inviteRecord) {
-    console.error("Invalid or expired invite token");
-    return null;
-  }
-
-  const isMatching = await bcrypt.compare(token, inviteRecord.token);
-  if (!isMatching) return null;
-
-  return inviteRecord;
-}
-
 export async function createAdminInvitation(email) {
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const { rawToken, hashedToken, expiresAt } =
@@ -47,16 +25,48 @@ export async function createAdminInvitation(email) {
     RETURNING id
   `;
 
-  await pool.query(q, [email, hashedToken, expiresAt]);
+  const result = await pool.query(q, [email, hashedToken, expiresAt]);
+
+  if (!result.rows[0]) {
+    throw new Error(
+      "createAdminInvitation: Failed to save admin invitation info",
+    );
+  }
 
   return rawToken;
 }
 
-export async function invalidateAdminInvitation(inviteToken, client) {
+export async function invalidateAdminInvitation(inviteId, client) {
   const q = `
     UPDATE admin_invites
     SET used = TRUE
-    WHERE token = $1
+    WHERE id = $1
   `;
-  await client.query(q, [inviteToken]);
+  const result = await client.query(q, [inviteId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(
+      "invalidateAdminInvitation: Failed to invalidate admin invitation token",
+    );
+  }
+}
+
+export async function verifyAdminInvitation(token, email) {
+  const q = `
+    SELECT * FROM admin_invites
+    WHERE email = $1
+    AND used = FALSE
+    AND expires_at > NOW()
+  `;
+
+  const result = await pool.query(q, [email]);
+  const inviteRecords = result.rows; // 같은 이메일이 몇 번의 초대를 받을 수 있음
+
+  for (const inviteRecord of inviteRecords) {
+    const isMatching = await bcrypt.compare(token, inviteRecord.token);
+
+    if (isMatching) return inviteRecord;
+  }
+
+  return null;
 }

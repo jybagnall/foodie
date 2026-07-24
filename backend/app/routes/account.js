@@ -30,7 +30,7 @@ import { createStripeCustomerId } from "../controllers/account.controller.js";
 
 const router = express.Router();
 
-router.get("/my-profile", verifyUserAuth, async (req, res) => {
+router.get("/my-profile", verifyUserAuth, async (req, res, next) => {
   try {
     const profile = await findMyProfile(req.user.id);
 
@@ -43,13 +43,11 @@ router.get("/my-profile", verifyUserAuth, async (req, res) => {
     res.status(200).json(profile);
   } catch (err) {
     console.error("User data fetching error,", err);
-    res.status(500).json({
-      error: "We're having trouble verifying your account right now.",
-    });
+    return next(err);
   }
 });
 
-router.get("/user", verifyUserAuth, async (req, res) => {
+router.get("/user", verifyUserAuth, async (req, res, next) => {
   try {
     const existingUser = await findUserById(req.user.id);
 
@@ -70,84 +68,85 @@ router.get("/user", verifyUserAuth, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("User data fetching error,", err);
-    res.status(500).json({
-      error: "We're having trouble verifying your account right now.",
-    });
+    return next(err);
   }
 });
 
-router.post("/forgot-password", validateBody("email"), async (req, res) => {
-  try {
-    const { email } = req.body;
-    const rawToken = await createPasswordResetToken(email);
-
-    if (rawToken) {
-      const resetLink = `${process.env.FRONTEND_PUBLIC_URL}/reset-password?token=${rawToken}`;
-      await sendPasswordResetEmail(email, resetLink);
-    }
-
-    res.status(200).json({ message: "A reset link has been sent." });
-  } catch (err) {
-    console.error("Password reset error,", err);
-    res.status(500).json({ error: "Something went wrong. Please try again." });
-  }
-});
-
-router.post("/login", validateBody("email", "password"), async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const loggedInUser = await findUserByEmail(email);
-
-    if (!loggedInUser) {
-      return res
-        .status(401)
-        .json({ error: "Please check your email or password and try again." });
-    }
-
-    const passwordMatches = await verifyPassword(
-      password,
-      loggedInUser.password,
-    );
-
-    if (!passwordMatches) {
-      return res
-        .status(401)
-        .json({ error: "Incorrect email or password. Please try again." });
-    }
-
-    const { accessToken, refreshToken } = generateTokens({
-      id: loggedInUser.id,
-      role: loggedInUser.role,
-      name: loggedInUser.name,
-      email: loggedInUser.email,
-      stripe_customer_id: loggedInUser.stripe_customer_id,
-    });
-
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
-    setRefreshTokenCookie(res, refreshToken);
-
+router.post(
+  "/forgot-password",
+  validateBody("email"),
+  async (req, res, next) => {
     try {
-      await updateLastLogin(loggedInUser.id);
-    } catch (err) {
-      console.error(
-        `Failed to update last_login for user ${loggedInUser.id}:`,
-        err,
-      );
-    } // 부가 정보라 실패해도 로그인 응답을 막지 않음
+      const { email } = req.body;
+      const rawToken = await createPasswordResetToken(email);
 
-    res.status(200).json({
-      message: "You have successfully logged in! Welcome back.",
-      accessToken,
-    });
-  } catch (err) {
-    console.error("Login error,", err);
-    res
-      .status(500)
-      .json({ error: "A server error occurred. Please try again later." });
-  }
-});
+      if (rawToken) {
+        const resetLink = `${process.env.FRONTEND_PUBLIC_URL}/reset-password?token=${rawToken}`;
+        await sendPasswordResetEmail(email, resetLink);
+      }
+
+      res.status(200).json({ message: "A reset link has been sent." });
+    } catch (err) {
+      return next(err);
+    }
+  },
+);
+
+router.post(
+  "/login",
+  validateBody("email", "password"),
+  async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
+      const loggedInUser = await findUserByEmail(email);
+
+      if (!loggedInUser) {
+        return res
+          .status(401)
+          .json({ error: "Incorrect email or password. Please try again." });
+      }
+
+      const passwordMatches = await verifyPassword(
+        password,
+        loggedInUser.password,
+      );
+
+      if (!passwordMatches) {
+        return res
+          .status(401)
+          .json({ error: "Incorrect email or password. Please try again." });
+      }
+
+      const { accessToken, refreshToken } = generateTokens({
+        id: loggedInUser.id,
+        role: loggedInUser.role,
+        name: loggedInUser.name,
+        email: loggedInUser.email,
+        stripe_customer_id: loggedInUser.stripe_customer_id,
+      });
+
+      const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+      await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
+      setRefreshTokenCookie(res, refreshToken);
+
+      try {
+        await updateLastLogin(loggedInUser.id);
+      } catch (err) {
+        console.error(
+          `Failed to update last_login for user ${loggedInUser.id}:`,
+          err,
+        );
+      } // 부가 정보라 실패해도 로그인 응답을 막지 않음
+
+      res.status(200).json({
+        message: "You have successfully logged in! Welcome back.",
+        accessToken,
+      });
+    } catch (err) {
+      return next(err);
+    }
+  },
+);
 
 // 쿠키 제거는 서버에서만
 router.post("/logout", async (req, res) => {
@@ -255,60 +254,62 @@ router.post("/refresh-access-token", async (req, res) => {
     } else {
       console.error("Unexpected refresh error:", err);
     }
-    res.status(401).json({
+    return res.status(401).json({
       error: "For your security, you’ve been logged out. Please sign in again.",
     });
   }
 });
 
-router.post("/reset-password", validateBody("password"), async (req, res) => {
-  const client = await pool.connect();
-  try {
-    const { resetToken, password } = req.body;
-    const hashedPwResetToken = await hashRawPasswordToken(resetToken);
-    const user = await findUserByPasswordResetToken(hashedPwResetToken);
+router.post(
+  "/reset-password",
+  validateBody("password"),
+  async (req, res, next) => {
+    const client = await pool.connect();
+    try {
+      const { resetToken, password } = req.body;
+      const hashedPwResetToken = await hashRawPasswordToken(resetToken);
+      const user = await findUserByPasswordResetToken(hashedPwResetToken);
 
-    if (!user)
-      return res.status(400).json({ error: "Invalid or expired token." });
+      if (!user)
+        return res.status(400).json({ error: "Invalid or expired token." });
 
-    await client.query("BEGIN");
-    await updatePassword(password, user.id, client);
-    await clearPasswordResetToken(user.id, client);
+      await client.query("BEGIN");
+      await updatePassword(password, user.id, client);
+      await clearPasswordResetToken(user.id, client);
 
-    const { accessToken, refreshToken } = generateTokens({
-      id: user.id,
-      role: user.role,
-      name: user.name,
-      email: user.email,
-      stripe_customer_id: user.stripe_customer_id,
-    });
+      const { accessToken, refreshToken } = generateTokens({
+        id: user.id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        stripe_customer_id: user.stripe_customer_id,
+      });
 
-    const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-    await updateUserRefreshToken(user.id, hashedRefresh, client);
-    await client.query("COMMIT");
+      const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+      await updateUserRefreshToken(user.id, hashedRefresh, client);
+      await client.query("COMMIT");
 
-    // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
-    setRefreshTokenCookie(res, refreshToken);
+      // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
+      setRefreshTokenCookie(res, refreshToken);
 
-    res.status(200).json({
-      message: "Password changed successfully",
-      accessToken,
-    });
-  } catch (err) {
-    console.error("Password update error,", err);
-    await client.query("ROLLBACK").catch(() => {});
-    res
-      .status(500)
-      .json({ error: "Something went wrong while updating the password." });
-  } finally {
-    client.release();
-  }
-});
+      res.status(200).json({
+        message: "Password changed successfully",
+        accessToken,
+      });
+    } catch (err) {
+      console.error("Password update error,", err);
+      await client.query("ROLLBACK").catch(() => {});
+      return next(err);
+    } finally {
+      client.release();
+    }
+  },
+);
 
 router.post(
   "/signup",
   validateBody("name", "email", "password"),
-  async (req, res) => {
+  async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { name, email, password } = req.body;
@@ -365,11 +366,9 @@ router.post(
       await client.query("ROLLBACK");
       console.error("user registration error,", err);
       if (err.code === "23505") {
-        res.status(400).json({ error: "Email already registered." });
+        return res.status(400).json({ error: "Email already registered." });
       } else {
-        res
-          .status(500)
-          .json({ error: "Something went wrong while creating your account." });
+        return next(err);
       }
     } finally {
       client.release();
@@ -381,16 +380,13 @@ router.patch(
   "/update-name",
   verifyUserAuth,
   validateBody("name"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { name } = req.body;
       await updateUserName(req.user.id, name);
       res.status(200).json({ success: true });
     } catch (err) {
-      console.error("DB update error,", err);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while uploading the name." });
+      return next(err);
     }
   },
 );
@@ -399,7 +395,7 @@ router.patch(
   "/update-password",
   verifyUserAuth,
   validateBody("password"),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { currentPassword, password } = req.body;
 
@@ -429,10 +425,7 @@ router.patch(
       await updatePassword(password, req.user.id);
       res.status(200).json({ success: true });
     } catch (err) {
-      console.error("DB update error,", err);
-      res
-        .status(500)
-        .json({ error: "Something went wrong while uploading the password." });
+      return next(err);
     }
   },
 );

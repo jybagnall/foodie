@@ -23,9 +23,6 @@ export async function validateCreateMenu(req, res, next) {
       await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
     }
 
-    console.error("Menu validation error:", err);
-    res
-      .status(500)
-      .json({ error: "Something went wrong while validating your request." });
+    return next(err);
   }
 }

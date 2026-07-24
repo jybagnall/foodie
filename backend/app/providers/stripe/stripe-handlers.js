@@ -117,10 +117,7 @@ export async function handleRefundUpdated(client, refundObj) {
   const payment = await findPaymentByStripeChargeId(client, refundObj.charge);
 
   if (!payment) {
-    console.error("Payment not found for charge", {
-      chargeId: refundObj.charge,
-    });
-    return;
+    throw new Error(`Payment not found for charge ${refundObj.charge}`);
   } // payment 없으면 런타임 에러 발생함
 
   const { id: paymentId, order_id: orderId } = payment;
@@ -137,10 +134,15 @@ export async function handleRefundUpdated(client, refundObj) {
       refundStatus: refundObj.status, // succeeded, failed, canceled
       reason: refundObj.reason,
     });
-    await updateOrderStatus(client, orderId, "canceled");
   } else {
     await markRefundAsCompleted(client, refundObj.status, refundObj.id);
   }
+
+  // 환불이 실제로 성공했을 때만 주문을 취소 처리
+  if (refundObj.status === "succeeded") {
+    await updateOrderStatus(client, orderId, "canceled");
+  }
+
   await updatePaymentStatus(client, paymentStatus, refundObj.charge);
 }
 // refundObj.charge: Stripe의 Charge ID
