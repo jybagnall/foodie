@@ -2,7 +2,6 @@ import useBrandAssetsMutations from "../../hooks/useBrandAssetsMutations";
 import { useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo } from "react";
 import SpinnerMini from "../user_feedback/SpinnerMini";
-import BackToDash from "../UI/BackToDash";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
@@ -76,7 +75,7 @@ export default function BrandImageUploader({ label, assetType }) {
 
       <Button
         type="submit"
-        className="py-1 px-3 bg-gray-400 hover:bg-gray-500 text-white"
+        className="py-1 px-3 bg-blue-400 hover:bg-blue-500 text-white"
         disabled={!file || isUploading}
       >
         {isUploading ? <SpinnerMini /> : "Upload Image"}

@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import { storage } from "../config/cloudinary.js";
+import { cloudinary } from "../config/cloudinary.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { getImages, uploadImage } from "../services/brand-service.js";
 import { BRAND_ASSET_KEYS } from "../constants/brandAssets.js";
@@ -41,7 +42,17 @@ router.post(
       }
 
       const imgSrc = req.file.path;
-      await uploadImage({ key, imgSrc });
+      const imgPublicId = req.file.filename;
+      const oldPublicId = await uploadImage({ key, imgSrc, imgPublicId });
+
+      if (oldPublicId) {
+        await cloudinary.uploader.destroy(oldPublicId).catch((err) => {
+          console.error(
+            `Failed to delete old brand asset ${oldPublicId}:`,
+            err,
+          );
+        });
+      }
       res
         .status(200)
         .json({ message: "A new image is uploaded successfully." });

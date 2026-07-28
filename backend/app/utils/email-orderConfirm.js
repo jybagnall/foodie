@@ -1,12 +1,8 @@
 import { Resend } from "resend";
-import dotenv from "dotenv";
 import Stripe from "stripe";
-
 import { getOrderConfirmationDetails } from "../services/order-service.js";
 import { formatCurrency } from "./orderCalculations.js";
 import { formatPaymentMethodDisplay } from "./paymentInfo.js";
-
-dotenv.config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

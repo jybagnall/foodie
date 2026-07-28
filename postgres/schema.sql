@@ -138,6 +138,7 @@ CREATE TABLE refunds (
 -- pending | processing | dead | ignored | success (이벤트 수신 상태)
 CREATE TABLE stripe_events (
   id TEXT PRIMARY KEY,
+  stripe_event_id TEXT UNIQUE NOT NULL,
   event_type TEXT NOT NULL,
   payload JSONB NOT NULL,
   status TEXT DEFAULT 'pending',
@@ -152,6 +153,11 @@ CREATE TABLE stripe_events (
 CREATE TABLE app_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+CREATE TABLE reconciliation_state (
+  id TEXT PRIMARY KEY,
+  last_checked_at TIMESTAMPTZ NOT NULL
 );
 
 -- partial index: dead 상태이고 아직 알림 안 간 이벤트만 DB가 모아둠

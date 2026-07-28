@@ -8,6 +8,7 @@
     "start": "node server.js",
     "worker": "nodemon --legacy-watch --inspect=0.0.0.0:9230 workers/stripeWorker.js",
     "payment-cleanup": "nodemon --legacy-watch --inspect=0.0.0.0:9231 workers/paymentCleanupWorker.js",
+    "stripe-reconciliation": "nodemon --legacy-watch --inspect=0.0.0.0:9232 workers/stripeReconciliation.js",
     "dev": "nodemon --legacy-watch --inspect=0.0.0.0:9229 server.js"
   },
   "keywords": [],

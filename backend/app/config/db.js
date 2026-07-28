@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config(); // .env 파일을 실제로 메모리에 로드함?
 import pkg from "pg"; // PostgreSQL과 연결하기 위한 pg 라이브러리
 
 const { Pool } = pkg;
@@ -8,6 +6,7 @@ const useSSL = process.env.DB_SSL === "true";
 // DB 연결 관리자 pool이 생성됨.
 // pool 안에는 여러 개의 DB 연결이 미리 만들어져 있고,
 // 쿼리 실행시 놀고 있는 커넥션이 랜덤으로 픽됨
+
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,

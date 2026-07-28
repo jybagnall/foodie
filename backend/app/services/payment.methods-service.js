@@ -5,7 +5,7 @@ export async function clearDefaultCard(client, userId) {
     UPDATE payment_methods
     SET is_default = FALSE
     WHERE user_id = $1
-    AND is_default = TRUE
+      AND is_default = TRUE
     `;
   await client.query(q, [userId]);
 }
@@ -26,7 +26,11 @@ export async function deleteCard(cardId, userId) {
     WHERE (id = $1 AND user_id = $2)
   `;
 
-  await pool.query(q, [cardId, userId]);
+  const result = await pool.query(q, [cardId, userId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(`Card not found or does not belong to user ${userId}.`);
+  }
 }
 
 export async function getCardsInfo(userId) {
@@ -67,7 +71,8 @@ export async function saveCardToDb(
       brand = EXCLUDED.brand,
       last4 = EXCLUDED.last4,
       exp_month = EXCLUDED.exp_month,
-      exp_year = EXCLUDED.exp_year
+      exp_year = EXCLUDED.exp_year,
+      is_default = EXCLUDED.is_default
     RETURNING id
   `;
   const values = [
@@ -80,5 +85,5 @@ export async function saveCardToDb(
     setAsDefault,
   ];
   const { rows } = await client.query(q, values);
-  return rows[0]?.id ?? null;
+  return rows[0]?.id;
 }

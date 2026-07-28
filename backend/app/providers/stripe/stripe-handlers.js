@@ -57,6 +57,7 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
 
   if (saveCard) {
     try {
+      await client.query("SAVEPOINT save_card");
       const stripePaymentMethod = await stripe.paymentMethods.retrieve(
         paymentIntent.payment_method,
       );

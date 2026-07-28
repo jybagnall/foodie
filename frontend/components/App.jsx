@@ -10,7 +10,6 @@ import OrderLayout from "./routes/OrderLayout";
 import UserLayout from "./routes/UserLayout";
 import AddressForm from "../components/pages/userDashboard/address/AddressForm";
 import AdminLanding from "./admin/AdminLanding";
-import AdminAccount from "./admin/AdminAccount";
 import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import AddressBook from "../components/pages/userDashboard/address/AddressBook";

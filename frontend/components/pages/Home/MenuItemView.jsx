@@ -25,9 +25,13 @@ export default function MenuItemView({ menuItem, onAdd }) {
     <li className="bg-gray-700 rounded-2xl overflow-hidden text-center shadow-md shadow-black/30 flex flex-col">
       <article className="flex flex-col h-full">
         <img
-          src={image?.startsWith("http") ? image : "/logo.jpg"}
+          src={image || "/logo.jpg"}
           alt={name || "Logo"}
           className="w-full h-80 object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null; // 무한 루프 방지
+            e.currentTarget.src = "/logo.jpg";
+          }}
         />
 
         <div className="flex flex-col grow justify-between p-4">

@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import pool from "../app/config/db.js";
 import { handleStripeEvent } from "../app/providers/stripe/stripe-event-service.js";
 
@@ -21,12 +23,13 @@ process.on("SIGTERM", () => {
   console.log("SIGTERM received, finishing current job...");
   isShuttingDown = true;
 });
+// SELECT + LOCK + UPDATE 한번에 실행
+// 루프 안의 트랜잭션은 끝까지 처리됨
+// isShuttingDown이 true가 되면 다음 루프 진입 안 함
 
 async function startStripeWorker() {
   const client = await pool.connect();
-  // SELECT + LOCK + UPDATE 한번에 실행
-  // 루프 안의 트랜잭션은 끝까지 처리됨
-  // isShuttingDown이 true가 되면 다음 루프 진입 안 함
+
   try {
     while (!isShuttingDown) {
       try {

@@ -1,9 +1,4 @@
-import {
-  Dialog,
-  DialogBackdrop,
-  DialogPanel,
-  DialogTitle,
-} from "@headlessui/react";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 export default function EditMenuModal({ modalIsOpen, onCancel, children }) {

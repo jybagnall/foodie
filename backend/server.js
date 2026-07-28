@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "./.env" });
+import "dotenv/config";
 
 import express from "express";
 import http from "http";
@@ -21,10 +20,8 @@ import brandRoutes from "./app/routes/brand.js";
 import { stripeWebhookHandler } from "./app/routes/stripeWebhook.js";
 
 const app = express();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const server = http.createServer(app); // create HTTP server
 
 const PORT = process.env.PORT || 5000;
@@ -51,7 +48,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-// 요청 로그
+// 요청 로그 (라우터보다 앞에 있어서 모든 요청이 기록됨)
 app.use((req, res, next) => {
   console.log(
     `🚩req at [${new Date().toISOString()}]: ${req.method} ${req.url}`,

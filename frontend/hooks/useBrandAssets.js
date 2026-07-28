@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import AddressService from "../services/address.service";
 import BrandService from "../services/brand.service";
 
 export default function useBrandAssets() {

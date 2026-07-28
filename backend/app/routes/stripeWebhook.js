@@ -1,18 +1,13 @@
 import express from "express";
 import Stripe from "stripe";
 import pool from "../config/db.js";
+import { STRIPE_HANDLED_EVENTS } from "../constants/stripe.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/stripe/webhook
 // 결제 완료 후, Stripe가 Webhook URL 호출함.
-
-const HANDLED_EVENTS = [
-  "payment_intent.succeeded",
-  "payment_intent.payment_failed",
-  "refund.updated", // 카드사에서 환불 처리됨
-];
 
 // Stripe가 카드사와 통신 후 결제를 처리하고 나면, 서버에 결과를 알림
 export const stripeWebhookHandler = async (req, res) => {
@@ -37,19 +32,24 @@ export const stripeWebhookHandler = async (req, res) => {
 
   // 결제 성공, 실패 이벤트만 받고 Stripe에게 응답은 해야함
   // 결제 성공? 다음 try로 넘어감
-  if (!HANDLED_EVENTS.includes(event.type)) {
+  if (!STRIPE_HANDLED_EVENTS.includes(event.type)) {
     return res.status(200).end();
   }
 
   // 서명 검증 후, 이벤트 저장 & Stripe에게 응답. 이제 Worker 실행됨.
   // Worker는 setInterval로 3초마다 자동 실행 중.
   try {
-    await pool.query(
-      `INSERT INTO stripe_events (id, event_type, payload)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (id) DO NOTHING`,
+    const { rowCount } = await pool.query(
+      `INSERT INTO stripe_events (stripe_event_id, event_type, payload)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (stripe_event_id) DO NOTHING`,
       [event.id, event.type, event],
     );
+
+    if (rowCount === 0) {
+      console.log("Duplicate event, already recorded:", event.id);
+    }
+
     res.status(200).end(); // Stripe에게 이벤트 잘 받음을 알림
   } catch (err) {
     console.error("Webhook handler error:", err);

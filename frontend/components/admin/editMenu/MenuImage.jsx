@@ -9,8 +9,8 @@ export default function MenuImage({ image, editable, onEdit }) {
       }`}
     >
       <img
-        src={image?.startsWith("http") ? image : "/logo.jpg"}
-        alt="Menu image"
+        src={image || "/logo.jpg"}
+        alt={name || "Logo"}
         className={`w-full h-80 object-cover ${editable ? "cursor-pointer hover:ring-4 hover:ring-indigo-400 hover:ring-offset-2 hover:ring-offset-gray-900" : ""}`}
       />
 

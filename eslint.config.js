@@ -3,6 +3,18 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import { defineConfig, globalIgnores } from "eslint/config";
+import react from "eslint-plugin-react";
+
+const commonRules = {
+  "no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
+  "no-multi-spaces": "error",
+  "space-infix-ops": "error",
+  "space-before-blocks": "error",
+  "keyword-spacing": ["error", { before: true, after: true }],
+  "object-curly-spacing": ["error", "always"],
+  "array-bracket-spacing": ["error", "never"],
+  "comma-spacing": ["error", { before: false, after: true }],
+};
 
 export default defineConfig([
   globalIgnores(["dist"]),
@@ -15,16 +27,7 @@ export default defineConfig([
       globals: globals.node,
     },
     extends: [js.configs.recommended],
-    rules: {
-      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
-      "no-multi-spaces": "error",
-      "space-infix-ops": "error",
-      "space-before-blocks": "error",
-      "keyword-spacing": ["error", { before: true, after: true }],
-      "object-curly-spacing": ["error", "always"],
-      "array-bracket-spacing": ["error", "never"],
-      "comma-spacing": ["error", { before: false, after: true }],
-    },
+    rules: commonRules,
   },
 
   // JS
@@ -36,16 +39,7 @@ export default defineConfig([
       globals: globals.browser,
     },
     extends: [js.configs.recommended],
-    rules: {
-      "no-multi-spaces": "error",
-      "space-infix-ops": "error",
-      "space-before-blocks": "error",
-      "keyword-spacing": ["error", { before: true, after: true }],
-      "object-curly-spacing": ["error", "always"],
-      "array-bracket-spacing": ["error", "never"],
-      "comma-spacing": ["error", { before: false, after: true }],
-      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
-    },
+    rules: commonRules,
   },
 
   // JSX
@@ -60,23 +54,23 @@ export default defineConfig([
       },
     },
     plugins: {
+      react,
       reactHooks,
       reactRefresh,
     },
     extends: [
       js.configs.recommended,
+      react.configs.flat.recommended,
+      react.configs.flat["jsx-runtime"], // React import 강제 안 함
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
     rules: {
-      "no-multi-spaces": "error",
-      "space-infix-ops": "error",
-      "space-before-blocks": "error",
-      "keyword-spacing": ["error", { before: true, after: true }],
-      "object-curly-spacing": ["error", "always"],
-      "array-bracket-spacing": ["error", "never"],
-      "comma-spacing": ["error", { before: false, after: true }],
-      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+      ...commonRules,
+      "react/prop-types": "off",
+    },
+    settings: {
+      react: { version: "detect" },
     },
   },
 ]);

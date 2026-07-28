@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import AccountService from "../../services/account.service";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import Button from "../UI/Button";
-import Input from "../UI/Input";
 import { Link } from "react-router-dom";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import PasswordField from "../UI/PasswordField";
@@ -100,6 +99,12 @@ export default function ResetPassword() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
+        {errorMsg && (
+          <div className="mb-4">
+            <ErrorAlert title="We couldn’t reset password" message={errorMsg} />
+          </div>
+        )}
+
         <form
           className="flex flex-col gap-5 mt-20"
           onSubmit={handleSubmit(onPasswordSubmit)}

@@ -6,7 +6,7 @@ export async function acknowledgeFailures(lastSeenTimeId) {
     SET notified_at = NOW()
     WHERE status = 'dead'
     AND notified_at IS NULL
-    AND AND id <= $1
+    AND id <= $1
   `;
 
   await pool.query(q, [lastSeenTimeId]);
@@ -15,10 +15,9 @@ export async function acknowledgeFailures(lastSeenTimeId) {
 export async function getDeadEventsCount() {
   const q = `
     SELECT COUNT(*)::int AS count,
-    MAX(created_at) AS last_seen_id
+    MAX(id) AS last_seen_id
     FROM stripe_events
-    WHERE status = 'dead'
-    AND notified_at IS NULL
+    WHERE status = 'dead' AND notified_at IS NULL
     `;
   const result = await pool.query(q);
   const count = result.rows[0]?.count ?? 0;
@@ -63,7 +62,7 @@ export async function getUnprocessedEvents({
       AND ($1::text IS NULL OR event_type = $1)
       AND ($2::text IS NULL OR status = $2)
       AND ($3::timestamp IS NULL OR created_at >= $3)
-    ORDER BY created_at DESC, id DESC
+    ORDER BY id DESC
     LIMIT $4
     OFFSET $5
     `;
@@ -99,8 +98,3 @@ export async function getUnprocessedEventsCount() {
   const result = await pool.query(q);
   return result.rows[0] ?? { failedCount: 0, deadCount: 0 };
 }
-
-// getFailedEvents()
-// retryEvent(id)
-// replayEvent(id)
-// getEventLogs(id)

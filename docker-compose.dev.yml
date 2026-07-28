@@ -128,6 +128,33 @@ services:
     networks:
       - foodie-net
 
+  stripe-reconciliation-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-dev
+    working_dir: /app
+    command: npm run stripe-reconciliation
+    container_name: foodie-stripe-reconciliation-worker
+    ports:
+      - "9232:9232"
+    restart: on-failure
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=foodie-db
+      - DB_PORT=5432
+      - DB_SSL=false
+      - DOCKERIZED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./postgres/.env
+    networks:
+      - foodie-net
+
 volumes:
   pgdata:
 

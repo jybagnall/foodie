@@ -7,8 +7,8 @@ export default function Button({
   ...props
 }) {
   const baseStyle = textOnly
-    ? "cursor-pointer bg-transparent border-0 transition-colors"
-    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200 py-1 px-3";
+    ? "cursor-pointer bg-transparent border-0 transition-colors inline-flex items-center justify-center"
+    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200 py-1 px-3 inline-flex items-center justify-center";
 
   const disabledStyle =
     "bg-gray-300 text-gray-500 cursor-not-allowed shadow-md pointer-events-none";
