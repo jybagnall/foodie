@@ -28,7 +28,7 @@ export default function AddingItemFeedback({ t, item, isNew, nextQty }) {
           navigate("/cart");
           toast.dismiss(t.id);
         }}
-        className="ml-3 text-sm font-medium text-gray-600 cursor-pointer"
+        className="ml-3 text-sm font-medium text-orange-600 hover:text-orange-600 transition-colors cursor-pointer"
       >
         View the cart
       </Button>

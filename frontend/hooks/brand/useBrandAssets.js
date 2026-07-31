@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import BrandService from "../services/brand.service";
+import BrandService from "../../services/brand.service";
 
 export default function useBrandAssets() {
   const { data: assets = {} } = useQuery({

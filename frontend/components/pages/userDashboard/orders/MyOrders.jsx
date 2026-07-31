@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import useMyOrders from "../../../../hooks/useMyOrders";
+import useMyOrders from "../../../../hooks/order/useMyOrders";
 import Spinner from "../../../user_feedback/Spinner";
 import PageError from "../../../user_feedback/PageError";
 import { ShoppingBagIcon } from "@heroicons/react/24/outline";

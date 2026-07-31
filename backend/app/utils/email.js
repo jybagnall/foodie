@@ -1,9 +1,7 @@
-import { Resend } from "resend";
+import { resend } from "../config/resend.js";
 
 export async function sendAdminInvitationEmail(to, inviteLink) {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     await resend.emails.send({
       from: "Acme <onboarding@resend.dev>",
       to,
@@ -18,8 +16,6 @@ export async function sendAdminInvitationEmail(to, inviteLink) {
 
 export async function sendPasswordResetEmail(to, resetLink) {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     await resend.emails.send({
       from: "Acme <onboarding@resend.dev>",
       to,

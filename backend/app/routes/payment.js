@@ -1,5 +1,5 @@
 import express from "express";
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import { findUniquePaymentByOrderId } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import {
@@ -11,7 +11,6 @@ import {
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.get("/client-secret", verifyUserAuth, async (req, res) => {
   try {

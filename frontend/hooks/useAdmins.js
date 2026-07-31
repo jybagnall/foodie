@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import AdminService from "../services/admin.service";
-import useAccessToken from "./useAccessToken";
-import useUserId from "./useUserId";
+import useAccessToken from "../auth/useAccessToken";
+import useUserId from "../auth/useUserId";
 
-export default function useAdminList() {
+export default function useAdmins() {
   const accessToken = useAccessToken();
   const userId = useUserId();
 

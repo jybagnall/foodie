@@ -1,11 +1,27 @@
-import { Resend } from "resend";
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
+
+import { resend } from "../config/resend.js";
+
 import { getOrderConfirmationDetails } from "../services/order-service.js";
 import { formatCurrency } from "./orderCalculations.js";
 import { formatPaymentMethodDisplay } from "./paymentInfo.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Promise.race로 타임아웃을 거는 이유:
+// 이메일 발송이 멈추면, 그 뒤에 있는 결제 이벤트들도 전부 처리가 안 되고 줄줄이 밀림.
+
+// resend.emails.send()가 멈춰있어도 15초 뒤에 이 함수는 종료되고,
+// 워커는 다음 이벤트로 계속 진행 가능.
+// 백그라운드에 남은 이메일 요청은 나중에 알아서 성공하거나 실패.
+
+async function withTimeout(promise, ms, message) {
+  let timer;
+
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 export async function sendOrderConfirmationEmail(
   client,
@@ -148,13 +164,23 @@ export async function sendOrderConfirmationEmail(
 </div>
     `;
 
-    await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
-      to: email,
-      subject: "Payment Processed for Your Foodie Order",
-      html,
-    });
+    await withTimeout(
+      resend.emails.send({
+        from: "Acme <onboarding@resend.dev>",
+        to: email,
+        subject: "Payment Processed for Your Foodie Order",
+        html,
+      }),
+      15000,
+      "Resend email send timed out",
+    );
   } catch (err) {
-    console.error("❌ Failed to send email:", err);
+    if (err.message === "Resend email send timed out") {
+      console.warn(
+        `Email sending timed out for order ${orderId}. Continuing worker.`,
+      );
+    } else {
+      console.error("❌ Failed to send email:", err);
+    }
   }
 }

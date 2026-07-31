@@ -1,6 +1,6 @@
 import { toast } from "react-hot-toast";
 import { currencyFormatter } from "../../../../utils/format";
-import useServerCartActions from "../../../../hooks/useServerCartActions";
+import useServerCartActions from "../../../../hooks/cart/useServerCartActions";
 import AddingItemFeedback from "../../../user_feedback/AddingItemFeedback";
 
 export default function OrderPreviewItem({ item, showPrice = false }) {

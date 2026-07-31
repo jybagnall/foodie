@@ -1,4 +1,4 @@
-import useGuestCartActions from "../../../hooks/useGuestCartActions";
+import useGuestCartActions from "../../../hooks/cart/useGuestCartActions";
 import MenuItemView from "./MenuItemView";
 
 export default function GuestMenuItem({ menuItem }) {

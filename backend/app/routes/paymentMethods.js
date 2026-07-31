@@ -1,5 +1,5 @@
 import express from "express";
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import {
   deleteCard,
@@ -10,7 +10,6 @@ import { getPaymentMethodByStripeId } from "../controllers/paymentMethod.control
 import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.get("/", verifyUserAuth, async (req, res, next) => {
   try {

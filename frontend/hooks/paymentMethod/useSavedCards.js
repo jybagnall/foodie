@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import PaymentMethodsService from "../services/payment-methods.service";
-import useAccessToken from "./useAccessToken";
-import useUserId from "./useUserId";
+import PaymentMethodsService from "../../services/payment-methods.service";
+import useAccessToken from "../auth/useAccessToken";
+import useUserId from "../auth/useUserId";
 
 export default function useSavedCards() {
   const accessToken = useAccessToken();

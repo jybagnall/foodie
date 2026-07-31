@@ -1,7 +1,5 @@
-import Stripe from "stripe";
 import { updateUserStripeId } from "../services/account-service.js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { stripe } from "../config/stripe.js";
 
 export async function createStripeCustomerId(createdUser, name, email) {
   let stripeCustomerId = null;

@@ -1,11 +1,9 @@
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import {
   FREE_DELIVERY_THRESHOLD,
   DELIVERY_FEE,
   STATE_TAX_RATES,
 } from "../constants/delivery.js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export function calculateOrderSubTotal(order) {
   const subTotalAmount = order.reduce(

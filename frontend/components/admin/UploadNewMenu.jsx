@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Input from "../UI/Input";
 import Button from "../UI/Button";
 import BackToDash from "../UI/BackToDash";
-import useMenusMutations from "../../hooks/useMenusMutations";
+import useMenusMutations from "../../hooks/menu/useMenusMutations";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { menuFieldConfigs, menuValidationRules } from "../../constants/menu";

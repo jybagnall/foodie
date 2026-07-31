@@ -1,8 +1,5 @@
-import { Toaster } from "react-hot-toast";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CartContextProvider } from "../contexts/CartContext";
-import { AuthContextProvider } from "../contexts/AuthContext";
-import { SidebarContextProvider } from "../contexts/SidebarContext";
+import { Routes, Route } from "react-router-dom";
+
 import AdminRoute from "./routes/AdminRoute";
 import UserProtectedRoutes from "./routes/UserProtectedRoutes";
 import AdminLayout from "./routes/AdminLayout";
@@ -14,7 +11,6 @@ import AdminInvite from "./admin/AdminInvite";
 import AdminSignup from "./admin/AdminSignup";
 import AddressBook from "../components/pages/userDashboard/address/AddressBook";
 import BrandingSettings from "./admin/BrandingSettings";
-import CartMergeHandler from "./system/CartMergeHandler";
 import DeleteAccount from "./pages/userDashboard/account/DeleteAccount";
 import EditProfile from "./pages/userDashboard/account/EditProfile";
 import EditMenuPage from "./admin/editMenu/EditMenuPage";
@@ -43,103 +39,72 @@ import EditMenuDetails from "./admin/editMenu/EditMenuDetails";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <CartContextProvider>
-        <AuthContextProvider>
-          <CartMergeHandler />
-          <SidebarContextProvider>
-            <Toaster position="top-center" reverseOrder={false} />
-            <div className="h-screen flex flex-col">
-              <Header />
-              <div className="flex-1">
-                <Routes>
-                  <Route path="/" element={<UserLanding />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route
-                    path="/create-admin-account"
-                    element={<AdminSignup />}
-                  />
-                  <Route path="/cart" element={<ViewCart />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route
-                    path="/my-account"
-                    element={
-                      <UserProtectedRoutes>
-                        <UserLayout />
-                      </UserProtectedRoutes>
-                    }
-                  >
-                    <Route index element={<MyAccount />} />
-                    <Route path="orders/:orderId" element={<OrderDetail />} />
-                    <Route path="orders" element={<MyOrders />} />
-                    <Route path="address" element={<AddressBook />} />
-                    <Route path="address/new" element={<AddressForm />} />
-                    <Route path="address/:id/edit" element={<AddressForm />} />
-                    <Route path="edit/:field" element={<EditProfile />} />
-                    <Route
-                      path="account-deletion"
-                      element={<DeleteAccount />}
-                    />
-                    <Route path="payment-methods" element={<PaymentMethod />} />
-                  </Route>
+    <div className="h-screen flex flex-col">
+      <Header />
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<UserLanding />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/create-admin-account" element={<AdminSignup />} />
+          <Route path="/cart" element={<ViewCart />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/my-account"
+            element={
+              <UserProtectedRoutes>
+                <UserLayout />
+              </UserProtectedRoutes>
+            }
+          >
+            <Route index element={<MyAccount />} />
+            <Route path="orders/:orderId" element={<OrderDetail />} />
+            <Route path="orders" element={<MyOrders />} />
+            <Route path="address" element={<AddressBook />} />
+            <Route path="address/new" element={<AddressForm />} />
+            <Route path="address/:id/edit" element={<AddressForm />} />
+            <Route path="edit/:field" element={<EditProfile />} />
+            <Route path="account-deletion" element={<DeleteAccount />} />
+            <Route path="payment-methods" element={<PaymentMethod />} />
+          </Route>
 
-                  <Route
-                    path="/order"
-                    element={
-                      <UserProtectedRoutes>
-                        <OrderLayout />
-                      </UserProtectedRoutes>
-                    }
-                  >
-                    <Route path="shipping" element={<ShippingForm />} />
-                    <Route
-                      path="payment/:orderId"
-                      element={<OrderPaymentPage />}
-                    />
-                    <Route
-                      path="completed/:orderId"
-                      element={<OrderConfirmation />}
-                    />
-                    <Route
-                      path="completed/:orderId/receipt"
-                      element={<OrderReceipt />}
-                    />
-                  </Route>
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminLayout />
-                      </AdminRoute>
-                    }
-                  >
-                    <Route index element={<AdminLanding />} />
-                    <Route path="new-menu" element={<UploadNewMenu />} />
-                    <Route path="edit-menu" element={<EditMenuPage />} />
-                    <Route
-                      path="edit-menu/:menuId"
-                      element={<EditMenuDetails />}
-                    />
-                    <Route path="invite" element={<AdminInvite />} />
-                    <Route
-                      path="settings/branding"
-                      element={<BrandingSettings />}
-                    />
-                    <Route path="manage" element={<AdminManagement />} />
-                    <Route
-                      path="events-monitor"
-                      element={<StripeEventMonitor />}
-                    />
-                  </Route>
-                  <Route path="*" element={<PageNotFound />} />
-                </Routes>
-              </div>
-            </div>
-          </SidebarContextProvider>
-        </AuthContextProvider>
-      </CartContextProvider>
-    </BrowserRouter>
+          <Route
+            path="/order"
+            element={
+              <UserProtectedRoutes>
+                <OrderLayout />
+              </UserProtectedRoutes>
+            }
+          >
+            <Route path="shipping" element={<ShippingForm />} />
+            <Route path="payment/:orderId" element={<OrderPaymentPage />} />
+            <Route path="completed/:orderId" element={<OrderConfirmation />} />
+            <Route
+              path="completed/:orderId/receipt"
+              element={<OrderReceipt />}
+            />
+          </Route>
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminLanding />} />
+            <Route path="new-menu" element={<UploadNewMenu />} />
+            <Route path="edit-menu" element={<EditMenuPage />} />
+            <Route path="edit-menu/:menuId" element={<EditMenuDetails />} />
+            <Route path="invite" element={<AdminInvite />} />
+            <Route path="settings/branding" element={<BrandingSettings />} />
+            <Route path="manage" element={<AdminManagement />} />
+            <Route path="events-monitor" element={<StripeEventMonitor />} />
+          </Route>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </div>
+    </div>
   );
 }

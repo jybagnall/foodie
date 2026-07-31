@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import OrderService from "../services/order.service";
-import useAccessToken from "./useAccessToken";
-import useUserId from "./useUserId";
+import OrderService from "../../services/order.service";
+import useAccessToken from "../auth/useAccessToken";
+import useUserId from "../auth/useUserId";
 
 export default function useCancelOrder(orderId) {
   const accessToken = useAccessToken();

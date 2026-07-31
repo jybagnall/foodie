@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import PageError from "../../user_feedback/PageError";
-import useMenus from "../../../hooks/useMenus";
+import useMenus from "../../../hooks/menu/useMenus";
 import MenuItemSwitcher from "./MenuItemSwitcher";
 
 export default function UserLanding() {

@@ -1,12 +1,12 @@
 import toast from "react-hot-toast";
 import { useCallback, useContext } from "react";
-import CartContext from "../contexts/CartContext";
+import CartContext from "../../contexts/CartContext";
 import useServerCart from "./useServerCart";
 import {
   createCartSyncPayload,
   createNextCartAfterAdd,
   createNextCartAfterDecrease,
-} from "../utils/calculateCart";
+} from "../../utils/calculateCart";
 
 export default function useServerCartActions() {
   const { items, setItems, selectedItemIds, setSelectedItemIds } =

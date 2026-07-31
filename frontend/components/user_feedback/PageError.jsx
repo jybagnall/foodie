@@ -1,5 +1,5 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import useBrandAssets from "../../hooks/useBrandAssets";
+import useBrandAssets from "../../hooks/brand/useBrandAssets";
 
 export default function PageError({
   title = "An unexpected error occured",

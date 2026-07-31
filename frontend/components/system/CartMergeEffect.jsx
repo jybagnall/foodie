@@ -1,4 +1,4 @@
-import { useCartMergeOnLogin } from "../../hooks/useCartMergeOnLogin";
+import { useCartMergeOnLogin } from "../../hooks/cart/useCartMergeOnLogin";
 
 export default function CartMergeEffect({ accessToken }) {
   useCartMergeOnLogin(accessToken);

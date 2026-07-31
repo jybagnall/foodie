@@ -1,9 +1,7 @@
 import "dotenv/config";
-import Stripe from "stripe";
+import { stripe } from "../app/config/stripe";
 import pool from "../app/config/db";
 import { STRIPE_HANDLED_EVENTS } from "../app/constants/stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 async function getLastCheckedAt() {
   const { rows } = await pool.query(

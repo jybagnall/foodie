@@ -6,7 +6,7 @@ import Spinner from "../../user_feedback/Spinner";
 import EmptyDataState from "../../UI/EmptyDataState";
 import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
 import { canRetryPayment } from "../../../utils/orderHelpers";
-import useOrderDetails from "../../../hooks/useOrderDetails";
+import useOrderDetails from "../../../hooks/order/useOrderDetails";
 
 // 라우터 진입점, 3DS 복귀 처리, 주문 관련 데이터 fetch
 
@@ -31,10 +31,10 @@ export default function OrderPaymentPage() {
   }, [paymentStatus, navigate]);
 
   useEffect(() => {
-    // 결제 시도의 증거가 없으면 결제창(StripePaymentSetup)이 렌더링됨
-    if (!redirectPaymentIntentId) return; // ❗에러의 원인
+    if (!redirectPaymentIntentId) return; // ❗
 
     grantPaymentFlowAccess(); // "결제 완료 페이지에 접근 허용" 플래그 설정
+
     window.location.replace(
       `/order/completed/${orderId}?payment_intent=${redirectPaymentIntentId}`,
     );
@@ -42,6 +42,7 @@ export default function OrderPaymentPage() {
 
   // payment_intent가 있다면 결제창 막고(빈 화면 후) 결제 완료 페이지로
   if (redirectPaymentIntentId) return null;
+
   if (paymentStatus === "paid") return null;
   if (isOrderFetching) return <Spinner />;
 

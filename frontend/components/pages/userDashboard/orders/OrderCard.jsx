@@ -3,7 +3,7 @@ import { useState } from "react";
 import OrderHeader from "./OrderHeader";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderActions from "./OrderActions";
-import useCancelOrder from "../../../../hooks/useCancelOrder";
+import useCancelOrder from "../../../../hooks/order/useCancelOrder";
 
 export default function OrderCard({ order }) {
   const { cancelOrder, isCanceling, isCancelError } = useCancelOrder(order.id);

@@ -1,6 +1,4 @@
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { stripe } from "../config/stripe.js";
 
 export async function getPaymentMethodByStripeId(stripePaymentMethodId, user) {
   if (!stripePaymentMethodId) {

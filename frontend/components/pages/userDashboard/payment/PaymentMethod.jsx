@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CreditCardIcon } from "@heroicons/react/24/outline";
 import EmptyDataState from "../../../UI/EmptyDataState";
-import useSavedCards from "../../../../hooks/useSavedCards";
+import useSavedCards from "../../../../hooks/paymentMethod/useSavedCards";
 import Spinner from "../../../user_feedback/Spinner";
 import SavedCard from "../../Payment/SavedCard";
 import AlertModal from "../../../UI/AlertModal";

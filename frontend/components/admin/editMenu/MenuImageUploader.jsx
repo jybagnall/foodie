@@ -1,6 +1,6 @@
 import { useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo } from "react";
-import useAdminMenuMutations from "../../../hooks/useAdminMenuMutations";
+import useAdminMenuMutations from "../../../hooks/menu/useAdminMenuMutations";
 import SpinnerMini from "../../user_feedback/SpinnerMini";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";

@@ -1,9 +1,9 @@
 import { useCallback, useContext } from "react";
-import CartContext from "../contexts/CartContext";
+import CartContext from "../../contexts/CartContext";
 import {
   createNextCartAfterAdd,
   createNextCartAfterDecrease,
-} from "../utils/calculateCart";
+} from "../../utils/calculateCart";
 
 export default function useGuestCartActions() {
   const { items, setItems, setSelectedItemIds } = useContext(CartContext);

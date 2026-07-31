@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import useMyProfile from "../../../../hooks/useMyProfile";
+import useMyProfile from "../../../../hooks/profile/useMyProfile";
 import Input from "../../../UI/Input";
 import Button from "../../../UI/Button";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
-import useMyProfileMutations from "../../../../hooks/useMyProfileMutations";
+import useMyProfileMutations from "../../../../hooks/profile/useMyProfileMutations";
 import { signupValidationRules } from "../../../../constants/auth";
 
 export default function EditNameForm() {

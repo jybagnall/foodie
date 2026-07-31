@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import { stripe } from "../../config/stripe.js";
 import {
   upsertPaymentFromIntent,
   markPaymentFailed,
@@ -20,8 +20,6 @@ import {
 
 // 여기서의 실패: DB 저장 실패, 주문 상태 업데이트 실패, 트랜잭션 롤백, 서버 장애
 // 이 실패들은 유저에게 실시간으로 보여줄 수 없음.
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // metadata는 모든 값이 string으로 저장됨
 export async function handlePaymentIntentSucceeded(client, paymentIntent) {

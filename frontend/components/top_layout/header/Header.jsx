@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import CurrentCart from "./cart/CurrentCart.jsx";
 import UserName from "./user-menu/UserName.jsx";
-import useBrandAssets from "../../../hooks/useBrandAssets.js";
+import useBrandAssets from "../../../hooks/brand/useBrandAssets.js";
 
 export default function Header() {
   const { assets } = useBrandAssets();

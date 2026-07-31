@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import { getMenuPrices } from "../services/menu-service.js";
 import { getOrderById, updateOrderStatus } from "../services/order-service.js";
 import {
@@ -15,8 +15,6 @@ import {
 import { createRefundRecord } from "../services/refund-service.js";
 import pool from "../config/db.js";
 import { CANCELLABLE_PAYMENT_STATUSES } from "../constants/payment.js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // 1. 메뉴 가격 조회 2. 가격 매핑 3. 총액 계산
 export async function buildOrderWithPrices(client, address, orderPayload) {

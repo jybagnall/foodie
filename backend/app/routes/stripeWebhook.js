@@ -1,10 +1,9 @@
 import express from "express";
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import pool from "../config/db.js";
 import { STRIPE_HANDLED_EVENTS } from "../constants/stripe.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/stripe/webhook
 // 결제 완료 후, Stripe가 Webhook URL 호출함.

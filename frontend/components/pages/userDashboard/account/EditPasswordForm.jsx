@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import useMyProfileMutations from "../../../../hooks/useMyProfileMutations";
+import useMyProfileMutations from "../../../../hooks/profile/useMyProfileMutations";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import Input from "../../../UI/Input";
 import Button from "../../../UI/Button";

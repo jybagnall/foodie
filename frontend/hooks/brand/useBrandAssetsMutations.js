@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import useAccessToken from "./useAccessToken";
-import BrandService from "../services/brand.service";
+import useAccessToken from "../auth/useAccessToken";
+import BrandService from "../../services/brand.service";
 
 export default function useBrandAssetsMutations() {
   const accessToken = useAccessToken();

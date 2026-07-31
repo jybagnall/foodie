@@ -9,7 +9,7 @@ import {
 import useAccessToken from "../../../hooks/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
 import useUserId from "../../../hooks/useUserId";
-import useServerCartActions from "../../../hooks/useServerCartActions";
+import useServerCartActions from "../../../hooks/cart/useServerCartActions";
 // /order/completed/orderId?payment_intent=
 
 export default function OrderConfirmation() {

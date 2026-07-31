@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import MenuService from "../services/menu.service";
+import MenuService from "../../services/menu.service";
 
 export default function useMenus() {
   const {

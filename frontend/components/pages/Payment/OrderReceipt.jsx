@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import Spinner from "../../user_feedback/Spinner";
 import PageError from "../../user_feedback/PageError";
 import { currencyFormatter } from "../../../utils/format";
-import useOrderDetails from "../../../hooks/useOrderDetails";
+import useOrderDetails from "../../../hooks/order/useOrderDetails";
 
 export default function OrderReceipt() {
   const { orderId } = useParams();

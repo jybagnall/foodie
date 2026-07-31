@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useStripe } from "@stripe/react-stripe-js";
-import useSavedCards from "../../../hooks/useSavedCards";
+import useSavedCards from "../../../hooks/paymentMethod/useSavedCards";
 import Button from "../../UI/Button";
 import ErrorAlert from "../../user_feedback/ErrorAlert";
 import SavedCard from "./SavedCard";

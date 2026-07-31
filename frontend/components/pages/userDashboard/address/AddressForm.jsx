@@ -9,10 +9,12 @@ import ErrorAlert from "../../../user_feedback/ErrorAlert";
 
 export default function AddressForm() {
   const { id } = useParams();
-  const isEditMode = Boolean(id);
-  const navigate = useNavigate();
   const { state } = useLocation();
+  const navigate = useNavigate();
+
+  const isEditMode = Boolean(id);
   const address = state?.address;
+
   const methods = useForm();
   const {
     register,

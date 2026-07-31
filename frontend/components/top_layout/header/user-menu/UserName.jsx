@@ -5,8 +5,8 @@ import AuthContext from "../../../../contexts/AuthContext";
 import Spinner from "../../../user_feedback/Spinner";
 import CartContext from "../../../../contexts/CartContext";
 import UserDropdown from "./UserDropdown";
-import useMyProfile from "../../../../hooks/useMyProfile";
-import useServerCart from "../../../../hooks/useServerCart";
+import useMyProfile from "../../../../hooks/profile/useMyProfile";
+import useServerCart from "../../../../hooks/cart/useServerCart";
 import { createCartSyncPayload } from "../../../../utils/calculateCart";
 
 export default function UserName() {

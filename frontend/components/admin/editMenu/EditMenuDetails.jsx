@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import useAdminMenu from "../../../hooks/useAdminMenu";
+import useAdminMenu from "../../../hooks/menu/useAdminMenu";
 import MenuName from "./MenuName";
 import Spinner from "../../user_feedback/Spinner";
 import PageError from "../../user_feedback/PageError";

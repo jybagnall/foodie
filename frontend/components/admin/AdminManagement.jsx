@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import useAdminList from "../../hooks/useAdminList";
+import useAdmins from "../../hooks/useAdmins";
 import BackToDash from "../UI/BackToDash";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { formatDateTime } from "../../utils/format";
 
 export default function AdminManagement() {
-  const { admins, isError, isFetching } = useAdminList();
+  const { admins, isError, isFetching } = useAdmins();
 
   useEffect(() => {
     document.title = "Admin Management| Foodie";

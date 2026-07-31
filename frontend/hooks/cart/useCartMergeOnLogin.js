@@ -1,8 +1,8 @@
 import { useContext, useEffect, useRef } from "react";
-import CartContext from "../contexts/CartContext";
-import { mergeCarts } from "../utils/merge";
+import CartContext from "../../contexts/CartContext";
+import { mergeCarts } from "../../utils/merge";
 import useServerCart from "./useServerCart";
-import { clearCartStorage } from "../storage/cartStorage";
+import { clearCartStorage } from "../../storage/cartStorage";
 
 export function useCartMergeOnLogin(accessToken) {
   const { items, setItems, setSelectedItemIds, switchToServerMode } =

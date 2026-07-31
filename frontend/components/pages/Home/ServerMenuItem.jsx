@@ -1,4 +1,4 @@
-import useServerCartActions from "../../../hooks/useServerCartActions";
+import useServerCartActions from "../../../hooks/cart/useServerCartActions";
 import MenuItemView from "./MenuItemView";
 
 export default function ServerMenuItem({ menuItem }) {

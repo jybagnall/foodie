@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import useAccessToken from "./useAccessToken";
-import AccountService from "../services/account.service";
-import useUserId from "./useUserId";
+import AccountService from "../../services/account.service";
+import useAccessToken from "../auth/useAccessToken";
+import useUserId from "../auth/useUserId";
 
 export default function useMyProfileMutations() {
   const accessToken = useAccessToken();

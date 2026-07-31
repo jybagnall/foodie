@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import useAccessToken from "./useAccessToken";
-import useUserId from "./useUserId";
-import CartService from "../services/cart.service";
+import useAccessToken from "../auth/useAccessToken";
+import useUserId from "../auth/useUserId";
+import CartService from "../../services/cart.service";
 
 export default function useServerCart() {
   const accessToken = useAccessToken();

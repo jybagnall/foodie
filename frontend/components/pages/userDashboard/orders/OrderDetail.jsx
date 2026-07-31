@@ -8,10 +8,10 @@ import OrderHeader from "./OrderHeader";
 import OrderSummary from "../../../OrderUI/OrderSummary";
 import DeliverySummary from "../../../OrderUI/DeliverySummary";
 import PaymentMethodCard from "./PaymentMethodCard";
-import usePaymentMethod from "../../../../hooks/usePaymentMethod";
-import useServerCartActions from "../../../../hooks/useServerCartActions";
-import useServerCart from "../../../../hooks/useServerCart";
-import useOrderDetails from "../../../../hooks/useOrderDetails";
+import usePaymentMethod from "../../../../hooks/paymentMethod/usePaymentMethod";
+import useServerCartActions from "../../../../hooks/cart/useServerCartActions";
+import useServerCart from "../../../../hooks/cart/useServerCart";
+import useOrderDetails from "../../../../hooks/order/useOrderDetails";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)

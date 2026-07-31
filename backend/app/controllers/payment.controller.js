@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import { stripe } from "../config/stripe.js";
 import { updateUserStripeId } from "../services/account-service.js";
 import { getOrderById } from "../services/order-service.js";
 import {
@@ -6,8 +6,6 @@ import {
   findUniquePaymentByOrderId,
 } from "../services/payment-service.js";
 import { identifyCardByUserId } from "../services/payment.methods-service.js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // PaymentIntent 생성 및 DB 저장
 async function createAndStoreStripePaymentIntent(

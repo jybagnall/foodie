@@ -7,7 +7,7 @@ import {
 import { Link } from "react-router-dom";
 import PageError from "../../../user_feedback/PageError";
 import Spinner from "../../../user_feedback/Spinner";
-import useMyProfile from "../../../../hooks/useMyProfile";
+import useMyProfile from "../../../../hooks/profile/useMyProfile";
 import { useEffect } from "react";
 
 // user: id, created_at, name, email

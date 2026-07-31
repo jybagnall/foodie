@@ -1,4 +1,4 @@
-import useBrandAssetsMutations from "../../hooks/useBrandAssetsMutations";
+import useBrandAssetsMutations from "../../hooks/brand/useBrandAssetsMutations";
 import { useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo } from "react";
 import SpinnerMini from "../user_feedback/SpinnerMini";

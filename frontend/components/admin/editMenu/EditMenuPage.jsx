@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import useMenus from "../../../hooks/useMenus";
+import useMenus from "../../../hooks/menu/useMenus";
 import BackToDash from "../../UI/BackToDash";
 import Spinner from "../../user_feedback/Spinner";
 import PageError from "../../user_feedback/PageError";

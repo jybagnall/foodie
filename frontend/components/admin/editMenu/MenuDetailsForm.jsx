@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import useAdminMenuMutations from "../../../hooks/useAdminMenuMutations";
+import useAdminMenuMutations from "../../../hooks/menu/useAdminMenuMutations";
 import SpinnerMini from "../../user_feedback/SpinnerMini";
 import Button from "../../UI/Button";
 import Input from "../../UI/Input";
