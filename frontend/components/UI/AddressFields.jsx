@@ -12,7 +12,7 @@ import { US_STATES } from "../../constants/usStates";
 export default function AddressFields() {
   const {
     register,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useFormContext();
 
   const mainFields = ["full_name", "phone", "street"];
@@ -24,7 +24,7 @@ export default function AddressFields() {
       id={key}
       {...addressFieldConfigs[key]}
       register={register(key, addressValidationRules[key])}
-      error={errors[key]}
+      error={touchedFields[key] ? errors[key] : undefined}
     />
   );
 

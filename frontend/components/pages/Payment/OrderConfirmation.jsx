@@ -6,9 +6,9 @@ import {
   revokePaymentFlowAccess,
   hasPaymentFlowAccess,
 } from "../../../storage/paymentStorage";
-import useAccessToken from "../../../hooks/useAccessToken";
+import useAccessToken from "../../../hooks/auth/useAccessToken";
 import { mapPaymentStatusToContent } from "./mapPaymentStatusToContent";
-import useUserId from "../../../hooks/useUserId";
+import useUserId from "../../../hooks/auth/useUserId";
 import useServerCartActions from "../../../hooks/cart/useServerCartActions";
 // /order/completed/orderId?payment_intent=
 

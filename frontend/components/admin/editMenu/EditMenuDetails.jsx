@@ -8,7 +8,7 @@ import MenuImage from "./MenuImage";
 import MenuPrice from "./MenuPrice";
 import MenuDescription from "./MenuDescription";
 import BackToDash from "../../UI/BackToDash";
-import useAdminMenuMutations from "../../../hooks/useAdminMenuMutations";
+import useAdminMenuMutations from "../../../hooks/menu/useAdminMenuMutations";
 import Button from "../../UI/Button";
 import AlertModal from "../../UI/AlertModal";
 import ErrorAlert from "../../user_feedback/ErrorAlert";

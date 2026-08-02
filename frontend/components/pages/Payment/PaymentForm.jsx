@@ -6,7 +6,7 @@ import ErrorAlert from "../../user_feedback/ErrorAlert";
 import { grantPaymentFlowAccess } from "../../../storage/paymentStorage";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";
-import useAccessToken from "../../../hooks/useAccessToken";
+import useAccessToken from "../../../hooks/auth/useAccessToken";
 import SaveCardPreferences from "./SaveCardPreferences";
 import { confirmStripePayment } from "../../../utils/stripeHelpers";
 

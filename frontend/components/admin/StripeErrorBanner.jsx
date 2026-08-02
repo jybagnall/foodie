@@ -2,11 +2,11 @@ import {
   XMarkIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
+import useStripeEventMonitor from "../../hooks/stripe/useStripeEventMonitor";
 
 //deadSummary = { count: 0, lastSeenId: null }
 export default function StripeErrorBanner() {
-  const { deadSummary, confirmDeadEvents } = useStripeEventMonitor();
+  const { deadSummary, acknowledgeDeadEvents } = useStripeEventMonitor();
 
   const showBanner = deadSummary.count > 0;
   if (!showBanner) return null;
@@ -23,7 +23,7 @@ export default function StripeErrorBanner() {
       <div className="flex gap-3 cursor-pointer">
         <button
           onClick={() => {
-            confirmDeadEvents(deadSummary.lastSeenId);
+            acknowledgeDeadEvents(deadSummary.lastSeenId);
           }}
           className="font-bold cursor-pointer"
         >

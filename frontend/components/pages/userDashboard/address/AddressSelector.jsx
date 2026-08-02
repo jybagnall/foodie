@@ -2,28 +2,18 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import { useFormContext } from "react-hook-form";
 import AddressFields from "../../../UI/AddressFields";
 import AddressSelectableCard from "../../userDashboard/address/AddressSelectableCard";
-import {
-  ADDRESS_MODE,
-  ADDRESS_SELECTOR_HEADINGS,
-  EMPTY_ADDRESS,
-} from "./address.constants";
-
-// EMPTY_ADDRESS = {
-//   full_name: "",
-//   street: "",
-//   city: "",
-//   postal_code: "",
-//   phone: "",
-//   is_default: false,
-// };
+import { ADDRESS_SELECTOR_HEADINGS, EMPTY_ADDRESS } from "./address.constants";
 
 export default function AddressSelector({
   addresses,
-  selectedAddressId,
-  setSelectedAddressId,
-  mode,
-  setMode,
   onAddressSubmit,
+  mode,
+  selectedAddressId,
+  editAddress,
+  createAddress,
+  selectAddress,
+  isEditing,
+  isCreating,
 }) {
   const { handleSubmit, reset } = useFormContext();
 
@@ -33,20 +23,17 @@ export default function AddressSelector({
 
   const handleEditClick = (address) => {
     reset(address);
-    setMode(ADDRESS_MODE.EDIT);
-    setSelectedAddressId(address.id);
+    editAddress(address.id);
   };
 
   const handleNewAddressClick = () => {
     reset(EMPTY_ADDRESS);
-    setMode(ADDRESS_MODE.CREATE);
-    setSelectedAddressId(null); // 새 주소 입력 시 기존 선택 해제
+    createAddress();
   };
 
   const handleRadioChange = (addressId) => {
-    setMode(ADDRESS_MODE.SELECT);
-    setSelectedAddressId(addressId);
     reset(EMPTY_ADDRESS);
+    selectAddress(addressId);
   };
 
   return (
@@ -59,13 +46,12 @@ export default function AddressSelector({
           key={address.id}
           className={`cursor-pointer border rounded-lg p-2 transition ${address.id === selectedAddressId ? "border-blue-600 ring-2 ring-blue-100" : "border-gray-200"}`}
         >
-          {mode === ADDRESS_MODE.EDIT && selectedAddressId === address.id ? (
-            <form
-              onSubmit={handleSubmit(onAddressSubmit)}
+          {isEditing && selectedAddressId === address.id ? (
+            <div
               className={`border rounded-lg p-4 transition border-gray-200 flex flex-col gap-5`}
             >
               <AddressFields />
-            </form>
+            </div>
           ) : (
             <AddressSelectableCard
               address={address}
@@ -78,7 +64,7 @@ export default function AddressSelector({
       ))}
 
       {/* 새 주소 입력창 무조건 보여줌 */}
-      {mode !== ADDRESS_MODE.CREATE && (
+      {!isCreating && (
         <div
           onClick={handleNewAddressClick}
           className="flex items-center gap-2 text-md text-gray-300 cursor-pointer mt-5"
@@ -87,7 +73,7 @@ export default function AddressSelector({
           <p>Enter a new address</p>
         </div>
       )}
-      {mode === ADDRESS_MODE.CREATE && (
+      {isCreating && (
         <form
           onSubmit={handleSubmit(onAddressSubmit)}
           className={`border rounded-lg p-4 transition border-blue-600 ring-2 ring-blue-100 flex flex-col gap-5`}

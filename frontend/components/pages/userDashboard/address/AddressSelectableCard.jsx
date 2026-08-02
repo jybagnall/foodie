@@ -1,6 +1,6 @@
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { formatPhone } from "../../../../utils/format";
-import useAddressBook from "../../../../hooks/useAddressBook";
+import useAddressBook from "../../../../hooks/address/useAddressBook";
 import { useState } from "react";
 import AlertModal from "../../../UI/AlertModal";
 

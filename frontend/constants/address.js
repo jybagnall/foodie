@@ -26,21 +26,16 @@ export const addressValidationRules = {
     required: true,
     minLength: 5,
     maxLength: 20,
+    validate: {
+      noSpacesOnly: (value) =>
+        value.trim().length > 0 || "Name cannot be blank or spaces only.",
+    },
   },
   phone: {
     required: "Phone number is required",
-    minLength: {
-      value: 10,
-      message: "Phone number must be at least 10 digits.",
-    },
-    maxLength: {
-      value: 20,
-      message: "Phone number cannot exceed 20 digits.",
-    },
-    validate: {
-      validFormat: (value) =>
-        /^\+?\d{9,20}$/.test(value.replace(/[-\s]/g, "")) ||
-        "Invalid phone number format.",
+    pattern: {
+      value: /^\d{10,20}$/,
+      message: "Enter 10–20 digits without spaces.",
     },
   },
   street: {
@@ -60,17 +55,9 @@ export const addressValidationRules = {
   },
   postal_code: {
     required: "Postal code is required",
-    minLength: {
-      value: 4,
-      message: "Postal code must be at least 4 digits.",
-    },
-    maxLength: {
-      value: 10,
-      message: "Postal code cannot exceed 10 digits.",
-    },
-    validate: {
-      isNumber: (value) =>
-        /^\d+$/.test(value) || "Postal code must contain only numbers.",
+    pattern: {
+      value: /^\d{4,10}$/,
+      message: "Postal code must contain 4–10 digits.",
     },
   },
   city: {

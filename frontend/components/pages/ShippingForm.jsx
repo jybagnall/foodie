@@ -10,12 +10,12 @@ import Spinner from "../user_feedback/Spinner";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import SpinnerMini from "../user_feedback/SpinnerMini";
 import AddressFields from "../UI/AddressFields";
-import useAddressBook from "../../hooks/useAddressBook";
+import useAddressBook from "../../hooks/address/useAddressBook";
 import AddressSelector from "./userDashboard/address/AddressSelector";
-import useAccessToken from "../../hooks/useAccessToken";
-import useUserId from "../../hooks/useUserId";
+import useAccessToken from "../../hooks/auth/useAccessToken";
+import useUserId from "../../hooks/auth/useUserId";
 import { buildOrderDetails } from "../../utils/orderHelpers";
-import { ADDRESS_MODE } from "./userDashboard/address/address.constants";
+import useAddressMode from "../../hooks/address/useAddressMode";
 
 export default function ShippingForm() {
   const { items, totalAmount, subTotalAmount, deliveryFee, selectedItemIds } =
@@ -24,16 +24,25 @@ export default function ShippingForm() {
   const userId = useUserId();
   const { addresses, isFetching, fetchingError, isDeleteError } =
     useAddressBook();
+  const {
+    selectedAddressId,
+    exitAddressForm,
+    isSelecting,
+    isEditing,
+    isCreating,
+    mode,
+    editAddress,
+    createAddress,
+    selectAddress,
+  } = useAddressMode(addresses, isFetching);
 
-  const [mode, setMode] = useState(ADDRESS_MODE.CREATE);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const abortControllerRef = useRef(null);
 
-  const methods = useForm();
+  const methods = useForm({ mode: "onChange" });
 
   const {
     handleSubmit,
@@ -48,33 +57,10 @@ export default function ShippingForm() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isFetching && addresses.length > 0) {
-      setMode(ADDRESS_MODE.SELECT);
-    }
-  }, [isFetching]);
-
-  useEffect(() => {
-    if (addresses.length === 1 && !selectedAddressId) {
-      setSelectedAddressId(addresses[0].id);
-    }
-  }, [addresses]);
-
-  const canSubmitSelect = mode === ADDRESS_MODE.SELECT && !!selectedAddressId;
-  const canSubmitEdit = mode === ADDRESS_MODE.EDIT && isDirty && isValid;
-  const canSubmitCreate = mode === ADDRESS_MODE.CREATE && isValid;
+  const canSubmitSelect = isSelecting && !!selectedAddressId;
+  const canSubmitEdit = isEditing && isDirty && isValid;
+  const canSubmitCreate = isCreating && isValid;
   const isAddressReady = canSubmitSelect || canSubmitEdit || canSubmitCreate;
-
-  const handleCancel = () => {
-    if (mode === ADDRESS_MODE.EDIT) {
-      setMode(ADDRESS_MODE.SELECT);
-      setSelectedAddressId(null);
-    } else if (mode === ADDRESS_MODE.CREATE && addresses.length > 0) {
-      setMode(ADDRESS_MODE.SELECT);
-    } else {
-      navigate("/cart");
-    }
-  };
 
   const onAddressSubmit = async (formData) => {
     if (isOrderProcessing) return;
@@ -94,10 +80,9 @@ export default function ShippingForm() {
     }
 
     // 선택 모드 ? 선택한 주소 제출 : 새 주소나 편집 주소 제출
-    const shippingInfo =
-      mode === ADDRESS_MODE.SELECT
-        ? addresses.find((a) => a.id === selectedAddressId)
-        : formData;
+    const shippingInfo = isSelecting
+      ? addresses.find((a) => a.id === selectedAddressId)
+      : formData;
 
     if (!shippingInfo) {
       setErrorMsg("Please select or enter a shipping address.");
@@ -146,9 +131,18 @@ export default function ShippingForm() {
     },
   ];
 
-  const currentError = errorConfigs.find(({ condition }) => condition);
+  // 조건이 처음으로 true인 객체
+  const resolvedError = errorConfigs.find((config) => config.condition);
 
-  if (fetchingError) console.error(fetchingError.message);
+  // if, else if, else
+  const error = errorMsg
+    ? { title: "There was a problem", message: errorMsg }
+    : resolvedError
+      ? {
+          title: resolvedError.title,
+          message: resolvedError.errorMsg,
+        }
+      : null;
 
   if (isFetching) {
     return <Spinner />;
@@ -157,17 +151,9 @@ export default function ShippingForm() {
   return (
     <main className="min-h-screen flex justify-center items-start py-20 px-4">
       <section className="w-full max-w-lg bg-gray-700 shadow-2xl rounded-xl p-8 border border-gray-700">
-        {errorMsg && (
+        {error && (
           <div className="mb-4">
-            <ErrorAlert title="There was a problem" message={errorMsg} />
-          </div>
-        )}
-        {currentError && (
-          <div className="mb-4">
-            <ErrorAlert
-              title={currentError.title}
-              message={currentError.errorMsg}
-            />
+            <ErrorAlert title={error.title} message={error.message} />
           </div>
         )}
 
@@ -185,11 +171,14 @@ export default function ShippingForm() {
             {addresses.length > 0 ? (
               <AddressSelector
                 addresses={addresses}
-                selectedAddressId={selectedAddressId}
-                setSelectedAddressId={setSelectedAddressId}
-                mode={mode}
-                setMode={setMode}
                 onAddressSubmit={onAddressSubmit}
+                mode={mode}
+                selectedAddressId={selectedAddressId}
+                editAddress={editAddress}
+                createAddress={createAddress}
+                selectAddress={selectAddress}
+                isEditing={isEditing}
+                isCreating={isCreating}
               />
             ) : (
               <AddressFields />
@@ -200,10 +189,9 @@ export default function ShippingForm() {
                 type="button"
                 textOnly
                 className="text-gray-300 hover:text-gray-400"
-                onClick={handleCancel}
+                onClick={exitAddressForm}
               >
-                {mode === ADDRESS_MODE.EDIT ||
-                (mode === ADDRESS_MODE.CREATE && addresses.length > 0)
+                {isEditing || (isCreating && addresses.length > 0)
                   ? "Back"
                   : "Cancel"}
               </Button>

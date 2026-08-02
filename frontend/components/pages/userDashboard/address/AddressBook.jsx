@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import useAddressBook from "../../../..//hooks/useAddressBook";
+import useAddressBook from "../../../..//hooks/address/useAddressBook";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import AddressCard from "../../userDashboard/address/AddressCard";
 import Spinner from "../../../user_feedback/Spinner";

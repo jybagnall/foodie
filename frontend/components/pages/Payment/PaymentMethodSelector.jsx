@@ -6,7 +6,7 @@ import ErrorAlert from "../../user_feedback/ErrorAlert";
 import SavedCard from "./SavedCard";
 import PaymentFormWrapper from "./PaymentFormWrapper";
 import Spinner from "../../user_feedback/Spinner";
-import useAccessToken from "../../../hooks/useAccessToken";
+import useAccessToken from "../../../hooks/auth/useAccessToken";
 import SpinnerMini from "../../user_feedback/SpinnerMini";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
 import PaymentService from "../../../services/payment.service";

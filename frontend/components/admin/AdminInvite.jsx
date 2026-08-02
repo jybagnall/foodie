@@ -8,7 +8,7 @@ import Spinner from "../user_feedback/Spinner";
 import AdminFeedback from "./AdminFeedback";
 import BackToDash from "../UI/BackToDash";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
-import useAccessToken from "../../hooks/useAccessToken";
+import useAccessToken from "../../hooks/auth/useAccessToken";
 import { signupValidationRules } from "../../constants/auth";
 
 export default function AdminInvite() {

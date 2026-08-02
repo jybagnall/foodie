@@ -5,7 +5,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import PaymentService from "../../../services/payment.service";
 import { getUserErrorMessage } from "../../../utils/getUserErrorMsg";
-import useAccessToken from "../../../hooks/useAccessToken";
+import useAccessToken from "../../../hooks/auth/useAccessToken";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import Spinner from "../../user_feedback/Spinner";
 import EmptyDataState from "../../UI/EmptyDataState";

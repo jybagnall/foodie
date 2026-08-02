@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
-import useStripeEventMonitor from "../../hooks/useStripeEventMonitor";
+import useStripeEventMonitor from "../../hooks/stripe/useStripeEventMonitor";
 import StatusEventSummary from "../StripeEventMonitor/StripeEventSummary";
 import StripeEventFilters from "../StripeEventMonitor/StripeEventFilters";
 import EmptyEventState from "../StripeEventMonitor/EmptyEventState";
@@ -25,7 +25,7 @@ export default function StripeEventMonitor() {
   const {
     events,
     eventTypes,
-    statusSummary,
+    erroredEventCounts,
     filters,
     currentPage,
     totalMatchingEvents,
@@ -121,7 +121,7 @@ export default function StripeEventMonitor() {
         </div>
 
         <section className="bg-gray-700 rounded-2xl shadow-lg p-4 sm:p-8">
-          <StatusEventSummary statusSummary={statusSummary} />
+          <StatusEventSummary erroredEventCounts={erroredEventCounts} />
           <StripeEventFilters
             draftFilters={draftFilters}
             filters={filters}
