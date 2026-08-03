@@ -23,9 +23,7 @@ export default function UserName() {
   const isLoggedIn = !!accessToken;
 
   useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
+    return () => abortControllerRef.current?.abort();
   }, []);
 
   const handleMouseEnter = () => {

@@ -60,7 +60,7 @@ export default function ForgotPassword() {
           <p className="text-lg font-semibold mb-2">Check your email 📩</p>
 
           <p className="text-md text-gray-300 mb-6 leading-relaxed">
-            We've sent you a password reset link. Please check your inbox.
+            We&apos;ve sent you a password reset link. Please check your inbox.
           </p>
 
           <button

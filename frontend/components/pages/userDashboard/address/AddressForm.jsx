@@ -6,6 +6,7 @@ import useAddressBook from "../../../../hooks/address/useAddressBook";
 import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import Button from "../../../UI/Button";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
+import { getAddressFormError } from "../../../../utils/addressErrors";
 
 export default function AddressForm() {
   const { id } = useParams();
@@ -31,6 +32,12 @@ export default function AddressForm() {
     isUpdating,
     isUpdateError,
   } = useAddressBook();
+
+  const error = getAddressFormError({
+    isEditMode,
+    isUpdateError,
+    isCreateError,
+  });
 
   useEffect(() => {
     document.title = "Address Form | Foodie";
@@ -92,29 +99,12 @@ export default function AddressForm() {
     navigate("/my-account/address");
   };
 
-  const errorConfigs = isEditMode
-    ? {
-        condition: isUpdateError,
-        title: "Couldn't update address",
-        message:
-          "Something went wrong while updating your address. Please try again.",
-      }
-    : {
-        condition: isCreateError,
-        title: "Couldn't save address",
-        message:
-          "Something went wrong while saving your new address. Please try again.",
-      };
-
   return (
     <main className="min-h-screen flex justify-center items-start py-10 px-4">
       <section className="w-full max-w-lg bg-gray-700 border-2 border-gray-400 shadow-xl rounded-xl p-8">
-        {errorConfigs.condition && (
+        {error && (
           <div className="mb-4">
-            <ErrorAlert
-              title={errorConfigs.title}
-              message={errorConfigs.message}
-            />
+            <ErrorAlert title={error.title} message={error.errorMsg} />
           </div>
         )}
 

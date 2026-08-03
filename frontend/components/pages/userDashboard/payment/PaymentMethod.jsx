@@ -6,6 +6,7 @@ import Spinner from "../../../user_feedback/Spinner";
 import SavedCard from "../../Payment/SavedCard";
 import AlertModal from "../../../UI/AlertModal";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
+import PageError from "../../../user_feedback/PageError";
 
 export default function PaymentMethods() {
   const {

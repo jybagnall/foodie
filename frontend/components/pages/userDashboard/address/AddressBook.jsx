@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useEffect } from "react";
 import useAddressBook from "../../../..//hooks/address/useAddressBook";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import AddressCard from "../../userDashboard/address/AddressCard";
 import Spinner from "../../../user_feedback/Spinner";
-import { useEffect } from "react";
+import { getAddressBookError } from "../../../../utils/addressErrors";
 
 export default function AddressBook() {
   const {
@@ -19,43 +20,24 @@ export default function AddressBook() {
     isDeleteError,
   } = useAddressBook();
 
+  const error = getAddressBookError({
+    isDefaultUpdateError,
+    fetchingError,
+    isDeleteError,
+  });
+
   useEffect(() => {
     document.title = "Shipping Addresses | Foodie";
   }, []);
-
-  const errorConfigs = [
-    {
-      condition: isDefaultUpdateError,
-      errorMsg:
-        "We couldn't update your default address. Please try again later.",
-      title: "Update failed",
-    },
-    {
-      condition: fetchingError,
-      errorMsg:
-        "We couldn't load your addresses due to a network issue. Please try again.",
-      title: "Connection issue",
-    },
-    {
-      condition: isDeleteError,
-      errorMsg: "We couldn't delete the address. Please try again later.",
-      title: "Delete failed",
-    },
-  ];
-
-  const currentError = errorConfigs.find(({ condition }) => condition);
 
   if (isFetching || isUpdatingDefaultAddress) return <Spinner />;
 
   return (
     <main className="min-h-screen flex flex-col items-center py-10 px-4 space-y-6">
       <p className="self-start font-bold text-xl">Address Book</p>
-      {currentError && (
+      {error && (
         <div className="w-full max-w-2xl">
-          <ErrorAlert
-            title={currentError.title}
-            message={currentError.errorMsg}
-          />
+          <ErrorAlert title={error.title} message={error.errorMsg} />
         </div>
       )}
 

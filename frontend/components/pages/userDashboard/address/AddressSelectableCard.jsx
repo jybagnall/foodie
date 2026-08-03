@@ -3,6 +3,7 @@ import { formatPhone } from "../../../../utils/format";
 import useAddressBook from "../../../../hooks/address/useAddressBook";
 import { useState } from "react";
 import AlertModal from "../../../UI/AlertModal";
+import Button from "../../../UI/Button";
 
 export default function AddressSelectableCard({
   address,
@@ -46,7 +47,8 @@ export default function AddressSelectableCard({
 
       <div className="ml-4 mt-1 inline-flex items-center gap-x-2 px-2 py-1 font-medium text-gray-300">
         <button
-          className={`w-5 h-5 flex items-center justify-center cursor-pointer`}
+          className="w-5 h-5 flex items-center justify-center cursor-pointer"
+          type="button"
         >
           <PencilIcon
             className="size-5 stroke-current"
@@ -56,7 +58,8 @@ export default function AddressSelectableCard({
         <button
           disabled={isDeleting}
           onClick={() => setShowAlert(true)}
-          className={`w-5 h-5 flex items-center justify-center cursor-pointer`}
+          className="w-5 h-5 flex items-center justify-center cursor-pointer"
+          type="button"
         >
           <TrashIcon className="size-5 stroke-current" />
         </button>

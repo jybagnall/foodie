@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { ADDRESS_MODE } from "../../components/pages/userDashboard/address/address.constants";
 
-export default function useAddressMode(addresses, isFetching) {
+export default function useAddressMode({
+  addresses,
+  isFetching,
+  isDirty,
+  isValid,
+}) {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState(ADDRESS_MODE.CREATE);
@@ -24,6 +28,11 @@ export default function useAddressMode(addresses, isFetching) {
   const isSelecting = mode === ADDRESS_MODE.SELECT;
   const isCreating = mode === ADDRESS_MODE.CREATE;
   const isEditing = mode === ADDRESS_MODE.EDIT;
+
+  const canSubmitSelect = isSelecting && !!selectedAddressId;
+  const canSubmitEdit = isEditing && isDirty && isValid;
+  const canSubmitCreate = isCreating && isValid;
+  const isAddressReady = canSubmitSelect || canSubmitEdit || canSubmitCreate;
 
   const exitAddressForm = () => {
     if (isEditing) {
@@ -61,5 +70,6 @@ export default function useAddressMode(addresses, isFetching) {
     isSelecting,
     isEditing,
     isCreating,
+    isAddressReady,
   };
 }

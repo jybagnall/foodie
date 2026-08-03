@@ -1,21 +1,16 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useFormContext } from "react-hook-form";
 import AddressFields from "../../../UI/AddressFields";
-import AddressSelectableCard from "../../userDashboard/address/AddressSelectableCard";
 import { ADDRESS_SELECTOR_HEADINGS, EMPTY_ADDRESS } from "./address.constants";
+import AddressOption from "./AddressOption";
 
 export default function AddressSelector({
   addresses,
   onAddressSubmit,
-  mode,
-  selectedAddressId,
-  editAddress,
-  createAddress,
-  selectAddress,
-  isEditing,
-  isCreating,
+  addressMode,
 }) {
   const { handleSubmit, reset } = useFormContext();
+  const { mode, selectedAddressId, isEditing, isCreating } = addressMode;
 
   const sortedAddresses = [...addresses].sort(
     (a, b) => Number(b.is_default) - Number(a.is_default),
@@ -23,17 +18,17 @@ export default function AddressSelector({
 
   const handleEditClick = (address) => {
     reset(address);
-    editAddress(address.id);
+    addressMode.editAddress(address.id);
   };
 
   const handleNewAddressClick = () => {
     reset(EMPTY_ADDRESS);
-    createAddress();
+    addressMode.createAddress();
   };
 
   const handleRadioChange = (addressId) => {
     reset(EMPTY_ADDRESS);
-    selectAddress(addressId);
+    addressMode.selectAddress(addressId);
   };
 
   return (
@@ -41,26 +36,16 @@ export default function AddressSelector({
       <h2 className="font-semibold text-lg text-gray-300">
         {ADDRESS_SELECTOR_HEADINGS[mode]}
       </h2>
+
       {sortedAddresses.map((address) => (
-        <div
+        <AddressOption
           key={address.id}
-          className={`cursor-pointer border rounded-lg p-2 transition ${address.id === selectedAddressId ? "border-blue-600 ring-2 ring-blue-100" : "border-gray-200"}`}
-        >
-          {isEditing && selectedAddressId === address.id ? (
-            <div
-              className={`border rounded-lg p-4 transition border-gray-200 flex flex-col gap-5`}
-            >
-              <AddressFields />
-            </div>
-          ) : (
-            <AddressSelectableCard
-              address={address}
-              handleEditClick={handleEditClick}
-              selectedAddressId={selectedAddressId}
-              handleRadioChange={handleRadioChange}
-            />
-          )}
-        </div>
+          address={address}
+          selectedAddressId={selectedAddressId}
+          showEditForm={isEditing && selectedAddressId === address.id}
+          handleEditClick={handleEditClick}
+          handleRadioChange={handleRadioChange}
+        />
       ))}
 
       {/* 새 주소 입력창 무조건 보여줌 */}
@@ -73,6 +58,7 @@ export default function AddressSelector({
           <p>Enter a new address</p>
         </div>
       )}
+
       {isCreating && (
         <form
           onSubmit={handleSubmit(onAddressSubmit)}

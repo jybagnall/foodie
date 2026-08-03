@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import AuthContext from "../../contexts/AuthContext";
 import { useContext, useEffect, useRef, useState } from "react";
+import AuthContext from "../../contexts/AuthContext";
 import AccountService from "../../services/account.service";
 import Button from "../UI/Button";
 import Input from "../UI/Input";
@@ -9,6 +9,7 @@ import Spinner from "../user_feedback/Spinner";
 import ErrorAlert from "../user_feedback/ErrorAlert";
 import { getUserErrorMessage } from "../../utils/getUserErrorMsg";
 import { signupValidationRules } from "../../constants/auth";
+import SignupPrompt from "../authUI/SignupPrompt";
 
 export default function Login() {
   const authContext = useContext(AuthContext);
@@ -106,20 +107,7 @@ export default function Login() {
                 Sign In
               </Button>
 
-              <div className="flex flex-col items-center text-center mt-6 text-gray-200 text-sm">
-                <p className="flex items-center w-full justify-center gap-2">
-                  <span className="h-px w-40 bg-gray-300" />
-                  <span className="whitespace-nowrap">New to Foodie?</span>
-                  <span className="h-px w-40 bg-gray-300" />
-                </p>
-
-                <Link
-                  to="/signup"
-                  className="mt-4 text-blue-200 hover:text-blue-300 cursor-pointer font-semibold transition-all duration-200"
-                >
-                  Create a new Foodie account
-                </Link>
-              </div>
+              <SignupPrompt />
             </div>
           </form>
         </section>

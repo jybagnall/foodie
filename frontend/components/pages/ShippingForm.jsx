@@ -14,40 +14,46 @@ import useAddressBook from "../../hooks/address/useAddressBook";
 import AddressSelector from "./userDashboard/address/AddressSelector";
 import useAccessToken from "../../hooks/auth/useAccessToken";
 import useUserId from "../../hooks/auth/useUserId";
-import { buildOrderDetails } from "../../utils/orderHelpers";
+import { buildOrderDetails, isCartReady } from "../../utils/orderHelpers";
 import useAddressMode from "../../hooks/address/useAddressMode";
+import { getShippingFormError } from "../../utils/addressErrors";
 
 export default function ShippingForm() {
-  const { items, totalAmount, subTotalAmount, deliveryFee, selectedItemIds } =
-    useContext(CartContext);
+  const methods = useForm({ mode: "onChange" });
+  const {
+    handleSubmit,
+    formState: { isValid, isDirty },
+  } = methods;
+
+  const cart = useContext(CartContext);
   const accessToken = useAccessToken();
   const userId = useUserId();
+
   const { addresses, isFetching, fetchingError, isDeleteError } =
     useAddressBook();
+
+  const [isOrderProcessing, setIsOrderProcessing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const addressMode = useAddressMode({
+    addresses,
+    isFetching,
+    isDirty,
+    isValid,
+  });
+
   const {
     selectedAddressId,
     exitAddressForm,
     isSelecting,
     isEditing,
     isCreating,
-    mode,
-    editAddress,
-    createAddress,
-    selectAddress,
-  } = useAddressMode(addresses, isFetching);
+    isAddressReady,
+  } = addressMode;
 
-  const [isOrderProcessing, setIsOrderProcessing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const abortControllerRef = useRef(null);
-
-  const methods = useForm({ mode: "onChange" });
-
-  const {
-    handleSubmit,
-    formState: { isValid, isDirty },
-  } = methods;
 
   useEffect(() => {
     document.title = "Shipping Form | Foodie";
@@ -57,22 +63,18 @@ export default function ShippingForm() {
     };
   }, []);
 
-  const canSubmitSelect = isSelecting && !!selectedAddressId;
-  const canSubmitEdit = isEditing && isDirty && isValid;
-  const canSubmitCreate = isCreating && isValid;
-  const isAddressReady = canSubmitSelect || canSubmitEdit || canSubmitCreate;
+  const error = getShippingFormError({
+    fetchingError,
+    isDeleteError,
+    errorMsg,
+  });
+
+  const backButtonLabel =
+    isEditing || (isCreating && addresses.length > 0) ? "Back" : "Cancel";
 
   const onAddressSubmit = async (formData) => {
     if (isOrderProcessing) return;
-    if (
-      items.length === 0 ||
-      selectedItemIds.size === 0 ||
-      !totalAmount ||
-      !subTotalAmount ||
-      deliveryFee === null ||
-      subTotalAmount <= 0 ||
-      totalAmount <= 0
-    ) {
+    if (!isCartReady(cart)) {
       setErrorMsg(
         "Your cart is empty. Please add items before placing an order.",
       );
@@ -90,6 +92,7 @@ export default function ShippingForm() {
     }
 
     abortControllerRef.current = new AbortController();
+
     const orderService = new OrderService(
       abortControllerRef.current.signal,
       () => accessToken,
@@ -97,8 +100,8 @@ export default function ShippingForm() {
 
     const orderDetails = buildOrderDetails(
       shippingInfo,
-      items,
-      selectedItemIds,
+      cart.items,
+      cart.selectedItemIds,
     );
     setIsOrderProcessing(true);
 
@@ -117,32 +120,6 @@ export default function ShippingForm() {
       setIsOrderProcessing(false);
     }
   };
-
-  const errorConfigs = [
-    {
-      condition: fetchingError,
-      errorMsg: "We couldn't load your saved address.",
-      title: "We couldn't load your saved address",
-    },
-    {
-      condition: isDeleteError,
-      errorMsg: "We couldn't delete the address. Please try again later.",
-      title: "Delete failed",
-    },
-  ];
-
-  // 조건이 처음으로 true인 객체
-  const resolvedError = errorConfigs.find((config) => config.condition);
-
-  // if, else if, else
-  const error = errorMsg
-    ? { title: "There was a problem", message: errorMsg }
-    : resolvedError
-      ? {
-          title: resolvedError.title,
-          message: resolvedError.errorMsg,
-        }
-      : null;
 
   if (isFetching) {
     return <Spinner />;
@@ -172,13 +149,7 @@ export default function ShippingForm() {
               <AddressSelector
                 addresses={addresses}
                 onAddressSubmit={onAddressSubmit}
-                mode={mode}
-                selectedAddressId={selectedAddressId}
-                editAddress={editAddress}
-                createAddress={createAddress}
-                selectAddress={selectAddress}
-                isEditing={isEditing}
-                isCreating={isCreating}
+                addressMode={addressMode}
               />
             ) : (
               <AddressFields />
@@ -188,12 +159,10 @@ export default function ShippingForm() {
               <Button
                 type="button"
                 textOnly
-                className="text-gray-300 hover:text-gray-400"
+                className="text-gray-200 hover:text-gray-300"
                 onClick={exitAddressForm}
               >
-                {isEditing || (isCreating && addresses.length > 0)
-                  ? "Back"
-                  : "Cancel"}
+                {backButtonLabel}
               </Button>
               <Button
                 type="submit"

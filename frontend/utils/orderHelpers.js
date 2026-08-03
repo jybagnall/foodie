@@ -85,3 +85,13 @@ const RETRYABLE_PAYMENT_STATUSES = [
 export function canRetryPayment(paymentStatus) {
   return RETRYABLE_PAYMENT_STATUSES.includes(paymentStatus);
 }
+
+export function isCartReady(cart) {
+  return (
+    cart.items.length > 0 &&
+    cart.selectedItemIds.size > 0 &&
+    cart.totalAmount > 0 &&
+    cart.subTotalAmount > 0 &&
+    cart.deliveryFee !== null
+  );
+}
