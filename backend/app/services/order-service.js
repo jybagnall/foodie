@@ -240,7 +240,8 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   const values = [newStatus, orderId, currentStatus];
   const result = await client.query(q, values);
 
+  // 이미 paid였거나, orderId가 잘못됐거나
   if (result.rowCount === 0) {
-    throw new Error("ORDER_STATUS_CONFLICT"); // 이미 paid였거나, orderId가 잘못됐거나
+    throw new Error("ORDER_STATUS_CONFLICT");
   }
 }

@@ -68,6 +68,7 @@ export async function cancelOrder(orderId, user) {
 
 async function cancelPaidOrder(orderId) {
   const payment = await findUniquePaymentByOrderId(orderId);
+
   if (!payment) throw new Error("PAYMENT_NOT_FOUND");
   if (!payment.stripe_charge_id) throw new Error("CHARGE_NOT_FOUND");
   if (payment.payment_status !== "succeeded")
@@ -75,13 +76,16 @@ async function cancelPaidOrder(orderId) {
   if (!payment.stripe_payment_intent_id)
     throw new Error("PAYMENT_INTENT_NOT_FOUND");
 
+  // amount 생략 시 전액 환불
   const refund = await stripe.refunds.create({
     payment_intent: payment.stripe_payment_intent_id,
-    // amount 생략 시 전액 환불
   });
 
-  // 카드사 환불 신호 전송 성공
-  if (refund.status !== "succeeded") throw new Error("REFUND_FAILED");
+  // 카드사에 환불 신호 전송 중이거나 성공일 땐 정상 진행 (pending, succeeded)
+  // failed/canceled 만 진짜 실패.
+  if (refund.status === "failed" || refund.status === "canceled") {
+    throw new Error("REFUND_FAILED");
+  }
 
   const client = await pool.connect();
   try {

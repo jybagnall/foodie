@@ -29,7 +29,7 @@ export async function createRefundRecord(
 }
 
 // 이미 succeeded가 된 환불은 절대 다시 변경하지 않는다.
-export async function markRefundAsCompleted(client, newStatus, stripeRefundId) {
+export async function updateRefundStatus(client, newStatus, stripeRefundId) {
   const completedAt = newStatus === "succeeded" ? new Date() : null;
 
   const q = `

@@ -14,7 +14,7 @@ import {
 } from "../../services/payment.methods-service.js";
 import {
   createRefundRecord,
-  markRefundAsCompleted,
+  updateRefundStatus,
   refundRecordExists,
 } from "../../services/refund-service.js";
 
@@ -120,7 +120,9 @@ export async function handleRefundUpdated(client, refundObj) {
   } // payment 없으면 런타임 에러 발생함
 
   const { id: paymentId, order_id: orderId } = payment;
+
   const alreadyProcessed = await refundRecordExists(client, refundObj.id);
+
   const paymentStatus =
     REFUND_TO_PAYMENT_STATUS[refundObj.status] ?? "refund_pending";
 
@@ -134,7 +136,7 @@ export async function handleRefundUpdated(client, refundObj) {
       reason: refundObj.reason,
     });
   } else {
-    await markRefundAsCompleted(client, refundObj.status, refundObj.id);
+    await updateRefundStatus(client, refundObj.status, refundObj.id);
   }
 
   // 환불이 실제로 성공했을 때만 주문을 취소 처리
