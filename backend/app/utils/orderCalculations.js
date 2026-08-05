@@ -14,6 +14,10 @@ export function calculateOrderSubTotal(order) {
   return parseFloat(subTotalAmount.toFixed(2));
 }
 
+export function calculateOrderTotal(amount) {
+  return parseFloat(amount.toFixed(2));
+}
+
 export function calculateDeliveryFee(subtotal) {
   return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
 }
