@@ -7,7 +7,7 @@ import {
   getCardsInfo,
 } from "../services/payment.methods-service.js";
 import { getPaymentMethodByStripeId } from "../controllers/paymentMethod.controller.js";
-import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
+import { PAYMENT_ERROR_STATUS } from "../constants/errors.js";
 
 const router = express.Router();
 

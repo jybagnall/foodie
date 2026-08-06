@@ -13,7 +13,7 @@ import {
   buildOrderWithPrices,
   cancelOrder,
 } from "../controllers/order.controller.js";
-import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
+import { ORDER_ERROR_STATUS } from "../constants/errors.js";
 import { parseCursor } from "../utils/validators.js";
 
 const router = express.Router();
@@ -59,7 +59,7 @@ router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
     res.status(200).json({ message: "Order canceled." });
   } catch (err) {
     console.error("Order cancellation failed:", err);
-    const status = PAYMENT_ERROR_STATUS[err.message] ?? 500;
+    const status = ORDER_ERROR_STATUS[err.message] ?? 500;
     return res.status(status).json({
       error: "We failed to cancel order. Please try again.",
     });
@@ -73,7 +73,7 @@ router.post(
   "/initialize-order",
   verifyUserAuth,
   validateOrderBody,
-  async (req, res, next) => {
+  async (req, res) => {
     const client = await pool.connect();
     try {
       const { address, orderPayload } = req.body;
@@ -105,14 +105,10 @@ router.post(
     } catch (err) {
       await client.query("ROLLBACK").catch(() => {});
       console.error("Order error,", err);
-
-      if (err.message === "ITEMS_UNAVAILABLE") {
-        return res
-          .status(400)
-          .json({ error: "Some items are no longer available." });
-      }
-
-      return next(err);
+      const status = ORDER_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error: "Failed to initialize order.",
+      });
     } finally {
       client.release();
     }

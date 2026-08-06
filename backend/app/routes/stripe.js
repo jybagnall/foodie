@@ -80,9 +80,3 @@ router.post(
 );
 
 export default router;
-
-// GET    /api/stripe/events?status=failed
-// GET    /api/stripe/events/failures/count
-// POST   /api/stripe/events/:id/retry
-// POST   /api/stripe/events/:id/replay
-// GET    /api/stripe/events/:id/logs

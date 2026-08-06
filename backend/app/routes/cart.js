@@ -27,19 +27,24 @@ router.get("/get-cart", verifyUserAuth, async (req, res) => {
 // ]
 
 // 서로 다른 커넥션은 서로의 성공/실패를 ‘전혀 모른다’.
+
 router.post("/save-cart", verifyUserAuth, async (req, res, next) => {
   const { items = [] } = req.body;
+
   const client = await pool.connect(); // pool (DB 연결 관리자)에서 커넥션을 한개 픽.
 
   try {
     await client.query("BEGIN"); // 지금부터 여러 DB 작업을 한 묶음으로 취급, 시작한다
+
     const cartId = await saveCurrentCart(client, req.user.id);
     await saveCurrentCartItems(client, cartId, items);
+
     await client.query("COMMIT"); // DB 저장 확정, 전부 성공!
+
     const updateCarttems = await getCartItemsByUserId(req.user.id);
     res.status(201).json(updateCarttems);
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {}); // BEGIN 이후 작업 전부 취소, 전부 실패!
+    await client.query("ROLLBACK").catch(() => {}); // 작업 전부 취소, 전부 실패!
     return next(err);
   } finally {
     client.release();

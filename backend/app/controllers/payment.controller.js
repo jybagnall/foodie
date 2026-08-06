@@ -1,4 +1,19 @@
 import { stripe } from "../config/stripe.js";
+import { PAYMENT_ERROR } from "../constants/errors.js";
+import {
+  DEFAULT_CURRENCY,
+  getStripePaymentReturnUrl,
+  STRIPE_METADATA_USER_ID,
+  STRIPE_METADATA_ORDER_ID,
+  STRIPE_RETRY_BASE_DELAY_MS,
+  STRIPE_RETRY_MAX_ATTEMPTS,
+  SUPPORTED_STRIPE_PAYMENT_METHODS,
+  toStripeAmount,
+  STRIPE_PAYMENT_INTENT_ID_PREFIX,
+  STRIPE_ERROR_CODE,
+  STRIPE_ERROR_TYPE,
+  STRIPE_PAYMENT_INTENT_STATUS,
+} from "../constants/stripe.js";
 import { updateUserStripeId } from "../services/account-service.js";
 import { getOrderById } from "../services/order-service.js";
 import {
@@ -19,15 +34,18 @@ async function createAndStoreStripePaymentIntent(
     amount,
     currency,
     customer: customerId,
-    payment_method_types: ["card"],
+    payment_method_types: SUPPORTED_STRIPE_PAYMENT_METHODS,
     // automatic_payment_methods: { enabled: true }, 사용 가능한 결제 수단을 자동으로 활성화
-    metadata: { userId: String(userId), orderId: String(orderId) },
+    metadata: {
+      [STRIPE_METADATA_USER_ID]: String(userId),
+      [STRIPE_METADATA_ORDER_ID]: String(orderId),
+    },
     // 주문 & 사용자 연결 (custom data)
   });
 
   if (!paymentIntent || !paymentIntent.client_secret) {
     console.error("Stripe PaymentIntent failed:", paymentIntent);
-    throw new Error("PAYMENT_INTENT_FAILURE");
+    throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_FAILURE);
   }
 
   try {
@@ -47,23 +65,25 @@ async function createAndStoreStripePaymentIntent(
         paymentIntentId: paymentIntent.id,
         error: cancelErr.message,
       });
-      throw new Error("PAYMENT_INTENT_CANCELLATION_FAILURE");
+      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_CANCELLATION_FAILURE);
     }
-    throw new Error("POST_PAYMENT_INTENT_DB_FAILURE");
+    throw new Error(PAYMENT_ERROR.POST_PAYMENT_INTENT_DB_FAILURE);
   }
 }
 
 async function updateUserStripeIdWithRetry(
   userId,
   stripeCustomerId,
-  attempts = 3,
+  attempts = STRIPE_RETRY_MAX_ATTEMPTS,
 ) {
   for (let i = 0; i < attempts; i++) {
     try {
       return await updateUserStripeId(userId, stripeCustomerId);
     } catch (err) {
       if (i === attempts - 1) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 200 * (i + 1)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, STRIPE_RETRY_BASE_DELAY_MS * (i + 1)),
+      );
     }
   }
 }
@@ -77,7 +97,7 @@ async function ensureStripeCustomerId(user) {
       // Stripe에 존재하는지 검증
       await stripe.customers.retrieve(customerId);
     } catch (err) {
-      if (err.code === "resource_missing") {
+      if (err.code === STRIPE_ERROR_CODE.RESOURCE_MISSING) {
         customerId = null;
       } else {
         console.error("Stripe customer retrieve failed", {
@@ -85,7 +105,7 @@ async function ensureStripeCustomerId(user) {
           customerId,
           code: err.code,
         });
-        throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
+        throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE);
       }
     }
   }
@@ -95,7 +115,7 @@ async function ensureStripeCustomerId(user) {
       {
         name: user.name,
         email: user.email,
-        metadata: { userId: user.id },
+        metadata: { [STRIPE_METADATA_USER_ID]: String(user.id) },
       },
       { idempotencyKey: `stripe-customer-for-user-${user.id}` },
       // 생성 API가 여러 번 호출되어도 Stripe는 하나만 생성
@@ -108,7 +128,7 @@ async function ensureStripeCustomerId(user) {
         `Failed to save stripe customer ${newCustomer.id} for user ${user.id}`,
         dbErr,
       );
-      throw new Error("PAYMENT_SERVICE_UNAVAILABLE");
+      throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE);
     }
   }
 
@@ -117,51 +137,51 @@ async function ensureStripeCustomerId(user) {
 
 export async function getExistingClientSecret(orderId, user) {
   if (!orderId || isNaN(Number(orderId))) {
-    throw new Error("INVALID_ORDER_ID");
+    throw new Error(PAYMENT_ERROR.INVALID_ORDER_ID);
   }
 
   const order = await getOrderById(orderId); // 금액 가져오기
   if (!order) {
     console.error("Order not found", { orderId, userId: user.id });
-    throw new Error("ORDER_NOT_FOUND");
+    throw new Error(PAYMENT_ERROR.ORDER_NOT_FOUND);
   }
-  if (order.user_id !== user.id) throw new Error("FORBIDDEN");
+  if (order.user_id !== user.id) throw new Error(PAYMENT_ERROR.FORBIDDEN);
   if (order.total_amount <= 0) {
-    throw new Error("INVALID_AMOUNT");
+    throw new Error(PAYMENT_ERROR.INVALID_AMOUNT);
   }
 
   const existing = await findUniquePaymentByOrderId(orderId);
-  if (!existing) throw new Error("PAYMENT_NOT_FOUND");
+  if (!existing) throw new Error(PAYMENT_ERROR.PAYMENT_NOT_FOUND);
 
   const intent = await stripe.paymentIntents.retrieve(
     existing.stripe_payment_intent_id,
   );
 
-  const amount = Math.round(order.total_amount * 100);
+  const amount = toStripeAmount(order.total_amount);
   if (intent.amount !== amount) {
-    throw new Error("AMOUNT_MISMATCH_WITH_INTENT");
+    throw new Error(PAYMENT_ERROR.AMOUNT_MISMATCH_WITH_INTENT);
   }
 
   return { clientSecret: intent.client_secret };
 }
 
 export async function getOrCreateClientSecret(orderId, user) {
-  const currency = "usd";
+  const currency = DEFAULT_CURRENCY;
 
   if (!orderId || isNaN(Number(orderId))) {
-    throw new Error("INVALID_ORDER_ID");
+    throw new Error(PAYMENT_ERROR.INVALID_ORDER_ID);
   }
 
   const order = await getOrderById(orderId); // 금액 가져오기
   if (!order) {
     console.error("Order not found", { orderId, userId: user.id });
-    throw new Error("ORDER_NOT_FOUND");
+    throw new Error(PAYMENT_ERROR.ORDER_NOT_FOUND);
   }
-  if (order.user_id !== user.id) throw new Error("FORBIDDEN");
+  if (order.user_id !== user.id) throw new Error(PAYMENT_ERROR.FORBIDDEN);
   if (order.total_amount <= 0) {
-    throw new Error("INVALID_AMOUNT");
+    throw new Error(PAYMENT_ERROR.INVALID_AMOUNT);
   }
-  const amount = Math.round(order.total_amount * 100);
+  const amount = toStripeAmount(order.total_amount);
 
   const existing = await findUniquePaymentByOrderId(orderId);
 
@@ -171,7 +191,7 @@ export async function getOrCreateClientSecret(orderId, user) {
     );
 
     if (intent.amount !== amount) {
-      throw new Error("AMOUNT_MISMATCH_WITH_INTENT");
+      throw new Error(PAYMENT_ERROR.AMOUNT_MISMATCH_WITH_INTENT);
     }
 
     return { clientSecret: intent.client_secret };
@@ -193,18 +213,18 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   const order = await getOrderById(orderId); // 주문 검증
   if (!order) {
     console.error("Order not found", { orderId, userId });
-    throw new Error("ORDER_NOT_FOUND");
+    throw new Error(PAYMENT_ERROR.ORDER_NOT_FOUND);
   }
-  if (order.user_id !== userId) throw new Error("FORBIDDEN");
+  if (order.user_id !== userId) throw new Error(PAYMENT_ERROR.FORBIDDEN);
 
   const card = await identifyCardByUserId(cardId, userId);
   if (!card) {
-    throw new Error("FORBIDDEN");
+    throw new Error(PAYMENT_ERROR.FORBIDDEN);
   } // 카드 검증
 
   const payment = await findUniquePaymentByOrderId(orderId);
   if (!payment) {
-    throw new Error("PAYMENT_NOT_FOUND");
+    throw new Error(PAYMENT_ERROR.PAYMENT_NOT_FOUND);
   } // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
   //❗에러의 원인: return_url 이 필요함
@@ -215,42 +235,42 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
     payment.stripe_payment_intent_id,
     {
       payment_method: card.stripe_payment_method_id,
-      return_url: `${process.env.FRONTEND_PUBLIC_URL}/order/payment/${orderId}`,
+      return_url: getStripePaymentReturnUrl(orderId),
     },
   ); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
 
-  if (paymentIntent.status === "requires_action") {
+  if (paymentIntent.status === STRIPE_PAYMENT_INTENT_STATUS.requiresAction) {
     return { requiresAction: true, clientSecret: paymentIntent.client_secret };
   }
 
   return { paymentIntent };
 }
 
-// "pi_3TbrqCJgr0Jxdxnc0ELERjXy"
+// "pi_3AbcD..."
 export async function verifyStripePayment(paymentIntentId, orderId, user) {
   if (
     !paymentIntentId ||
     typeof paymentIntentId !== "string" ||
-    !paymentIntentId.startsWith("pi_")
+    !paymentIntentId.startsWith(STRIPE_PAYMENT_INTENT_ID_PREFIX)
   ) {
-    throw new Error("INVALID_PAYMENT_INTENT");
+    throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT);
   } // suspicious/bad request
 
   let paymentIntent;
   try {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
   } catch (err) {
-    if (err.type === "StripeInvalidRequestError") {
-      throw new Error("INVALID_PAYMENT_INTENT");
+    if (err.type === STRIPE_ERROR_TYPE.INVALID_REQUEST) {
+      throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT);
     } // invalid payment intent ID
     throw err;
   }
 
   if (
-    paymentIntent.metadata.userId !== String(user.id) ||
-    paymentIntent.metadata.orderId !== String(orderId)
+    paymentIntent.metadata[STRIPE_METADATA_USER_ID] !== String(user.id) ||
+    paymentIntent.metadata[STRIPE_METADATA_ORDER_ID] !== String(orderId)
   ) {
-    throw new Error("INVALID_PAYMENT_INTENT");
+    throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT);
   }
 
   return {

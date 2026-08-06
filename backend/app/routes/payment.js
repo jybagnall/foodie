@@ -8,7 +8,11 @@ import {
   processSavedCardPayment,
   verifyStripePayment,
 } from "../controllers/payment.controller.js";
-import { PAYMENT_ERROR_STATUS } from "../utils/errors.js";
+import { PAYMENT_ERROR_STATUS } from "../constants/errors.js";
+import {
+  STRIPE_METADATA_SAVE_CARD,
+  STRIPE_METADATA_SET_AS_DEFAULT,
+} from "../constants/stripe.js";
 
 const router = express.Router();
 
@@ -93,8 +97,8 @@ router.patch("/update-payment-intent", verifyUserAuth, async (req, res) => {
 
     await stripe.paymentIntents.update(payment.stripe_payment_intent_id, {
       metadata: {
-        saveCard: String(saveCard),
-        setAsDefault: String(setAsDefault),
+        [STRIPE_METADATA_SAVE_CARD]: String(saveCard),
+        [STRIPE_METADATA_SET_AS_DEFAULT]: String(setAsDefault),
       },
       ...(saveCard && { setup_future_usage: "on_session" }),
     });
