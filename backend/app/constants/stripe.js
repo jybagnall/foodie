@@ -35,6 +35,11 @@ export const STRIPE_PAYMENT_INTENT_STATUS = {
   CANCELED: "canceled",
 };
 
+export const CONFIRMABLE_PAYMENT_STATUSES = [
+  "requires_payment_method",
+  "requires_confirmation",
+];
+
 export function toStripeAmount(amount) {
   return Math.round(amount * 100);
 }

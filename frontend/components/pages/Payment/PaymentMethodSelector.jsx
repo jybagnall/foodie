@@ -60,6 +60,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
       let { paymentIntent, requiresAction, clientSecret } =
         await paymentService.chargeSavedCard(orderId, selectedCardId);
 
+      // 3DS 인증 필요
       if (requiresAction) {
         const { error, paymentIntent: updatedIntent } =
           await stripe.handleNextAction({

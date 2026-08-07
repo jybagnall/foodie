@@ -1,4 +1,4 @@
-import { stripe } from "../config/stripe";
+import { stripe } from "../config/stripe.js";
 
 export async function cancelStripePaymentIntent(paymentIntentId) {
   try {

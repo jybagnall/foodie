@@ -25,6 +25,7 @@ import {
 import { cancelStripePaymentIntent } from "../utils/stripe.js";
 import { withTransaction } from "../utils/db.js";
 import { ORDER_ERROR } from "../constants/errors.js";
+import { isValidOrderId } from "../utils/validators.js";
 
 // 1. 메뉴 가격 조회 2. 가격 매핑 3. 총액 계산
 export async function buildOrderWithPrices(client, address, orderPayload) {
@@ -57,7 +58,7 @@ export async function buildOrderWithPrices(client, address, orderPayload) {
 }
 
 export async function cancelOrder(orderId, user) {
-  if (!(Number.isInteger(Number(orderId)) || Number(orderId) <= 0)) {
+  if (!isValidOrderId(orderId)) {
     throw new Error(ORDER_ERROR.INVALID_ORDER_ID);
   }
 

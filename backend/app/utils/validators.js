@@ -1,3 +1,9 @@
+export function isValidOrderId(orderId) {
+  const id = Number(orderId);
+
+  return Number.isInteger(id) && id > 0;
+}
+
 export function parseCursor(cursorString) {
   if (!cursorString) return null;
 
