@@ -15,6 +15,10 @@ import {
   STRIPE_PAYMENT_INTENT_STATUS,
   CONFIRMABLE_PAYMENT_STATUSES,
 } from "../constants/stripe.js";
+import {
+  confirmStripePaymentIntent,
+  retrieveStripePaymentIntent,
+} from "../integrations/stripe/payment-intent.js";
 import { updateUserStripeId } from "../services/account-service.js";
 import { getOrderById } from "../services/order-service.js";
 import {
@@ -32,21 +36,41 @@ async function createAndStoreStripePaymentIntent(
   customerId,
   userId,
 ) {
-  const paymentIntent = await stripe.paymentIntents.create(
-    {
-      amount,
-      currency,
-      customer: customerId,
-      payment_method_types: SUPPORTED_STRIPE_PAYMENT_METHODS,
-      metadata: {
-        [STRIPE_METADATA_USER_ID]: String(userId),
-        [STRIPE_METADATA_ORDER_ID]: String(orderId),
-      }, // 주문 & 사용자 연결 (custom data)
-    },
-    {
-      idempotencyKey: `payment-intent-for-order-${orderId}`,
-    },
-  );
+  let paymentIntent;
+
+  try {
+    paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount,
+        currency,
+        customer: customerId,
+        payment_method_types: SUPPORTED_STRIPE_PAYMENT_METHODS,
+        metadata: {
+          [STRIPE_METADATA_USER_ID]: String(userId),
+          [STRIPE_METADATA_ORDER_ID]: String(orderId),
+        }, // 주문 & 사용자 연결 (custom data)
+      },
+      {
+        idempotencyKey: `payment-intent-for-order-${orderId}`,
+      },
+    );
+  } catch (err) {
+    if (err.type === STRIPE_ERROR_TYPE.IDEMPOTENCY_ERROR) {
+      console.error("PaymentIntent idempotency conflict", {
+        orderId,
+        amount,
+      });
+      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_IDEMPOTENCY_CONFLICT, {
+        cause: err,
+      });
+    }
+    console.error("Stripe paymentIntents.create failed", {
+      orderId,
+      type: err.type,
+      code: err.code,
+    });
+    throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_FAILURE, { cause: err });
+  }
 
   if (!paymentIntent || !paymentIntent.client_secret) {
     console.error("Stripe PaymentIntent failed:", paymentIntent);
@@ -70,9 +94,15 @@ async function createAndStoreStripePaymentIntent(
         paymentIntentId: paymentIntent.id,
         error: cancelErr.message,
       });
-      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_CANCELLATION_FAILURE);
+
+      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_CANCELLATION_FAILURE, {
+        cause: cancelErr,
+      });
     }
-    throw new Error(PAYMENT_ERROR.POST_PAYMENT_INTENT_DB_FAILURE);
+
+    throw new Error(PAYMENT_ERROR.POST_PAYMENT_INTENT_DB_FAILURE, {
+      cause: dbErr,
+    });
   }
 }
 
@@ -114,21 +144,36 @@ async function ensureStripeCustomerId(user) {
           customerId,
           code: err.code,
         });
-        throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE);
+        throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
+          cause: err,
+        });
       }
     }
   }
 
   if (!customerId) {
-    const newCustomer = await stripe.customers.create(
-      {
-        name: user.name,
-        email: user.email,
-        metadata: { [STRIPE_METADATA_USER_ID]: String(user.id) },
-      },
-      { idempotencyKey: `stripe-customer-for-user-${user.id}` },
-      // 생성 API가 여러 번 호출되어도 Stripe는 하나만 생성
-    );
+    let newCustomer;
+
+    try {
+      newCustomer = await stripe.customers.create(
+        {
+          name: user.name,
+          email: user.email,
+          metadata: { [STRIPE_METADATA_USER_ID]: String(user.id) },
+        },
+        { idempotencyKey: `stripe-customer-for-user-${user.id}` },
+        // 생성 API가 여러 번 호출되어도 Stripe는 하나만 생성
+      );
+    } catch (err) {
+      console.error("Stripe customer create failed", {
+        userId: user.id,
+        type: err.type,
+        code: err.code,
+      });
+      throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
+        cause: err,
+      });
+    }
 
     try {
       await updateUserStripeIdWithRetry(user.id, newCustomer.id);
@@ -138,7 +183,9 @@ async function ensureStripeCustomerId(user) {
         `Failed to save stripe customer ${newCustomer.id} for user ${user.id}`,
         dbErr,
       );
-      throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE);
+      throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
+        cause: dbErr,
+      });
     }
   }
 
@@ -172,7 +219,7 @@ async function getValidatedPaymentIntent(orderId, userId) {
 
   if (!payment?.stripe_payment_intent_id) return { intent: null, amount };
 
-  const intent = await stripe.paymentIntents.retrieve(
+  const intent = await retrieveStripePaymentIntent(
     payment.stripe_payment_intent_id,
   );
 
@@ -212,44 +259,50 @@ export async function getOrCreateClientSecret(orderId, user) {
 }
 
 export async function processSavedCardPayment(orderId, cardId, userId) {
-  await validateOrderForPayment(orderId, userId);
-
   const card = await identifyCardByUserId(cardId, userId);
   if (!card) {
     throw new Error(PAYMENT_ERROR.FORBIDDEN);
   } // 카드 검증
 
-  const payment = await findUniquePaymentByOrderId(orderId);
+  const { intent: existingPaymentIntent } = await getValidatedPaymentIntent(
+    orderId,
+    userId,
+  );
 
-  // if (!payment) {
-  //   throw new Error(PAYMENT_ERROR.PAYMENT_NOT_FOUND);
-  // }
+  if (!existingPaymentIntent) {
+    throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_NOT_FOUND);
+  }
   // payment intent 조회 (결제 요청서가 생성된 상태인가)
 
   // 이미 succeeded/canceled된 PaymentIntent를 다시 confirm하면 에러임
-  const intent = await stripe.paymentIntents.retrieve(
-    payment.stripe_payment_intent_id,
-  );
-
-  if (!CONFIRMABLE_PAYMENT_STATUSES.includes(intent.status)) {
+  if (!CONFIRMABLE_PAYMENT_STATUSES.includes(existingPaymentIntent.status)) {
     throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_STATUS);
   }
 
-  const paymentIntent = await stripe.paymentIntents.confirm(intent.id, {
-    payment_method: card.stripe_payment_method_id,
-    return_url: getStripePaymentReturnUrl(orderId),
-  }); // 이미 만들어둔 결제 요청서를 완료 (결제 실행)
+  const confirmedPaymentIntent = await confirmStripePaymentIntent({
+    paymentIntentId: existingPaymentIntent.id,
+    paymentMethodId: card.stripe_payment_method_id,
+    returnUrl: getStripePaymentReturnUrl(orderId),
+  });
 
   // 3DS 인증 필요 여부 반환
-  if (paymentIntent.status === STRIPE_PAYMENT_INTENT_STATUS.requiresAction) {
-    return { requiresAction: true, clientSecret: paymentIntent.client_secret };
+  if (
+    confirmedPaymentIntent.status ===
+    STRIPE_PAYMENT_INTENT_STATUS.REQUIRES_ACTION
+  ) {
+    return {
+      requiresAction: true,
+      clientSecret: confirmedPaymentIntent.client_secret,
+    };
   }
 
-  if (paymentIntent.status !== "succeeded") {
+  if (
+    confirmedPaymentIntent.status !== STRIPE_PAYMENT_INTENT_STATUS.SUCCEEDED
+  ) {
     throw new Error(PAYMENT_ERROR.PAYMENT_FAILED);
   }
 
-  return { paymentIntentId: paymentIntent.id };
+  return { paymentIntentId: confirmedPaymentIntent.id };
 }
 
 // "pi_3AbcD..."

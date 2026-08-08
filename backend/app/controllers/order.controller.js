@@ -89,9 +89,14 @@ async function cancelPaidOrder(orderId) {
     throw new Error(ORDER_ERROR.PAYMENT_NOT_REFUNDABLE);
 
   // amount 생략 시 전액 환불
-  const refund = await stripe.refunds.create({
-    payment_intent: payment.stripe_payment_intent_id,
-  });
+  const refund = await stripe.refunds.create(
+    {
+      payment_intent: payment.stripe_payment_intent_id,
+    },
+    {
+      idempotencyKey: `refund-for-order-${orderId}`,
+    },
+  );
 
   // 카드사에 환불 신호 전송 중/성공일 땐 정상 진행 (pending, succeeded)
   // failed/canceled 만 진짜 실패.

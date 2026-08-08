@@ -6,11 +6,16 @@ export async function createStripeCustomerId(createdUser, name, email) {
   let stripeCustomerId = null;
 
   try {
-    const stripeCustomer = await stripe.customers.create({
-      name,
-      email,
-      metadata: { [STRIPE_METADATA_USER_ID]: createdUser.id },
-    });
+    const stripeCustomer = await stripe.customers.create(
+      {
+        name,
+        email,
+        metadata: { [STRIPE_METADATA_USER_ID]: createdUser.id },
+      },
+      {
+        idempotencyKey: `stripe-customer-for-user-${createdUser.id}`,
+      },
+    );
 
     stripeCustomerId = stripeCustomer.id;
     await updateUserStripeId(createdUser.id, stripeCustomerId);

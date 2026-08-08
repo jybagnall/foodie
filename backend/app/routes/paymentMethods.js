@@ -49,7 +49,9 @@ router.delete("/:cardId", verifyUserAuth, async (req, res, next) => {
     if (!methodId) return res.status(404).json({ error: "Card not found" });
 
     try {
-      await stripe.paymentMethods.detach(methodId); // 결제 완료된 카드만 삭제됨
+      await stripe.paymentMethods.detach(methodId, {
+        idempotencyKey: `detach-card-${cardId}`,
+      }); // 결제 완료된 카드만 삭제됨
     } catch (stripeErr) {
       if (stripeErr.code !== "resource_missing") {
         console.error("Stripe detach failed:", stripeErr);

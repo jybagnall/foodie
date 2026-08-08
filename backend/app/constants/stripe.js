@@ -23,6 +23,12 @@ export const STRIPE_ERROR_CODE = {
 
 export const STRIPE_ERROR_TYPE = {
   INVALID_REQUEST: "StripeInvalidRequestError",
+  CARD_ERROR: "StripeCardError",
+  API_ERROR: "StripeAPIError",
+  CONNECTION_ERROR: "StripeConnectionError",
+  AUTHENTICATION_ERROR: "StripeAuthenticationError",
+  RATE_LIMIT_ERROR: "StripeRateLimitError",
+  IDEMPOTENCY_ERROR: "StripeIdempotencyError",
 };
 
 export const STRIPE_PAYMENT_INTENT_STATUS = {

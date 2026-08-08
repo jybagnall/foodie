@@ -57,7 +57,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
     setErrorMsg("");
 
     try {
-      let { paymentIntent, requiresAction, clientSecret } =
+      let { paymentIntentId, requiresAction, clientSecret } =
         await paymentService.chargeSavedCard(orderId, selectedCardId);
 
       // 3DS 인증 필요
@@ -78,10 +78,10 @@ export default function PaymentMethodSelector({ order, orderId }) {
           return;
         }
 
-        paymentIntent = updatedIntent;
+        paymentIntentId = updatedIntent.id;
       }
 
-      if (!paymentIntent?.id) {
+      if (!paymentIntentId) {
         setErrorMsg(
           "An unexpected error occurred. Please try again or contact support.",
         );
@@ -90,7 +90,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
 
       grantPaymentFlowAccess();
       window.location.replace(
-        `/order/completed/${orderId}?payment_intent=${paymentIntent.id}`,
+        `/order/completed/${orderId}?payment_intent=${paymentIntentId}`,
       );
     } catch (err) {
       console.error(err);
