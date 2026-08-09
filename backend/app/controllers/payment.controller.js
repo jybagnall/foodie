@@ -1,4 +1,3 @@
-import { stripe } from "../config/stripe.js";
 import { PAYMENT_ERROR } from "../constants/errors.js";
 import {
   DEFAULT_CURRENCY,
@@ -7,16 +6,19 @@ import {
   STRIPE_METADATA_ORDER_ID,
   STRIPE_RETRY_BASE_DELAY_MS,
   STRIPE_RETRY_MAX_ATTEMPTS,
-  SUPPORTED_STRIPE_PAYMENT_METHODS,
   toStripeAmount,
   STRIPE_PAYMENT_INTENT_ID_PREFIX,
-  STRIPE_ERROR_CODE,
-  STRIPE_ERROR_TYPE,
   STRIPE_PAYMENT_INTENT_STATUS,
   CONFIRMABLE_PAYMENT_STATUSES,
 } from "../constants/stripe.js";
 import {
+  createStripeCustomer,
+  retrieveStripeCustomer,
+} from "../integrations/stripe/customer.js";
+import {
+  cancelOrphanedPaymentIntent,
   confirmStripePaymentIntent,
+  createStripePaymentIntent,
   retrieveStripePaymentIntent,
 } from "../integrations/stripe/payment-intent.js";
 import { updateUserStripeId } from "../services/account-service.js";
@@ -36,41 +38,13 @@ async function createAndStoreStripePaymentIntent(
   customerId,
   userId,
 ) {
-  let paymentIntent;
-
-  try {
-    paymentIntent = await stripe.paymentIntents.create(
-      {
-        amount,
-        currency,
-        customer: customerId,
-        payment_method_types: SUPPORTED_STRIPE_PAYMENT_METHODS,
-        metadata: {
-          [STRIPE_METADATA_USER_ID]: String(userId),
-          [STRIPE_METADATA_ORDER_ID]: String(orderId),
-        }, // 주문 & 사용자 연결 (custom data)
-      },
-      {
-        idempotencyKey: `payment-intent-for-order-${orderId}`,
-      },
-    );
-  } catch (err) {
-    if (err.type === STRIPE_ERROR_TYPE.IDEMPOTENCY_ERROR) {
-      console.error("PaymentIntent idempotency conflict", {
-        orderId,
-        amount,
-      });
-      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_IDEMPOTENCY_CONFLICT, {
-        cause: err,
-      });
-    }
-    console.error("Stripe paymentIntents.create failed", {
-      orderId,
-      type: err.type,
-      code: err.code,
-    });
-    throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_FAILURE, { cause: err });
-  }
+  const paymentIntent = await createStripePaymentIntent({
+    amount,
+    currency,
+    customerId,
+    userId,
+    orderId,
+  });
 
   if (!paymentIntent || !paymentIntent.client_secret) {
     console.error("Stripe PaymentIntent failed:", paymentIntent);
@@ -87,18 +61,8 @@ async function createAndStoreStripePaymentIntent(
       error: dbErr.message,
     });
 
-    try {
-      await stripe.paymentIntents.cancel(paymentIntent.id);
-    } catch (cancelErr) {
-      console.error("Failed to cancel orphaned PaymentIntent", {
-        paymentIntentId: paymentIntent.id,
-        error: cancelErr.message,
-      });
-
-      throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_CANCELLATION_FAILURE, {
-        cause: cancelErr,
-      });
-    }
+    // cancel 실패 시 PAYMENT_INTENT_CANCELLATION_FAILURE를 던지고 여기서 함수 종료됨 (의도된 동작)
+    await cancelOrphanedPaymentIntent(paymentIntent.id);
 
     throw new Error(PAYMENT_ERROR.POST_PAYMENT_INTENT_DB_FAILURE, {
       cause: dbErr,
@@ -128,52 +92,15 @@ async function ensureStripeCustomerId(user) {
   let customerId = user.stripe_customer_id;
 
   if (customerId) {
-    try {
-      // Stripe에 존재하는지 검증
-      const customer = await stripe.customers.retrieve(customerId);
+    const customer = await retrieveStripeCustomer(customerId);
 
-      if (customer.deleted) {
-        customerId = null;
-      }
-    } catch (err) {
-      if (err.code === STRIPE_ERROR_CODE.RESOURCE_MISSING) {
-        customerId = null; // 없는 아이디
-      } else {
-        console.error("Stripe customer retrieve failed", {
-          userId: user.id,
-          customerId,
-          code: err.code,
-        });
-        throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
-          cause: err,
-        });
-      }
+    if (!customer || customer.deleted) {
+      customerId = null;
     }
   }
 
   if (!customerId) {
-    let newCustomer;
-
-    try {
-      newCustomer = await stripe.customers.create(
-        {
-          name: user.name,
-          email: user.email,
-          metadata: { [STRIPE_METADATA_USER_ID]: String(user.id) },
-        },
-        { idempotencyKey: `stripe-customer-for-user-${user.id}` },
-        // 생성 API가 여러 번 호출되어도 Stripe는 하나만 생성
-      );
-    } catch (err) {
-      console.error("Stripe customer create failed", {
-        userId: user.id,
-        type: err.type,
-        code: err.code,
-      });
-      throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
-        cause: err,
-      });
-    }
+    const newCustomer = await createStripeCustomer(user);
 
     try {
       await updateUserStripeIdWithRetry(user.id, newCustomer.id);
@@ -305,7 +232,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   return { paymentIntentId: confirmedPaymentIntent.id };
 }
 
-// "pi_3AbcD..."
+// "pi_1AbcD..."
 export async function verifyStripePayment(paymentIntentId, orderId, user) {
   if (
     !paymentIntentId ||
@@ -317,12 +244,12 @@ export async function verifyStripePayment(paymentIntentId, orderId, user) {
 
   let paymentIntent;
   try {
-    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    paymentIntent = await retrieveStripePaymentIntent(paymentIntentId);
   } catch (err) {
-    if (err.type === STRIPE_ERROR_TYPE.INVALID_REQUEST) {
-      throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT);
-    } // invalid payment intent ID
-    throw err;
+    if (err.message === PAYMENT_ERROR.PAYMENT_INTENT_NOT_FOUND) {
+      throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT, { cause: err });
+    }
+    throw err; // PAYMENT_SERVICE_UNAVAILABLE 등은 그대로 전파
   }
 
   if (

@@ -315,24 +315,21 @@ router.post(
       const { name, email, password } = req.body;
       const existingUser = await findUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ error: "Email already in use." });
+        return res.status(409).json({ error: "Email already in use." });
       }
 
       await client.query("BEGIN");
       const createdUser = await createAccount(name, email, password, client);
+      await client.query("COMMIT");
+
       await updateLastLogin(createdUser.id, client).catch((err) => {
         console.error(
           `Failed to update last_login for user ${createdUser.id}:`,
           err,
         );
       });
-      await client.query("COMMIT");
 
-      const stripeCustomerId = await createStripeCustomerId(
-        createdUser,
-        name,
-        email,
-      );
+      const stripeCustomerId = await createStripeCustomerId(createdUser);
 
       const { accessToken, refreshToken } = generateTokens({
         id: createdUser.id,

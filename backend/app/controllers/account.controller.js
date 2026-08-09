@@ -1,26 +1,17 @@
 import { updateUserStripeId } from "../services/account-service.js";
-import { stripe } from "../config/stripe.js";
-import { STRIPE_METADATA_USER_ID } from "../constants/stripe.js";
+import { createStripeCustomer } from "../integrations/stripe/customer.js";
 
-export async function createStripeCustomerId(createdUser, name, email) {
-  let stripeCustomerId = null;
-
+export async function createStripeCustomerId(createdUser) {
   try {
-    const stripeCustomer = await stripe.customers.create(
-      {
-        name,
-        email,
-        metadata: { [STRIPE_METADATA_USER_ID]: createdUser.id },
-      },
-      {
-        idempotencyKey: `stripe-customer-for-user-${createdUser.id}`,
-      },
-    );
+    const stripeCustomer = await createStripeCustomer(createdUser);
+    await updateUserStripeId(createdUser.id, stripeCustomer.id);
 
-    stripeCustomerId = stripeCustomer.id;
-    await updateUserStripeId(createdUser.id, stripeCustomerId);
-  } catch (stripeErr) {
-    console.error(`Stripe customer creation failed for ${email}:`, stripeErr);
+    return stripeCustomer.id;
+  } catch (err) {
+    console.error(
+      `Failed to set up Stripe customer for ${createdUser.email}:`,
+      err,
+    );
+    return null;
   }
-  return stripeCustomerId;
 }
