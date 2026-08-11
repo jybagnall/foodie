@@ -10,10 +10,7 @@ import {
   findPasswordById,
   updatePassword,
   createPasswordResetToken,
-  findUserByPasswordResetToken,
-  clearPasswordResetToken,
   updateLastLogin,
-  createAccount,
 } from "../services/account-service.js";
 import {
   generateTokens,
@@ -26,7 +23,8 @@ import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
 import { sendPasswordResetEmail } from "../utils/email.js";
 import pool from "../config/db.js";
-import { createStripeCustomerId } from "../controllers/account.controller.js";
+import { resetPassword, signup } from "../controllers/account.controller.js";
+import { AUTH_ERROR_STATUS } from "../constants/errors.js";
 
 const router = express.Router();
 
@@ -47,30 +45,30 @@ router.get("/my-profile", verifyUserAuth, async (req, res, next) => {
   }
 });
 
-router.get("/user", verifyUserAuth, async (req, res, next) => {
-  try {
-    const existingUser = await findUserById(req.user.id);
+// router.get("/user", verifyUserAuth, async (req, res, next) => {
+//   try {
+//     const existingUser = await findUserById(req.user.id);
 
-    if (!existingUser) {
-      return res.status(400).json({
-        error: "We couldn’t verify your account. Please sign in again.",
-      });
-    }
+//     if (!existingUser) {
+//       return res.status(400).json({
+//         error: "We couldn’t verify your account. Please sign in again.",
+//       });
+//     }
 
-    res.status(200).json({
-      message: "User information is found.",
-      user: {
-        id: existingUser.id,
-        name: existingUser.name,
-        email: existingUser.email,
-        role: existingUser.role,
-        stripe_customer_id: existingUser.stripe_customer_id,
-      },
-    });
-  } catch (err) {
-    return next(err);
-  }
-});
+//     res.status(200).json({
+//       message: "User information is found.",
+//       user: {
+//         id: existingUser.id,
+//         name: existingUser.name,
+//         email: existingUser.email,
+//         role: existingUser.role,
+//         stripe_customer_id: existingUser.stripe_customer_id,
+//       },
+//     });
+//   } catch (err) {
+//     return next(err);
+//   }
+// });
 
 router.post(
   "/forgot-password",
@@ -268,26 +266,12 @@ router.post(
     try {
       const { resetToken, password } = req.body;
       const hashedPwResetToken = await hashRawPasswordToken(resetToken);
-      const user = await findUserByPasswordResetToken(hashedPwResetToken);
 
-      if (!user)
-        return res.status(400).json({ error: "Invalid or expired token." });
-
-      await client.query("BEGIN");
-      await updatePassword(password, user.id, client);
-      await clearPasswordResetToken(user.id, client);
-
-      const { accessToken, refreshToken } = generateTokens({
-        id: user.id,
-        role: user.role,
-        name: user.name,
-        email: user.email,
-        stripe_customer_id: user.stripe_customer_id,
+      const { accessToken, refreshToken } = await resetPassword({
+        client,
+        hashedPwResetToken,
+        password,
       });
-
-      const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-      await updateUserRefreshToken(user.id, hashedRefresh, client);
-      await client.query("COMMIT");
 
       // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
       setRefreshTokenCookie(res, refreshToken);
@@ -309,64 +293,38 @@ router.post(
 router.post(
   "/signup",
   validateBody("name", "email", "password"),
-  async (req, res, next) => {
+  async (req, res) => {
+    const { name, email, password } = req.body;
     const client = await pool.connect();
+
     try {
-      const { name, email, password } = req.body;
-      const existingUser = await findUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ error: "Email already in use." });
-      }
-
-      await client.query("BEGIN");
-      const createdUser = await createAccount(name, email, password, client);
-      await client.query("COMMIT");
-
-      await updateLastLogin(createdUser.id, client).catch((err) => {
-        console.error(
-          `Failed to update last_login for user ${createdUser.id}:`,
-          err,
-        );
+      const { accessToken, refreshToken, sessionIssued } = await signup({
+        client,
+        name,
+        email,
+        password,
       });
 
-      const stripeCustomerId = await createStripeCustomerId(createdUser);
-
-      const { accessToken, refreshToken } = generateTokens({
-        id: createdUser.id,
-        role: createdUser.role,
-        name: createdUser.name,
-        email: createdUser.email,
-        stripe_customer_id: stripeCustomerId,
-      });
-
-      try {
-        const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-        await updateUserRefreshToken(createdUser.id, hashedRefresh, client);
-        setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
-      } catch (refreshErr) {
-        // 계정은 이미 만들어졌음, 가입 실패가 아니라 가입은 됐는데 세션 발급 실패
-        console.error(
-          `Account ${createdUser.id} created but failed to persist refresh token:`,
-          refreshErr,
-        );
+      if (!sessionIssued) {
         return res.status(201).json({
           message: "Account created, but please log in to continue.",
           accountCreated: true,
         });
       }
 
+      setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
+
       res.status(201).json({
         message: "Account created successfully",
         accessToken, // Signup 페이지에서 받음
       });
     } catch (err) {
-      await client.query("ROLLBACK");
+      await client.query("ROLLBACK").catch(() => {});
       console.error("user registration error,", err);
-      if (err.code === "23505") {
-        return res.status(400).json({ error: "Email already registered." });
-      } else {
-        return next(err);
-      }
+      const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error: "Something went wrong during signup. Please try again.",
+      });
     } finally {
       client.release();
     }

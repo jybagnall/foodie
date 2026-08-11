@@ -1,9 +1,9 @@
 import { stripe } from "../config/stripe.js";
-import { PAYMENT_ERROR } from "../../constants/errors";
+import { PAYMENT_ERROR } from "../../constants/errors.js";
 import {
   STRIPE_ERROR_CODE,
   STRIPE_METADATA_USER_ID,
-} from "../../constants/stripe";
+} from "../../constants/stripe.js";
 
 export async function createStripeCustomer(user) {
   try {

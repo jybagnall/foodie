@@ -4,6 +4,7 @@ import {
   DELIVERY_FEE,
   STATE_TAX_RATES,
 } from "../constants/delivery.js";
+import { calculateStripeTax } from "../integrations/stripe/tax.js";
 
 export function calculateOrderSubTotal(order) {
   const subTotalAmount = order.reduce(
@@ -28,27 +29,10 @@ export function calculateTaxForTest(subTotal, deliveryFee, address) {
 }
 
 export async function calculateTax(subTotal, deliveryFee, address) {
-  const taxCalculation = await stripe.tax.calculations.create({
-    currency: "usd",
-    line_items: [
-      {
-        amount: Math.round(subTotal * 100),
-        reference: "food_subtotal",
-        tax_behavior: "exclusive",
-      },
-    ],
-    shipping_cost: {
-      amount: Math.round(deliveryFee * 100),
-    },
-    customer_details: {
-      address: {
-        line1: address.street,
-        city: address.city,
-        state: address.state,
-        postal_code: address.postal_code,
-      },
-      address_source: "shipping",
-    },
+  const taxCalculation = await calculateStripeTax({
+    subTotal,
+    deliveryFee,
+    address,
   });
 
   return parseFloat((taxCalculation.tax_amount_exclusive / 100).toFixed(2));

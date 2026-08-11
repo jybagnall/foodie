@@ -1,4 +1,3 @@
-import { stripe } from "../../config/stripe.js";
 import {
   upsertPaymentFromIntent,
   markPaymentFailed,
@@ -23,6 +22,7 @@ import {
   STRIPE_METADATA_SET_AS_DEFAULT,
   STRIPE_METADATA_USER_ID,
 } from "../../constants/stripe.js";
+import { retrieveStripePaymentMethod } from "../../integrations/stripe/payment-method.js";
 
 // 여기서의 실패: DB 저장 실패, 주문 상태 업데이트 실패, 트랜잭션 롤백, 서버 장애
 // 이 실패들은 유저에게 실시간으로 보여줄 수 없음.
@@ -64,7 +64,7 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
   if (saveCard) {
     try {
       await client.query("SAVEPOINT save_card");
-      const stripePaymentMethod = await stripe.paymentMethods.retrieve(
+      const stripePaymentMethod = await retrieveStripePaymentMethod(
         paymentIntent.payment_method,
       );
       // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
@@ -82,6 +82,7 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
 
       await updatePaymentMethod(client, paymentMethodId, orderId);
     } catch (err) {
+      await client.query("ROLLBACK TO SAVEPOINT save_card"); // 여기까지만 되돌리고 트랜잭션은 유효
       console.error(
         `Failed to save card for order ${orderId}, user ${userId}:`,
         err,

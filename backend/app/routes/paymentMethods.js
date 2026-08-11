@@ -1,5 +1,4 @@
 import express from "express";
-import { stripe } from "../config/stripe.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import {
   deleteCard,
@@ -8,6 +7,7 @@ import {
 } from "../services/payment.methods-service.js";
 import { getPaymentMethodByStripeId } from "../controllers/paymentMethod.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../constants/errors.js";
+import { detachStripePaymentMethod } from "../integrations/stripe/payment-method.js";
 
 const router = express.Router();
 
@@ -44,25 +44,14 @@ router.get("/:stripePaymentMethodId", verifyUserAuth, async (req, res) => {
 
 router.delete("/:cardId", verifyUserAuth, async (req, res, next) => {
   const { cardId } = req.params;
+
   try {
     const methodId = await findUniqueStripeMethodId(cardId, req.user.id);
     if (!methodId) return res.status(404).json({ error: "Card not found" });
 
-    try {
-      await stripe.paymentMethods.detach(methodId, {
-        idempotencyKey: `detach-card-${cardId}`,
-      }); // 결제 완료된 카드만 삭제됨
-    } catch (stripeErr) {
-      if (stripeErr.code !== "resource_missing") {
-        console.error("Stripe detach failed:", stripeErr);
-
-        return res.status(502).json({
-          error: "Failed to remove payment method. Please try again.",
-        });
-      }
-      // resource_missing: 이미 카드가 detach된 경우
-    }
+    await detachStripePaymentMethod(methodId, cardId);
     await deleteCard(cardId, req.user.id);
+
     res.status(200).json({ message: "Requested card deleted" });
   } catch (err) {
     return next(err);

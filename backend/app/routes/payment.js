@@ -1,18 +1,13 @@
 import express from "express";
-import { stripe } from "../config/stripe.js";
-import { findUniquePaymentByOrderId } from "../services/payment-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import {
   getOrCreateClientSecret,
   getExistingClientSecret,
   processSavedCardPayment,
   verifyStripePayment,
+  updatePaymentIntentMetadata,
 } from "../controllers/payment.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../constants/errors.js";
-import {
-  STRIPE_METADATA_SAVE_CARD,
-  STRIPE_METADATA_SET_AS_DEFAULT,
-} from "../constants/stripe.js";
 
 const router = express.Router();
 
@@ -85,22 +80,16 @@ router.post("/create-payment-intent", verifyUserAuth, async (req, res) => {
 });
 
 // Webhook이 실행될 때 paymentIntent.metadata.saveCard를 읽어서 카드를 저장할지 결정
-
 router.patch("/update-payment-intent", verifyUserAuth, async (req, res) => {
   try {
     const { orderId, saveCard, setAsDefault } = req.body;
-    const payment = await findUniquePaymentByOrderId(orderId);
-    if (!payment)
-      return res
-        .status(404)
-        .json({ error: "Order not found. Please try again." });
+    const userId = req.user.id;
 
-    await stripe.paymentIntents.update(payment.stripe_payment_intent_id, {
-      metadata: {
-        [STRIPE_METADATA_SAVE_CARD]: String(saveCard),
-        [STRIPE_METADATA_SET_AS_DEFAULT]: String(setAsDefault),
-      },
-      ...(saveCard && { setup_future_usage: "on_session" }),
+    await updatePaymentIntentMetadata({
+      orderId,
+      userId,
+      saveCard,
+      setAsDefault,
     });
 
     res.json({ success: true });

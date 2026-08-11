@@ -20,6 +20,7 @@ import {
   confirmStripePaymentIntent,
   createStripePaymentIntent,
   retrieveStripePaymentIntent,
+  updateStripePaymentIntent,
 } from "../integrations/stripe/payment-intent.js";
 import { updateUserStripeId } from "../services/account-service.js";
 import { getOrderById } from "../services/order-service.js";
@@ -230,6 +231,25 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
   }
 
   return { paymentIntentId: confirmedPaymentIntent.id };
+}
+
+export async function updatePaymentIntentMetadata({
+  orderId,
+  userId,
+  saveCard,
+  setAsDefault,
+}) {
+  const { order } = await validateOrderForPayment(orderId, userId);
+
+  const payment = await findUniquePaymentByOrderId(order.id);
+  if (!payment) {
+    throw new Error(PAYMENT_ERROR.PAYMENT_NOT_FOUND);
+  }
+
+  await updateStripePaymentIntent(payment.stripe_payment_intent_id, {
+    saveCard,
+    setAsDefault,
+  });
 }
 
 // "pi_1AbcD..."

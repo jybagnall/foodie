@@ -30,10 +30,10 @@ class AccountService {
     return data;
   }
 
-  async getUserInfo() {
-    const data = await this.client.get(`/api/accounts/user`);
-    return data;
-  }
+  // async getUserInfo() {
+  //   const data = await this.client.get(`/api/accounts/user`);
+  //   return data;
+  // }
 
   async loginUser(email, password) {
     const data = await this.client.rawPost("/api/accounts/login", {

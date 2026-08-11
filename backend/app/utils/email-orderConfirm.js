@@ -5,6 +5,7 @@ import { resend } from "../config/resend.js";
 import { getOrderConfirmationDetails } from "../services/order-service.js";
 import { formatCurrency } from "./orderCalculations.js";
 import { formatPaymentMethodDisplay } from "./paymentInfo.js";
+import { retrieveStripeCharge } from "../integrations/stripe/charge.js";
 
 // Promise.race로 타임아웃을 거는 이유:
 // 이메일 발송이 멈추면, 그 뒤에 있는 결제 이벤트들도 전부 처리가 안 되고 줄줄이 밀림.
@@ -34,11 +35,8 @@ export async function sendOrderConfirmationEmail(
     const { email, full_name, street, city, postal_code, phone } =
       await getOrderConfirmationDetails(client, orderId);
 
-    const charge = await stripe.charges.retrieve(latest_charge);
-    console.log(
-      "charge.payment_method_details",
-      JSON.stringify(charge.payment_method_details, null, 2),
-    );
+    const charge = await retrieveStripeCharge(latest_charge);
+
     const { type, card } = charge.payment_method_details;
     const paymentInfo = {
       method: type, // card, paypal

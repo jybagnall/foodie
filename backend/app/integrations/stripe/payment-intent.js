@@ -1,13 +1,16 @@
 import { stripe } from "../config/stripe.js";
 
-import { PAYMENT_ERROR } from "../../constants/errors";
+import { PAYMENT_ERROR } from "../../constants/errors.js";
 import {
   STRIPE_ERROR_CODE,
   STRIPE_ERROR_TYPE,
   STRIPE_METADATA_ORDER_ID,
+  STRIPE_METADATA_SAVE_CARD,
+  STRIPE_METADATA_SET_AS_DEFAULT,
   STRIPE_METADATA_USER_ID,
+  STRIPE_PAYMENT_INTENT_STATUS,
   SUPPORTED_STRIPE_PAYMENT_METHODS,
-} from "../../constants/stripe";
+} from "../../constants/stripe.js";
 
 export async function cancelOrphanedPaymentIntent(paymentIntentId) {
   try {
@@ -22,6 +25,21 @@ export async function cancelOrphanedPaymentIntent(paymentIntentId) {
     throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_CANCELLATION_FAILURE, {
       cause: cancelErr,
     });
+  }
+}
+
+export async function cancelStripePaymentIntent(paymentIntentId) {
+  try {
+    // 미완료 PaymentIntent를 취소
+    await stripe.paymentIntents.cancel(paymentIntentId);
+  } catch (stripeErr) {
+    // Stripe에 저장된 PaymentIntent를 조회
+    const current = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // 결제가 완료됐거나 다른 상태로 넘어감 - 만료 처리하면 안 됨
+    if (current.status !== STRIPE_PAYMENT_INTENT_STATUS.CANCELED) {
+      throw stripeErr;
+    }
   }
 }
 
@@ -122,6 +140,31 @@ export async function retrieveStripePaymentIntent(paymentIntentId) {
       type: err.type,
       code: err.code,
     });
+    throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, { cause: err });
+  }
+}
+
+export async function updateStripePaymentIntent(
+  paymentIntentId,
+  { saveCard, setAsDefault },
+) {
+  try {
+    return await stripe.paymentIntents.update(paymentIntentId, {
+      metadata: {
+        [STRIPE_METADATA_SAVE_CARD]: String(saveCard),
+        [STRIPE_METADATA_SET_AS_DEFAULT]: String(setAsDefault),
+      },
+      ...(saveCard && {
+        setup_future_usage: "on_session",
+      }),
+    });
+  } catch (err) {
+    console.error("Stripe PaymentIntent update failed", {
+      paymentIntentId,
+      type: err.type,
+      code: err.code,
+    });
+
     throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, { cause: err });
   }
 }
