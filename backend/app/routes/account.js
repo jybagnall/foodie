@@ -1,74 +1,36 @@
 import express from "express";
-import bcrypt from "bcrypt";
-
-import {
-  findUserByEmail,
-  findUserById,
-  updateUserRefreshToken,
-  findMyProfile,
-  updateUserName,
-  findPasswordById,
-  updatePassword,
-  createPasswordResetToken,
-  updateLastLogin,
-} from "../services/account-service.js";
-import {
-  generateTokens,
-  hashRawPasswordToken,
-  verifyPassword,
-  verifyRefreshToken,
-} from "../utils/auth.js";
+import { updateUserName } from "../services/account-service.js";
+import { hashRawPasswordToken } from "../utils/auth.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
-import { sendPasswordResetEmail } from "../utils/email.js";
 import pool from "../config/db.js";
-import { resetPassword, signup } from "../controllers/account.controller.js";
-import { AUTH_ERROR_STATUS } from "../constants/errors.js";
+import {
+  changePassword,
+  getMyProfile,
+  login,
+  logout,
+  refreshAccessToken,
+  requestPasswordReset,
+  resetPassword,
+  signup,
+} from "../controllers/account.controller.js";
+import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors.js";
 
 const router = express.Router();
 
-router.get("/my-profile", verifyUserAuth, async (req, res, next) => {
+router.get("/my-profile", verifyUserAuth, async (req, res) => {
   try {
-    const profile = await findMyProfile(req.user.id);
-
-    if (!profile) {
-      return res.status(400).json({
-        error: "We couldn’t verify your account. Please sign in again.",
-      });
-    }
-
+    const profile = await getMyProfile(req.user.id);
     res.status(200).json(profile);
   } catch (err) {
     console.error("User data fetching error,", err);
-    return next(err);
+    const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error: "We couldn't verify your account. Please sign in again.",
+    });
   }
 });
-
-// router.get("/user", verifyUserAuth, async (req, res, next) => {
-//   try {
-//     const existingUser = await findUserById(req.user.id);
-
-//     if (!existingUser) {
-//       return res.status(400).json({
-//         error: "We couldn’t verify your account. Please sign in again.",
-//       });
-//     }
-
-//     res.status(200).json({
-//       message: "User information is found.",
-//       user: {
-//         id: existingUser.id,
-//         name: existingUser.name,
-//         email: existingUser.email,
-//         role: existingUser.role,
-//         stripe_customer_id: existingUser.stripe_customer_id,
-//       },
-//     });
-//   } catch (err) {
-//     return next(err);
-//   }
-// });
 
 router.post(
   "/forgot-password",
@@ -76,13 +38,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { email } = req.body;
-      const rawToken = await createPasswordResetToken(email);
-
-      if (rawToken) {
-        const resetLink = `${process.env.FRONTEND_PUBLIC_URL}/reset-password?token=${rawToken}`;
-        await sendPasswordResetEmail(email, resetLink);
-      }
-
+      await requestPasswordReset(email);
       res.status(200).json({ message: "A reset link has been sent." });
     } catch (err) {
       return next(err);
@@ -90,93 +46,32 @@ router.post(
   },
 );
 
-router.post(
-  "/login",
-  validateBody("email", "password"),
-  async (req, res, next) => {
-    try {
-      const { email, password } = req.body;
-      const loggedInUser = await findUserByEmail(email);
+router.post("/login", validateBody("email", "password"), async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const { accessToken, refreshToken } = await login(email, password);
+    setRefreshTokenCookie(res, refreshToken);
 
-      if (!loggedInUser) {
-        return res
-          .status(401)
-          .json({ error: "Incorrect email or password. Please try again." });
-      }
-
-      const passwordMatches = await verifyPassword(
-        password,
-        loggedInUser.password,
-      );
-
-      if (!passwordMatches) {
-        return res
-          .status(401)
-          .json({ error: "Incorrect email or password. Please try again." });
-      }
-
-      const { accessToken, refreshToken } = generateTokens({
-        id: loggedInUser.id,
-        role: loggedInUser.role,
-        name: loggedInUser.name,
-        email: loggedInUser.email,
-        stripe_customer_id: loggedInUser.stripe_customer_id,
-      });
-
-      const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-      await updateUserRefreshToken(loggedInUser.id, hashedRefresh);
-      setRefreshTokenCookie(res, refreshToken);
-
-      try {
-        await updateLastLogin(loggedInUser.id);
-      } catch (err) {
-        console.error(
-          `Failed to update last_login for user ${loggedInUser.id}:`,
-          err,
-        );
-      } // 부가 정보라 실패해도 로그인 응답을 막지 않음
-
-      res.status(200).json({
-        message: "You have successfully logged in! Welcome back.",
-        accessToken,
-      });
-    } catch (err) {
-      return next(err);
-    }
-  },
-);
+    res.status(200).json({
+      message: "You have successfully logged in! Welcome back.",
+      accessToken,
+    });
+  } catch (err) {
+    const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+    const message =
+      err.message === AUTH_ERROR.INVALID_CREDENTIALS
+        ? "Incorrect email or password. Please try again."
+        : "Something went wrong. Please try again.";
+    return res.status(status).json({
+      error: message,
+    });
+  }
+});
 
 // 쿠키 제거는 서버에서만
 router.post("/logout", async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-
-  if (refreshToken) {
-    try {
-      const decoded = await verifyRefreshToken(refreshToken);
-      const dbUser = await findUserById(decoded.id);
-
-      if (dbUser?.current_refresh_token) {
-        // DB에 저장된 refreshToken과 일치 여부 확인
-        const isMatch = await bcrypt.compare(
-          refreshToken,
-          dbUser.current_refresh_token,
-        );
-
-        if (isMatch) {
-          try {
-            await updateUserRefreshToken(decoded.id, null);
-          } catch (err) {
-            console.error(
-              `Failed to invalidate refresh token for user ${decoded.id}`,
-              err,
-            );
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Refresh token verification failed during logout", err);
-    }
-  }
+  await logout(refreshToken);
 
   //  토큰 검증 결과와 관계없이 브라우저 쿠키 저장소에서 refreshToken 제거
   res.clearCookie("refreshToken", {
@@ -191,69 +86,36 @@ router.post("/logout", async (req, res) => {
 router.post("/refresh-access-token", async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(400).json({
-        error: "Your login session has expired. Please log in again.",
-      });
-    }
-
-    // 토큰 검증
-    const decodedToken = await verifyRefreshToken(refreshToken);
-    const dbUser = await findUserById(decodedToken.id);
-    if (!dbUser)
-      return res.status(401).json({
-        error: "We couldn’t verify your account. Please log in again.",
-      });
-
-    if (!dbUser.current_refresh_token) {
-      return res.status(403).json({
-        error:
-          "For your security, you've been logged out. Please sign in again.",
-      });
-    }
-
-    // DB에 저장된 refreshToken과 일치 여부 확인
-    const isMatch = await bcrypt.compare(
-      refreshToken,
-      dbUser.current_refresh_token,
-    );
-    if (!isMatch) {
-      return res.status(403).json({
-        error:
-          "For your security, you’ve been logged out. Please sign in again.",
-      });
-    }
-
-    // 새 토큰 생성
-    const newTokens = generateTokens({
-      id: dbUser.id,
-      role: dbUser.role,
-      name: dbUser.name,
-      email: dbUser.email,
-      stripe_customer_id: dbUser.stripe_customer_id ?? null,
-    });
-
-    // 새 refreshToken 해시 DB 저장 (이전 토큰 무효화)
-    const hashedNewRefresh = await bcrypt.hash(newTokens.refreshToken, 10);
-    await updateUserRefreshToken(dbUser.id, hashedNewRefresh);
+    const { accessToken, refreshToken: newRefreshToken } =
+      await refreshAccessToken(refreshToken);
 
     // 브라우저 쿠키 저장소에 새 refreshToken 저장
-    setRefreshTokenCookie(res, newTokens.refreshToken);
+    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({
       message: "Access token refreshed successfully.",
-      accessToken: newTokens.accessToken,
+      accessToken: accessToken,
     });
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      console.warn("Refresh token expired (normal):", err.message);
-    } else if (err.name === "JsonWebTokenError") {
+    if (err.message === AUTH_ERROR.SESSION_EXPIRED) {
+      console.warn(
+        "Refresh token expired (normal):",
+        err.cause?.message ?? err.message,
+      );
+    } else if (err.message === AUTH_ERROR.INVALID_REFRESH_TOKEN) {
+      console.warn(
+        "Invalid/tampered refresh token:",
+        err.cause?.message ?? err.message,
+      );
+    } else if (err.message === AUTH_ERROR.SESSION_REVOKED) {
       console.warn("Invalid refresh token");
     } else {
       console.error("Unexpected refresh error:", err);
     }
-    return res.status(401).json({
-      error: "For your security, you’ve been logged out. Please sign in again.",
+
+    const status = AUTH_ERROR_STATUS[err.message] ?? 401;
+    return res.status(status).json({
+      error: "For your security, you've been logged out. Please sign in again.",
     });
   }
 });
@@ -263,6 +125,7 @@ router.post(
   validateBody("password"),
   async (req, res, next) => {
     const client = await pool.connect();
+
     try {
       const { resetToken, password } = req.body;
       const hashedPwResetToken = await hashRawPasswordToken(resetToken);
@@ -294,10 +157,10 @@ router.post(
   "/signup",
   validateBody("name", "email", "password"),
   async (req, res) => {
-    const { name, email, password } = req.body;
     const client = await pool.connect();
 
     try {
+      const { name, email, password } = req.body;
       const { accessToken, refreshToken, sessionIssued } = await signup({
         client,
         name,
@@ -349,38 +212,17 @@ router.patch(
 router.patch(
   "/update-password",
   verifyUserAuth,
-  validateBody("password"),
-  async (req, res, next) => {
+  validateBody("currentPassword", "password"),
+  async (req, res) => {
     try {
       const { currentPassword, password } = req.body;
-
-      if (currentPassword === password) {
-        return res.status(400).json({
-          error: "New password must be different from the current password.",
-        });
-      }
-
-      const pwInDb = await findPasswordById(req.user.id);
-
-      if (!pwInDb) {
-        return res.status(404).json({
-          error: "User information is not available",
-        });
-      }
-
-      const passwordMatches = await verifyPassword(
-        currentPassword,
-        pwInDb.password,
-      );
-
-      if (!passwordMatches) {
-        return res.status(401).json({ error: "Current password is incorrect" });
-      }
-
-      await updatePassword(password, req.user.id);
+      await changePassword(currentPassword, password, req.user.id);
       res.status(200).json({ success: true });
     } catch (err) {
-      return next(err);
+      const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error: "Something went wrong. Please try again.",
+      });
     }
   },
 );

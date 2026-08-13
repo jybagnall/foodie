@@ -1,22 +1,11 @@
 import jwt from "jsonwebtoken";
+import { verifyAccessToken } from "../utils/auth";
+import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors";
 
-export function verifyUserAuth(req, res, next) {
+export async function verifyUserAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      return res
-        .status(401)
-        .json({ error: "Your session has expired. Please sign in again." });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.tokenType !== "access") {
-      return res
-        .status(401)
-        .json({ error: "Your session has expired. Please sign in again." });
-    }
+    const decoded = await verifyAccessToken(authHeader);
 
     // id, role, email → JWT 발급 시 항상 존재
     // stripe_customer_id → JWT 갱신 전에는 없을 수 있음
@@ -29,8 +18,12 @@ export function verifyUserAuth(req, res, next) {
 
     next();
   } catch (err) {
-    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
-      return res.status(401).json({
+    if (
+      err.message === AUTH_ERROR.SESSION_EXPIRED ||
+      err.message === AUTH_ERROR.INVALID_ACCESS_TOKEN
+    ) {
+      const status = AUTH_ERROR_STATUS[err.message] ?? 401;
+      return res.status(status).json({
         error: "Your session has expired. Please sign in again.",
       });
     }
@@ -47,10 +40,13 @@ export function verifyAdminAuth(req, res, next) {
     }
 
     const token = authHeader.split(" ")[1];
-    const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error("JWT_SECRET not defined");
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
 
-    const decoded = jwt.verify(token, secret); // JWT 검증
+    if (decoded.tokenType !== "access") {
+      return res
+        .status(401)
+        .json({ error: "Your session has expired. Please sign in again." });
+    }
 
     if (decoded.role !== "admin") {
       return res.status(403).json({ error: "Access denied: Admins only" });

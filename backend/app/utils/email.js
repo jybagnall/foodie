@@ -15,19 +15,14 @@ export async function sendAdminInvitationEmail(to, inviteLink) {
 }
 
 export async function sendPasswordResetEmail(to, resetLink) {
-  try {
-    await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
-      to,
-      subject: "Password Reset Request",
-      html: `
+  await resend.emails.send({
+    from: "Acme <onboarding@resend.dev>",
+    to,
+    subject: "Password Reset Request",
+    html: `
         <p>Click the link below to reset your password. This link is valid for 10 minutes.</p>
         <a href="${resetLink}">Reset Password</a>
         <p>If you did not request a password reset, you can safely ignore this email.</p>
       `,
-    });
-  } catch (err) {
-    console.error("Resend Error:", err);
-    throw err;
-  }
+  });
 }

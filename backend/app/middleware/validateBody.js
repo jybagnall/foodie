@@ -4,6 +4,9 @@ const US_STATE_CODES = new Set(US_STATES.map((state) => state.value));
 
 // rules.name === rules["name"]
 const rules = {
+  currentPassword: (v) => {
+    if (!v || typeof v !== "string") return "currentPassword is required.";
+  },
   name: (v) => {
     if (!v || typeof v !== "string") return "Name is required.";
     if (v.length < 2 || v.length > 32) return "Name must be 2–32 characters.";

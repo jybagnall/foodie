@@ -7,6 +7,7 @@ import {
   REFRESH_TOKEN_EXPIRES_IN,
   BCRYPT_SALT_ROUNDS,
 } from "../constants/auth.js";
+import { AUTH_ERROR } from "../constants/errors.js";
 
 export async function hashPassword(password) {
   const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
@@ -35,10 +36,6 @@ export async function generateHashedToken(expiresInMs = 10 * 60 * 1000) {
 }
 
 export function generateTokens(account) {
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET is not defined");
-  }
-
   const data = {
     id: account.id,
     role: account.role,
@@ -50,31 +47,68 @@ export function generateTokens(account) {
   return {
     accessToken: jwt.sign(
       { ...data, tokenType: "access" },
-      process.env.JWT_SECRET,
+      process.env.JWT_ACCESS_TOKEN_SECRET,
       { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
     ),
     refreshToken: jwt.sign(
       { ...data, tokenType: "refresh" },
-      process.env.JWT_SECRET,
+      process.env.JWT_REFRESH_TOKEN_SECRET,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN },
     ), // 서버가 토큰 검증을 할 때 사용함. 신뢰할 날짜인가
   };
 }
 
-export function verifyAccessToken(token) {
-  return jwt.verify(token, process.env.JWT_SECRET);
+export async function verifyAccessToken(authHeader) {
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new Error(AUTH_ERROR.SESSION_EXPIRED);
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  let decoded;
+
+  try {
+    decoded = await jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      throw new Error(AUTH_ERROR.SESSION_EXPIRED, {
+        cause: err,
+      });
+    }
+
+    throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN, {
+      cause: err,
+    });
+  }
+
+  if (decoded.tokenType !== "access") {
+    throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
+  }
+
+  return decoded;
 }
 
 const verifyToken = promisify(jwt.verify);
 
 export async function verifyRefreshToken(token) {
-  const user = await verifyToken(token, process.env.JWT_SECRET);
+  let decoded;
 
-  if (user.tokenType !== "refresh") {
-    throw new Error("Invalid token type.");
+  try {
+    decoded = await verifyToken(token, process.env.JWT_REFRESH_TOKEN_SECRET);
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      throw new Error(AUTH_ERROR.SESSION_EXPIRED, { cause: err });
+    }
+
+    throw new Error(AUTH_ERROR.INVALID_REFRESH_TOKEN, { cause: err });
+    // JsonWebTokenError (서명 불일치, malformed 등) — 조작/무효 토큰
   }
 
-  return user;
+  if (decoded.tokenType !== "refresh") {
+    throw new Error(AUTH_ERROR.INVALID_REFRESH_TOKEN);
+  }
+
+  return decoded;
 }
 
 // user:
