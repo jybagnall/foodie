@@ -1,10 +1,9 @@
 import express from "express";
 import multer from "multer";
 import { storage } from "../config/cloudinary.js";
-import { cloudinary } from "../config/cloudinary.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
-import { getImages, uploadImage } from "../services/brand-service.js";
-import { BRAND_ASSET_KEYS } from "../constants/brandAssets.js";
+import { getImages } from "../services/brand-service.js";
+import { uploadBrandAsset } from "../controllers/brand.controller.js";
 
 const router = express.Router();
 const upload = multer({ storage });
@@ -33,30 +32,16 @@ router.post(
       }
 
       const { assetType } = req.body;
-      const key = BRAND_ASSET_KEYS[assetType];
-
-      if (!key) {
-        return res.status(400).json({
-          error: "Invalid asset type",
-        });
-      }
-
-      const imgSrc = req.file.path;
-      const imgPublicId = req.file.filename;
-      const oldPublicId = await uploadImage({ key, imgSrc, imgPublicId });
-
-      if (oldPublicId) {
-        await cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-          console.error(
-            `Failed to delete old brand asset ${oldPublicId}:`,
-            err,
-          );
-        });
-      }
+      const file = req.file;
+      await uploadBrandAsset(assetType, file);
       res
         .status(200)
         .json({ message: "A new image is uploaded successfully." });
     } catch (err) {
+      if (err.message === "INVALID_ASSET_TYPE") {
+        return res.status(400).json({ error: "Invalid asset type" });
+      }
+
       return next(err);
     }
   },

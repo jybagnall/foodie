@@ -1,17 +1,10 @@
 import express from "express";
-import {
-  createOrder,
-  getAllOrders,
-  getOrderDetails,
-  insertOrderItems,
-} from "../services/order-service.js";
-import { saveShippingInfo } from "../services/address-service.js";
+import { getAllOrders, getOrderDetails } from "../services/order-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
-import pool from "../config/db.js";
 import { validateOrderBody } from "../middleware/validateOrderBody.js";
 import {
-  buildOrderWithPrices,
   cancelOrder,
+  initializeOrder,
 } from "../controllers/order.controller.js";
 import { ORDER_ERROR_STATUS } from "../constants/errors.js";
 import { parseCursor } from "../utils/validators.js";
@@ -74,43 +67,20 @@ router.post(
   verifyUserAuth,
   validateOrderBody,
   async (req, res) => {
-    const client = await pool.connect();
     try {
       const { address, orderPayload } = req.body;
-
-      await client.query("BEGIN");
-      const {
-        subTotalAmount,
-        deliveryFee,
-        taxAmount,
-        totalAmount,
-        completeOrder,
-      } = await buildOrderWithPrices(client, address, orderPayload);
-
-      const addressId = await saveShippingInfo(client, req.user.id, address);
-      const orderId = await createOrder(
-        client,
-        req.user.id,
-        addressId,
-        subTotalAmount,
-        deliveryFee,
-        taxAmount,
-        totalAmount,
+      const orderId = await initializeOrder({
         address,
-      );
-      await insertOrderItems(client, orderId, completeOrder);
-      // [{ menu_name, menu_id, qty, price }, {}]
-      await client.query("COMMIT");
+        orderPayload,
+        userId: req.user.id,
+      });
       res.status(201).json({ message: "Order info is saved.", orderId });
     } catch (err) {
-      await client.query("ROLLBACK").catch(() => {});
       console.error("Order error,", err);
       const status = ORDER_ERROR_STATUS[err.message] ?? 500;
       return res.status(status).json({
         error: "Failed to initialize order.",
       });
-    } finally {
-      client.release();
     }
   },
 );

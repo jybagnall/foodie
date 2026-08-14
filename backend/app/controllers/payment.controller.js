@@ -71,23 +71,6 @@ async function createAndStoreStripePaymentIntent(
   }
 }
 
-async function updateUserStripeIdWithRetry(
-  userId,
-  stripeCustomerId,
-  attempts = STRIPE_RETRY_MAX_ATTEMPTS,
-) {
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await updateUserStripeId(userId, stripeCustomerId);
-    } catch (err) {
-      if (i === attempts - 1) throw err;
-      await new Promise((resolve) =>
-        setTimeout(resolve, STRIPE_RETRY_BASE_DELAY_MS * (i + 1)),
-      );
-    }
-  }
-}
-
 // Stripe 고객 ID 확인/생성
 async function ensureStripeCustomerId(user) {
   let customerId = user.stripe_customer_id;
@@ -120,6 +103,40 @@ async function ensureStripeCustomerId(user) {
   return customerId;
 }
 
+async function getValidatedPaymentIntent(orderId, userId) {
+  const { amount } = await validateOrderForPayment(orderId, userId);
+  const payment = await findUniquePaymentByOrderId(orderId);
+
+  if (!payment?.stripe_payment_intent_id) return { intent: null, amount };
+
+  const intent = await retrieveStripePaymentIntent(
+    payment.stripe_payment_intent_id,
+  );
+
+  if (intent.amount !== amount) {
+    throw new Error(PAYMENT_ERROR.AMOUNT_MISMATCH_WITH_INTENT);
+  }
+
+  return { intent, amount };
+}
+
+async function updateUserStripeIdWithRetry(
+  userId,
+  stripeCustomerId,
+  attempts = STRIPE_RETRY_MAX_ATTEMPTS,
+) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await updateUserStripeId(userId, stripeCustomerId);
+    } catch (err) {
+      if (i === attempts - 1) throw err;
+      await new Promise((resolve) =>
+        setTimeout(resolve, STRIPE_RETRY_BASE_DELAY_MS * (i + 1)),
+      );
+    }
+  }
+}
+
 async function validateOrderForPayment(orderId, userId) {
   if (!isValidOrderId(orderId)) {
     throw new Error(PAYMENT_ERROR.INVALID_ORDER_ID);
@@ -139,23 +156,6 @@ async function validateOrderForPayment(orderId, userId) {
 
   const amount = toStripeAmount(order.total_amount);
   return { order, amount };
-}
-
-async function getValidatedPaymentIntent(orderId, userId) {
-  const { amount } = await validateOrderForPayment(orderId, userId);
-  const payment = await findUniquePaymentByOrderId(orderId);
-
-  if (!payment?.stripe_payment_intent_id) return { intent: null, amount };
-
-  const intent = await retrieveStripePaymentIntent(
-    payment.stripe_payment_intent_id,
-  );
-
-  if (intent.amount !== amount) {
-    throw new Error(PAYMENT_ERROR.AMOUNT_MISMATCH_WITH_INTENT);
-  }
-
-  return { intent, amount };
 }
 
 export async function getExistingClientSecret(orderId, user) {

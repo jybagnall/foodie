@@ -1,13 +1,11 @@
 import express from "express";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
+import { getCardsInfo } from "../services/payment.methods-service.js";
 import {
-  deleteCard,
-  findUniqueStripeMethodId,
-  getCardsInfo,
-} from "../services/payment.methods-service.js";
-import { getPaymentMethodByStripeId } from "../controllers/paymentMethod.controller.js";
+  getPaymentMethodByStripeId,
+  removeCard,
+} from "../controllers/paymentMethod.controller.js";
 import { PAYMENT_ERROR_STATUS } from "../constants/errors.js";
-import { detachStripePaymentMethod } from "../integrations/stripe/payment-method.js";
 
 const router = express.Router();
 
@@ -43,15 +41,9 @@ router.get("/:stripePaymentMethodId", verifyUserAuth, async (req, res) => {
 });
 
 router.delete("/:cardId", verifyUserAuth, async (req, res, next) => {
-  const { cardId } = req.params;
-
   try {
-    const methodId = await findUniqueStripeMethodId(cardId, req.user.id);
-    if (!methodId) return res.status(404).json({ error: "Card not found" });
-
-    await detachStripePaymentMethod(methodId, cardId);
-    await deleteCard(cardId, req.user.id);
-
+    const { cardId } = req.params;
+    await removeCard(cardId, req.user.id);
     res.status(200).json({ message: "Requested card deleted" });
   } catch (err) {
     return next(err);

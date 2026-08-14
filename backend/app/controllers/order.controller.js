@@ -1,7 +1,12 @@
 import pool from "../config/db.js";
 import { getMenuPrices } from "../services/menu-service.js";
 import { createRefundRecord } from "../services/refund-service.js";
-import { getOrderById, updateOrderStatus } from "../services/order-service.js";
+import {
+  createOrder,
+  getOrderById,
+  insertOrderItems,
+  updateOrderStatus,
+} from "../services/order-service.js";
 import {
   updatePendingPayment,
   findUniquePaymentByOrderId,
@@ -26,6 +31,7 @@ import { withTransaction } from "../utils/db.js";
 import { ORDER_ERROR } from "../constants/errors.js";
 import { isValidOrderId } from "../utils/validators.js";
 import { createStripeRefund } from "../integrations/stripe/refund.js";
+import { saveShippingInfo } from "../services/address-service.js";
 
 async function findCancellablePayment(orderId) {
   const payment = await findUniquePaymentByOrderId(orderId);
@@ -88,9 +94,9 @@ async function cancelPaidOrder(orderId) {
 }
 
 // 1. 메뉴 가격 조회 2. 가격 매핑 3. 총액 계산
-export async function buildOrderWithPrices(client, address, orderPayload) {
+async function buildOrderWithPrices(address, orderPayload) {
   const menuIds = [...new Set(orderPayload.items.map((i) => i.menu_id))];
-  const itemsWithPrice = await getMenuPrices(client, menuIds);
+  const itemsWithPrice = await getMenuPrices(menuIds);
   // [{ id, price }, {}]
 
   const pricedMap = new Map(
@@ -178,4 +184,29 @@ export async function expirePendingOrder(orderId) {
     console.error("Order expiration DB update failed:", err);
     throw new Error(ORDER_ERROR.POST_DB_FAILURE, { cause: err });
   }
+}
+
+export async function initializeOrder({ address, orderPayload, userId }) {
+  const { subTotalAmount, deliveryFee, taxAmount, totalAmount, completeOrder } =
+    await buildOrderWithPrices(address, orderPayload);
+
+  const orderId = await withTransaction(pool, async (client) => {
+    const addressId = await saveShippingInfo(client, userId, address);
+    const createdOrderId = await createOrder(
+      client,
+      userId,
+      addressId,
+      subTotalAmount,
+      deliveryFee,
+      taxAmount,
+      totalAmount,
+      address,
+    );
+    await insertOrderItems(client, createdOrderId, completeOrder);
+    // [{ menu_name, menu_id, qty, price }, {}]
+
+    return createdOrderId;
+  });
+
+  return orderId;
 }

@@ -23,8 +23,6 @@ import {
 import { sendPasswordResetEmail } from "../utils/email.js";
 import { BCRYPT_SALT_ROUNDS } from "../constants/auth.js";
 
-// logout,  getCurrentUser
-
 async function hashAndSaveRefreshToken(userId, refreshToken, client = null) {
   const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
   await updateUserRefreshToken(userId, hashedRefresh, client);
@@ -176,10 +174,22 @@ export async function signup({ client, name, email, password }) {
     throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE);
   }
 
-  await client.query("BEGIN");
-  const createdUser = await createAccount(name, email, password, client);
-  await client.query("COMMIT");
+  let createdUser;
 
+  try {
+    await client.query("BEGIN");
+    createdUser = await createAccount(name, email, password, client);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+
+    if (err.code === "23505") {
+      throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE, { cause: err });
+    }
+    throw err;
+  }
+
+  // 부가 작업
   await updateLastLogin(createdUser.id, client).catch((err) => {
     console.error(
       `Failed to update last_login for user ${createdUser.id}:`,

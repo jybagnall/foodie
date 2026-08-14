@@ -2,18 +2,17 @@ import express from "express";
 import multer from "multer";
 import { storage } from "../config/cloudinary.js";
 import pool from "../config/db.js";
-import { cloudinary } from "../config/cloudinary.js";
-import {
-  createMenu,
-  deleteMenu,
-  getMenus,
-  getSingleMenuDetail,
-  updateMenuField,
-  updateMenuImage,
-} from "../services/menu-service.js";
+import { getMenus, getSingleMenuDetail } from "../services/menu-service.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { validateCreateMenu } from "../middleware/validateCreateMenu.js";
 import { validateUpdateMenu } from "../middleware/validateUpdateMenu.js";
+import {
+  createNewMenu,
+  deleteMenuById,
+  updateMenu,
+  updateMenuImageByMenuId,
+} from "../controllers/menu.controller.js";
+import { MENU_ERROR_STATUS } from "../constants/errors.js";
 
 const router = express.Router();
 const upload = multer({ storage });
@@ -42,22 +41,20 @@ router.patch(
   "/:menuId",
   verifyAdminAuth,
   validateUpdateMenu,
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const { menuId } = req.params;
       const column = Object.keys(req.body)[0];
       const value = req.body[column];
-      const result = await updateMenuField(menuId, column, value);
-
-      if (result.rowCount === 0) {
-        return res.status(404).json({
-          error: "Menu not found.",
-        });
-      }
+      await updateMenu({ menuId, column, value });
 
       res.status(200).json({ success: true });
     } catch (err) {
-      return next(err);
+      console.error("Menu update error:", err);
+      const status = MENU_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error: status === 404 ? "Menu not found." : "Failed to update menu.",
+      });
     }
   },
 );
@@ -66,47 +63,27 @@ router.patch(
   "/:menuId/image",
   verifyAdminAuth,
   upload.single("image"),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Image is required" });
       }
 
       const { menuId } = req.params;
-      const imgSrc = req.file.path;
-      const imgPublicId = req.file.filename;
+      const file = req.file;
 
-      const menuInfo = await getSingleMenuDetail(menuId);
-
-      if (!menuInfo) {
-        await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
-        return res.status(404).json({ error: "Menu not found." });
-      } // DB에 존재하지 않는 메뉴라면 클라우드에 올려진 이미지 삭제
-
-      const result = await updateMenuImage(menuId, imgSrc, imgPublicId);
-
-      if (result.rowCount === 0) {
-        await cloudinary.uploader.destroy(imgPublicId).catch(() => {});
-        return res.status(404).json({
-          error: "Menu not found.",
-        });
-      } // DB 업데이트 중, 없는 메뉴였다면 클라우드에 올려진 이미지 삭제
-
-      if (menuInfo.image_public_id) {
-        await cloudinary.uploader
-          .destroy(menuInfo.image_public_id)
-          .catch(() => {});
-      } // 새 이미지가 올라갔으므로 기존 이미지는 삭제
+      await updateMenuImageByMenuId(file, menuId);
 
       res
         .status(200)
         .json({ message: "A new image is uploaded successfully." });
     } catch (err) {
-      if (req.file?.filename) {
-        await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
-      }
-
-      return next(err);
+      console.error("Menu image upload error:", err);
+      const status = MENU_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error:
+          status === 404 ? "Menu not found." : "Failed to update menu image.",
+      });
     }
   },
 );
@@ -118,54 +95,43 @@ router.post(
   verifyAdminAuth,
   upload.single("image"),
   validateCreateMenu,
-  async (req, res, next) => {
+  async (req, res) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Image is required" });
+      }
+
       const { name, price, description } = req.body;
-      const imgSrc = req.file.path;
-      const imgPublicId = req.file.filename;
-      await createMenu({ name, price, description, imgSrc, imgPublicId });
-      res.status(200).json({ message: "A new menu is uploaded successfully." });
+      const file = req.file;
+
+      await createNewMenu({ file, name, price, description });
+      res.status(201).json({ message: "A new menu is uploaded successfully." });
     } catch (err) {
-      if (req.file?.filename) {
-        await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
-      }
-
-      if (err.code === "23505") {
-        return res
-          .status(409)
-          .json({ error: "A menu with this name already exists." });
-      }
-
       console.error("Menu upload error:", err);
-      return next(err);
+      const status = MENU_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error:
+          status === 409
+            ? "Menu already exists."
+            : "Failed to create new menu.",
+      });
     }
   },
 );
 
-router.delete("/:menuId", verifyAdminAuth, async (req, res, next) => {
+router.delete("/:menuId", verifyAdminAuth, async (req, res) => {
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
     const { menuId } = req.params;
-    const menuInfo = await getSingleMenuDetail(menuId, client);
-
-    if (!menuInfo) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Menu not found." });
-    }
-
-    await deleteMenu(menuId, client);
-
-    await client.query("COMMIT");
-    await cloudinary.uploader.destroy(menuInfo.image_public_id).catch((err) => {
-      console.error(`Cloudinary cleanup failed for menu ${menuId}:`, err);
-    });
-
+    await deleteMenuById(client, menuId);
     res.status(200).json({ message: "Menu deleted successfully." });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-    return next(err);
+    console.error("Menu delete error:", err);
+    const status = MENU_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error: status === 404 ? "Menu not found." : "Failed to delete menu.",
+    });
   } finally {
     client.release();
   }

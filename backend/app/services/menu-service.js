@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { MENU_ERROR } from "../constants/errors.js";
 import { editableMenuFields } from "../constants/menu.js";
 
 export async function createMenu(data) {
@@ -44,19 +45,19 @@ export async function getSingleMenuDetail(id, db = pool) {
   return result.rows[0];
 }
 
-export async function getMenuPrices(client, menuIds) {
+export async function getMenuPrices(menuIds) {
   const q = `
   SELECT id, price
   FROM menus
   WHERE id = ANY($1)
   `;
-  const result = await client.query(q, [menuIds]);
+  const result = await pool.query(q, [menuIds]);
   return result.rows;
 }
 
 export async function updateMenuField(menuId, column, value) {
   if (!editableMenuFields.has(column)) {
-    throw new Error(`Invalid field: ${column}`);
+    throw new Error(MENU_ERROR.INVALID_FIELD);
   }
 
   const q = `

@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { ORDER_ERROR } from "../constants/errors.js";
 
 export async function createOrder(
   client,
@@ -35,7 +36,7 @@ export async function createOrder(
   const result = await client.query(q, values);
 
   if (!result.rows[0]) {
-    throw new Error("createOrder: Failed to create order");
+    throw new Error(ORDER_ERROR.ORDER_CREATE_FAILED);
   }
 
   return result.rows[0].id;
@@ -193,7 +194,7 @@ export async function insertOrderItems(client, orderId, order) {
   });
 
   if (placeholders.length === 0) {
-    throw new Error("insertOrderItems called with no items, skipping insert.");
+    throw new Error(ORDER_ERROR.EMPTY_ORDER_ITEMS);
   }
 
   const q = `
@@ -218,7 +219,7 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   );
 
   if (rows.length === 0) {
-    throw new Error("ORDER_NOT_FOUND");
+    throw new Error(ORDER_ERROR.ORDER_NOT_FOUND);
   }
 
   const currentStatus = rows[0].status; // 'pending', 'paid'
@@ -227,7 +228,7 @@ export async function updateOrderStatus(client, orderId, newStatus) {
 
   const allowed = ALLOWED_TRANSITIONS[currentStatus] ?? [];
   if (!allowed.includes(newStatus)) {
-    throw new Error("ORDER_STATUS_CONFLICT");
+    throw new Error(ORDER_ERROR.ORDER_STATUS_CONFLICT);
   }
 
   const q = `
@@ -242,6 +243,6 @@ export async function updateOrderStatus(client, orderId, newStatus) {
 
   // 이미 paid였거나, orderId가 잘못됐거나
   if (result.rowCount === 0) {
-    throw new Error("ORDER_STATUS_CONFLICT");
+    throw new Error(ORDER_ERROR.ORDER_STATUS_CONFLICT);
   }
 }

@@ -182,9 +182,9 @@ router.post(
         accessToken, // Signup 페이지에서 받음
       });
     } catch (err) {
-      await client.query("ROLLBACK").catch(() => {});
       console.error("user registration error,", err);
       const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+
       return res.status(status).json({
         error: "Something went wrong during signup. Please try again.",
       });

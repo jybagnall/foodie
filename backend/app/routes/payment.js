@@ -28,7 +28,6 @@ router.get("/client-secret", verifyUserAuth, async (req, res) => {
 router.get("/verify", verifyUserAuth, async (req, res) => {
   try {
     const { payment_intent: paymentIntentId, order_id: orderId } = req.query;
-
     const { paymentIntentStatus, lastPaymentError } = await verifyStripePayment(
       paymentIntentId,
       orderId,

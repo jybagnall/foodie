@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { ORDER_ERROR } from "../constants/errors.js";
 
 // 새 주소 추가(기존 기본 배송지 없으면 0 rows affected) & 기존 주소 변경
 export async function clearDefaultAddress(client, userId) {
@@ -122,7 +123,7 @@ export async function saveShippingInfo(client, userId, address) {
   const result = await client.query(q, values);
 
   if (!result.rows[0]) {
-    throw new Error("saveShippingInfo: Failed to save shipping address");
+    throw new Error(ORDER_ERROR.ADDRESS_SAVE_FAILED);
   }
 
   return result.rows[0].id;

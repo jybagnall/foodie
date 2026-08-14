@@ -58,7 +58,7 @@ export function generateTokens(account) {
   };
 }
 
-export async function verifyAccessToken(authHeader) {
+export function verifyAccessToken(authHeader) {
   if (!authHeader?.startsWith("Bearer ")) {
     throw new Error(AUTH_ERROR.SESSION_EXPIRED);
   }
@@ -68,7 +68,7 @@ export async function verifyAccessToken(authHeader) {
   let decoded;
 
   try {
-    decoded = await jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       throw new Error(AUTH_ERROR.SESSION_EXPIRED, {
