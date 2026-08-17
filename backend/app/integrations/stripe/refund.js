@@ -1,4 +1,4 @@
-import { stripe } from "../config/stripe.js";
+import { stripe } from "../../config/stripe.js";
 import { ORDER_ERROR } from "../../constants/errors.js";
 import { STRIPE_ERROR_TYPE } from "../../constants/stripe.js";
 

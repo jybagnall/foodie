@@ -1,4 +1,4 @@
-import { cloudinary } from "../config/cloudinary";
+import { cloudinary } from "../config/cloudinary.js";
 
 export async function cleanupCloudinaryAsset(publicId, reason) {
   if (!publicId) return;

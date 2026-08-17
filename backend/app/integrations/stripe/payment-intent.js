@@ -1,4 +1,4 @@
-import { stripe } from "../config/stripe.js";
+import { stripe } from "../../config/stripe.js";
 
 import { PAYMENT_ERROR } from "../../constants/errors.js";
 import {

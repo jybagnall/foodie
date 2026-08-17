@@ -19,9 +19,10 @@ export default function useStripeEventMonitor() {
   const accessToken = useAccessToken();
 
   const pageParam = searchParams.get("page");
-
-  const currentPage =
-    pageParam && !isNaN(Number(pageParam)) ? Number(pageParam) : 1;
+  const parsedPage = parseInt(pageParam, 10);
+  const currentPage = Number.isInteger(parsedPage)
+    ? Math.max(1, parsedPage)
+    : 1;
 
   const filters = useMemo(
     () => ({
@@ -50,7 +51,8 @@ export default function useStripeEventMonitor() {
   const { erroredEventCounts, isFetchingCount, eventsCountError } =
     useStripeErroredEventCounts(filters);
 
-  const { acknowledgeDeadEvents } = useAcknowledgeStripeEvents();
+  const { acknowledgeDeadEvents, isAcknowledging, acknowledgeFailed } =
+    useAcknowledgeStripeEvents();
 
   useEffect(() => {
     if (currentPage >= totalPages) return;
@@ -93,6 +95,8 @@ export default function useStripeEventMonitor() {
     currentPage,
     deadSummary,
     acknowledgeDeadEvents,
+    isAcknowledging,
+    acknowledgeFailed,
     isFetchingData,
     isFetchingCount,
     isFetchingEventTypes,

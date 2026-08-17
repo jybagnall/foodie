@@ -1,5 +1,5 @@
-import { verifyAccessToken } from "../utils/auth";
-import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors";
+import { verifyAccessToken } from "../utils/auth.js";
+import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors.js";
 
 export function verifyUserAuth(req, res, next) {
   try {

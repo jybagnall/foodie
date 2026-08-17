@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import pool from "../config/db.js";
 import {
   clearPasswordResetToken,
   createAccount,
@@ -17,13 +18,15 @@ import { createStripeCustomer } from "../integrations/stripe/customer.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 import {
   generateTokens,
+  hashRawPasswordToken,
   verifyPassword,
   verifyRefreshToken,
 } from "../utils/auth.js";
 import { sendPasswordResetEmail } from "../utils/email.js";
 import { BCRYPT_SALT_ROUNDS } from "../constants/auth.js";
+import { withTransaction } from "../utils/db.js";
 
-async function hashAndSaveRefreshToken(userId, refreshToken, client = null) {
+async function hashAndSaveRefreshToken(userId, refreshToken, client) {
   const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
   await updateUserRefreshToken(userId, hashedRefresh, client);
 }
@@ -150,7 +153,8 @@ export async function logout(refreshToken) {
   }
 }
 
-export async function resetPassword({ client, hashedPwResetToken, password }) {
+export async function resetPassword({ resetToken, password }) {
+  const hashedPwResetToken = await hashRawPasswordToken(resetToken);
   const user = await findUserByPasswordResetToken(hashedPwResetToken);
 
   if (!user) throw new Error(AUTH_ERROR.INVALID_RESET_TOKEN);
@@ -158,11 +162,11 @@ export async function resetPassword({ client, hashedPwResetToken, password }) {
   const { accessToken, refreshToken } = issueAuthSession(user);
   const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
 
-  await client.query("BEGIN");
-  await updatePassword(password, user.id, client);
-  await clearPasswordResetToken(user.id, client);
-  await updateUserRefreshToken(user.id, hashedRefresh, client);
-  await client.query("COMMIT");
+  await withTransaction(pool, async (client) => {
+    await updatePassword(password, user.id, client);
+    await clearPasswordResetToken(user.id, client);
+    await updateUserRefreshToken(user.id, hashedRefresh, client);
+  });
 
   return { accessToken, refreshToken };
 }

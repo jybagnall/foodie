@@ -1,12 +1,12 @@
-import { AUTH_ERROR } from "../constants/errors";
-import { createAccount, findUserByEmail } from "../services/account-service";
+import { AUTH_ERROR } from "../constants/errors.js";
+import { createAccount, findUserByEmail } from "../services/account-service.js";
 import {
   createAdminInvitation,
   invalidateAdminInvitation,
   verifyAdminInvitation,
-} from "../services/admin-service";
-import { generateTokens } from "../utils/auth";
-import { sendAdminInvitationEmail } from "../utils/email";
+} from "../services/admin-service.js";
+import { generateTokens } from "../utils/auth.js";
+import { sendAdminInvitationEmail } from "../utils/email.js";
 
 export async function adminSignup({
   client,

@@ -6,30 +6,45 @@ import useStripeEventMonitor from "../../hooks/stripe/useStripeEventMonitor";
 
 //deadSummary = { count: 0, lastSeenId: null }
 export default function StripeErrorBanner() {
-  const { deadSummary, acknowledgeDeadEvents } = useStripeEventMonitor();
+  const {
+    deadSummary,
+    acknowledgeDeadEvents,
+    isAcknowledging,
+    acknowledgeFailed,
+  } = useStripeEventMonitor();
 
   const showBanner = deadSummary.count > 0;
   if (!showBanner) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-full bg-red-600 text-white px-4 py-3 flex justify-between items-center z-50 shadow-lg">
+    <div className="fixed top-0 left-0 w-full bg-red-600 text-white px-4 py-3 z-50 shadow-lg">
       <div className="flex justify-between items-center">
-        <span className="mr-2">
-          <ExclamationTriangleIcon className="h-5 w-5" />
-        </span>
-        <span> {deadSummary.count} Stripe events failed to process.</span>
+        <div className="flex items-center">
+          <span className="mr-2">
+            <ExclamationTriangleIcon className="h-5 w-5" />
+          </span>
+
+          <span>{deadSummary.count} Stripe events failed to process.</span>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              acknowledgeDeadEvents(deadSummary.lastSeenId);
+            }}
+            disabled={isAcknowledging}
+            className="font-bold cursor-pointer"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
-      <div className="flex gap-3 cursor-pointer">
-        <button
-          onClick={() => {
-            acknowledgeDeadEvents(deadSummary.lastSeenId);
-          }}
-          className="font-bold cursor-pointer"
-        >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
-      </div>
+      {acknowledgeFailed && (
+        <span className="ml-2 text-sm text-yellow-200">
+          Failed to acknowledge. Please try again.
+        </span>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { BRAND_ASSET_KEYS } from "../constants/brandAssets";
+import { BRAND_ASSET_KEYS } from "../constants/brandAssets.js";
 import { uploadImage } from "../services/brand-service.js";
 import { cleanupCloudinaryAsset } from "../utils/cloudinary.js";
 

@@ -1,6 +1,5 @@
 import express from "express";
 import { updateUserName } from "../services/account-service.js";
-import { hashRawPasswordToken } from "../utils/auth.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
@@ -124,31 +123,22 @@ router.post(
   "/reset-password",
   validateBody("password"),
   async (req, res, next) => {
-    const client = await pool.connect();
-
     try {
       const { resetToken, password } = req.body;
-      const hashedPwResetToken = await hashRawPasswordToken(resetToken);
-
       const { accessToken, refreshToken } = await resetPassword({
-        client,
-        hashedPwResetToken,
+        resetToken,
         password,
       });
 
       // ❗refreshToken을 브라우저 쿠키에 저장 (브라우저가 처리함)
       setRefreshTokenCookie(res, refreshToken);
-
       res.status(200).json({
         message: "Password changed successfully",
         accessToken,
       });
     } catch (err) {
       console.error("Password update error,", err);
-      await client.query("ROLLBACK").catch(() => {});
       return next(err);
-    } finally {
-      client.release();
     }
   },
 );

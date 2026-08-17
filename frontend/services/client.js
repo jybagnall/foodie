@@ -120,7 +120,7 @@ class Client {
   }
 
   // ❗axios.patch(url, body, config)
-  async patch(endpoint, payload, options = {}) {
+  async patch(endpoint, payload) {
     return this.request("patch", endpoint, payload);
   }
 

@@ -1,11 +1,11 @@
-import pool from "../config/db";
+import pool from "../config/db.js";
 import {
   clearDefaultAddress,
   createUserAddress,
   setAddressAsDefault,
   updateUserAddress,
-} from "../services/address-service";
-import { withTransaction } from "../utils/db";
+} from "../services/address-service.js";
+import { withTransaction } from "../utils/db.js";
 
 export async function editAddress(userId, addressId, payload) {
   await withTransaction(pool, async (client) => {

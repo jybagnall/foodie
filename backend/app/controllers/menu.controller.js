@@ -1,12 +1,12 @@
-import { MENU_ERROR } from "../constants/errors";
+import { MENU_ERROR } from "../constants/errors.js";
 import {
   createMenu,
   deleteMenu,
   getSingleMenuDetail,
   updateMenuField,
   updateMenuImage,
-} from "../services/menu-service";
-import { cleanupCloudinaryAsset } from "../utils/cloudinary";
+} from "../services/menu-service.js";
+import { cleanupCloudinaryAsset } from "../utils/cloudinary.js";
 
 export async function createNewMenu({ file, name, price, description }) {
   const imgSrc = file.path;

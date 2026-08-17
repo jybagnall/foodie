@@ -8,7 +8,11 @@ export default function useAcknowledgeStripeEvents() {
   const accessToken = useAccessToken();
   const queryClient = useQueryClient();
 
-  const { mutate: acknowledgeDeadEvents } = useMutation({
+  const {
+    mutate: acknowledgeDeadEvents,
+    isPending: isAcknowledging,
+    isError: acknowledgeFailed,
+  } = useMutation({
     mutationFn: (id) =>
       new StripeService(null, () => accessToken).markStripeEventsAsNotified(id),
     onSuccess: async () => {
@@ -16,7 +20,10 @@ export default function useAcknowledgeStripeEvents() {
         queryKey: stripeKeys.deadCounts(),
       }); // 기존 숫자를 stale 처리, 자동 fetch
     },
+    onError: (err) => {
+      console.error("Failed to acknowledge dead Stripe events:", err);
+    },
   });
 
-  return { acknowledgeDeadEvents };
+  return { acknowledgeDeadEvents, isAcknowledging, acknowledgeFailed };
 }

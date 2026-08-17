@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { CART_ERROR } from "../constants/errors.js";
 
 export async function getCartItemsByUserId(userId) {
   const q = `
@@ -46,7 +47,7 @@ export async function saveCurrentCartItems(client, cartId, items = []) {
   const values = [];
   const placeholders = items.map((item, index) => {
     if (!item.menuId || !Number.isInteger(item.qty) || item.qty <= 0) {
-      throw new Error("Invalid cart item payload");
+      throw new Error(CART_ERROR.INVALID_CART_ITEM);
     }
 
     const baseIndex = index * 3;
