@@ -17,7 +17,9 @@ import {
 import { createStripeCustomer } from "../integrations/stripe/customer.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 import {
+  generateHashedToken,
   generateTokens,
+  hashPassword,
   hashRawPasswordToken,
   verifyPassword,
   verifyRefreshToken,
@@ -63,7 +65,8 @@ export async function changePassword(currentPassword, password, userId) {
     throw new Error(AUTH_ERROR.INCORRECT_PASSWORD);
   }
 
-  await updatePassword(password, userId);
+  const hashedPw = await hashPassword(password);
+  await updatePassword(hashedPw, userId);
 }
 
 export async function createStripeCustomerId(createdUser) {
@@ -171,22 +174,22 @@ export async function resetPassword({ resetToken, password }) {
   return { accessToken, refreshToken };
 }
 
-export async function signup({ client, name, email, password }) {
+export async function signup({ name, email, password }) {
   const existingUser = await findUserByEmail(email);
 
   if (existingUser) {
     throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE);
   }
 
+  const hashedPw = await hashPassword(password);
+
   let createdUser;
 
   try {
-    await client.query("BEGIN");
-    createdUser = await createAccount(name, email, password, client);
-    await client.query("COMMIT");
+    createdUser = await withTransaction(pool, async (client) => {
+      await createAccount({ name, email, hashedPw, client });
+    });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-
     if (err.code === "23505") {
       throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE, { cause: err });
     }
@@ -194,7 +197,7 @@ export async function signup({ client, name, email, password }) {
   }
 
   // 부가 작업
-  await updateLastLogin(createdUser.id, client).catch((err) => {
+  await updateLastLogin(createdUser.id).catch((err) => {
     console.error(
       `Failed to update last_login for user ${createdUser.id}:`,
       err,
@@ -208,7 +211,7 @@ export async function signup({ client, name, email, password }) {
   );
 
   try {
-    await hashAndSaveRefreshToken(createdUser.id, refreshToken, client);
+    await hashAndSaveRefreshToken(createdUser.id, refreshToken);
   } catch (err) {
     console.error(
       `Account ${createdUser.id} created but failed to persist refresh token:`,
@@ -260,7 +263,8 @@ export async function refreshAccessToken(currentRefreshToken) {
 }
 
 export async function requestPasswordReset(email) {
-  const rawToken = await createPasswordResetToken(email);
+  const { rawToken, hashedToken, expiresAt } = await generateHashedToken();
+  await createPasswordResetToken({ email, hashedToken, expiresAt });
 
   if (!rawToken) return;
 

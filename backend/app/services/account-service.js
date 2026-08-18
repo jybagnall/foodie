@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import { generateHashedToken, hashPassword } from "../utils/auth.js";
+import { AUTH_ERROR } from "../constants/errors.js";
 
 export async function clearPasswordResetToken(userId, client) {
   const q = `
@@ -11,18 +11,17 @@ export async function clearPasswordResetToken(userId, client) {
   const result = await client.query(q, [userId]);
 
   if (result.rowCount === 0) {
-    throw new Error(`No user found with id ${userId} to clear reset token.`);
+    throw new Error(AUTH_ERROR.USER_NOT_FOUND);
   }
 }
 
-export async function createAccount(
+export async function createAccount({
   name,
   email,
-  password,
+  hashedPw,
   client,
   role = "user",
-) {
-  const hashedPw = await hashPassword(password);
+}) {
   const q = `
     INSERT INTO users (name, email, password, role)
     VALUES ($1, $2, $3, $4)
@@ -33,15 +32,17 @@ export async function createAccount(
   const result = await client.query(q, values);
 
   if (!result.rows[0]) {
-    throw new Error("createAccount: Failed to create account.");
+    throw new Error(AUTH_ERROR.ACCOUNT_CREATION_FAILED);
   }
 
   return result.rows[0];
 }
 
-export async function createPasswordResetToken(email) {
-  const { rawToken, hashedToken, expiresAt } = await generateHashedToken();
-
+export async function createPasswordResetToken({
+  email,
+  hashedToken,
+  expiresAt,
+}) {
   const q = `
     UPDATE users
     SET 
@@ -53,8 +54,6 @@ export async function createPasswordResetToken(email) {
 
   const result = await pool.query(q, [hashedToken, expiresAt, email]);
   if (result.rowCount === 0) return null; // 이메일 없음
-
-  return rawToken;
 }
 
 export async function findMyProfile(id) {
@@ -110,8 +109,7 @@ export async function findUserByPasswordResetToken(hashedPwResetToken) {
   return result.rows[0];
 }
 
-export async function updatePassword(password, userId, db = pool) {
-  const hashedPw = await hashPassword(password);
+export async function updatePassword(hashedPw, userId, db = pool) {
   const q = `
     UPDATE users
     SET password= $1
@@ -121,7 +119,7 @@ export async function updatePassword(password, userId, db = pool) {
 
   const result = await db.query(q, values);
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update password for user ${userId}.`);
+    throw new Error(AUTH_ERROR.PASSWORD_UPDATE_FAILED);
   }
 }
 
@@ -134,7 +132,7 @@ export async function updateLastLogin(userId, db = pool) {
   const result = await db.query(q, [userId]);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update login info for user ${userId}.`);
+    throw new Error(AUTH_ERROR.LAST_LOGIN_UPDATE_FAILED);
   }
 }
 
@@ -149,7 +147,7 @@ export async function updateUserName(userId, name) {
   const result = await pool.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update user name ${userId}.`);
+    throw new Error(AUTH_ERROR.USER_NAME_UPDATE_FAILED);
   }
 }
 
@@ -167,7 +165,7 @@ export async function updateUserRefreshToken(
   const result = await db.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update refresh token for user ${userId}.`);
+    throw new Error(AUTH_ERROR.REFRESH_TOKEN_UPDATE_FAILED);
   }
 }
 
@@ -185,6 +183,6 @@ export async function updateUserStripeId(
 
   const result = await db.query(q, values);
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update Stripe customer id for user ${userId}.`);
+    throw new Error(AUTH_ERROR.STRIPE_ID_UPDATE_FAILED);
   }
 }

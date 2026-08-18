@@ -11,6 +11,7 @@ import {
   editAddress,
   setDefaultAddress,
 } from "../controllers/address.controller.js";
+import { ADDRESS_ERROR_STATUS } from "../constants/errors.js";
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.patch(
     "phone",
     "is_default",
   ),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const payload = req.body;
       const { addressId } = req.params;
@@ -55,25 +56,33 @@ router.patch(
         .json({ message: "User's address is successfully updated" });
     } catch (err) {
       console.error("update error,", err);
-      return next(err);
+      const status = ADDRESS_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error:
+          status === 404
+            ? "Address not found."
+            : "Failed to update user address.",
+      });
     }
   },
 );
 
-router.patch(
-  "/set-default/:addressId",
-  verifyUserAuth,
-  async (req, res, next) => {
-    try {
-      const { addressId } = req.params;
-      await setDefaultAddress(req.user.id, addressId);
-      res.status(200).json({ message: "Default is updated" });
-    } catch (err) {
-      console.error("update error,", err);
-      return next(err);
-    }
-  },
-);
+router.patch("/set-default/:addressId", verifyUserAuth, async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    await setDefaultAddress(req.user.id, addressId);
+    res.status(200).json({ message: "Default is updated" });
+  } catch (err) {
+    console.error("update error,", err);
+    const status = ADDRESS_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error:
+        status === 404
+          ? "Address not found."
+          : "Failed to update default address.",
+    });
+  }
+});
 
 router.post(
   "/create",
@@ -87,25 +96,35 @@ router.post(
     "phone",
     "is_default",
   ),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
       const payload = req.body;
       await createAddress(req.user.id, payload);
       res.status(201).json({ message: "Address created" });
     } catch (err) {
       console.error("create error,", err);
-      return next(err);
+      const status = ADDRESS_ERROR_STATUS[err.message] ?? 500;
+      return res.status(status).json({
+        error: "Failed to create user address.",
+      });
     }
   },
 );
 
-router.patch("/delete/:addressId", verifyUserAuth, async (req, res, next) => {
+router.patch("/delete/:addressId", verifyUserAuth, async (req, res) => {
   const { addressId } = req.params;
   try {
     await deleteAddress(req.user.id, addressId);
     res.status(200).json({ message: "Address deleted" });
   } catch (err) {
-    return next(err);
+    console.error("Delete address error:", err);
+    const status = ADDRESS_ERROR_STATUS[err.message] ?? 500;
+    return res.status(status).json({
+      error:
+        status === 404
+          ? "Address not found."
+          : "Failed to delete user address.",
+    });
   }
 });
 

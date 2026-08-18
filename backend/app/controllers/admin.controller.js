@@ -1,3 +1,4 @@
+import pool from "../config/db.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 import { createAccount, findUserByEmail } from "../services/account-service.js";
 import {
@@ -6,15 +7,10 @@ import {
   verifyAdminInvitation,
 } from "../services/admin-service.js";
 import { generateTokens } from "../utils/auth.js";
+import { withTransaction } from "../utils/db.js";
 import { sendAdminInvitationEmail } from "../utils/email.js";
 
-export async function adminSignup({
-  client,
-  inviteToken,
-  name,
-  email,
-  password,
-}) {
+export async function adminSignup({ inviteToken, name, email, password }) {
   const invitedRecord = await verifyAdminInvitation(inviteToken, email);
 
   if (!invitedRecord) {
@@ -29,12 +25,11 @@ export async function adminSignup({
   let newAdmin;
 
   try {
-    await client.query("BEGIN");
-    newAdmin = await createAccount(name, email, password, client, "admin");
-    await invalidateAdminInvitation(invitedRecord.id, client); // 토큰 무효화
-    await client.query("COMMIT");
+    newAdmin = await withTransaction(pool, async (client) => {
+      await createAccount({ name, email, password, client, role: "admin" });
+      await invalidateAdminInvitation(invitedRecord.id, client); // 토큰 무효화
+    });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
     if (err.code === "23505") {
       throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE, { cause: err });
     }

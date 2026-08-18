@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import { ORDER_ERROR } from "../constants/errors.js";
+import { ADDRESS_ERROR } from "../constants/errors.js";
 
 // 새 주소 추가(기존 기본 배송지 없으면 0 rows affected) & 기존 주소 변경
 export async function clearDefaultAddress(client, userId) {
@@ -34,7 +34,7 @@ export async function createUserAddress(client, payload, userId) {
   const result = await client.query(q, values);
 
   if (!result.rows[0]) {
-    throw new Error("createUserAddress: Failed to create user address");
+    throw new Error(ADDRESS_ERROR.ADDRESS_CREATE_FAILED);
   }
 
   return result.rows[0];
@@ -50,7 +50,7 @@ export async function deleteAddress(userId, addressId) {
   const result = await pool.query(q, [userId, addressId]);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to delete address for user ${userId}.`);
+    throw new Error(ADDRESS_ERROR.ADDRESS_NOT_FOUND);
   }
 }
 
@@ -91,7 +91,7 @@ export async function setAddressAsDefault(client, userId, addressId) {
   const result = await client.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update default address for user ${userId}.`);
+    throw new Error(ADDRESS_ERROR.ADDRESS_NOT_FOUND);
   }
 }
 
@@ -123,7 +123,7 @@ export async function saveShippingInfo(client, userId, address) {
   const result = await client.query(q, values);
 
   if (!result.rows[0]) {
-    throw new Error(ORDER_ERROR.ADDRESS_SAVE_FAILED);
+    throw new Error(ADDRESS_ERROR.ADDRESS_SAVE_FAILED);
   }
 
   return result.rows[0].id;
@@ -159,6 +159,6 @@ export async function updateUserAddress(client, payload, addressId, userId) {
   const result = await client.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to update address for user ${userId}.`);
+    throw new Error(ADDRESS_ERROR.ADDRESS_NOT_FOUND);
   }
 }

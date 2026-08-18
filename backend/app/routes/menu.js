@@ -1,7 +1,6 @@
 import express from "express";
 import multer from "multer";
 import { storage } from "../config/cloudinary.js";
-import pool from "../config/db.js";
 import { getMenus, getSingleMenuDetail } from "../services/menu-service.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { validateCreateMenu } from "../middleware/validateCreateMenu.js";
@@ -120,11 +119,9 @@ router.post(
 );
 
 router.delete("/:menuId", verifyAdminAuth, async (req, res) => {
-  const client = await pool.connect();
-
   try {
     const { menuId } = req.params;
-    await deleteMenuById(client, menuId);
+    await deleteMenuById(menuId);
     res.status(200).json({ message: "Menu deleted successfully." });
   } catch (err) {
     console.error("Menu delete error:", err);
@@ -132,8 +129,6 @@ router.delete("/:menuId", verifyAdminAuth, async (req, res) => {
     return res.status(status).json({
       error: status === 404 ? "Menu not found." : "Failed to delete menu.",
     });
-  } finally {
-    client.release();
   }
 });
 

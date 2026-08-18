@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./app/config/validateEnv.js";
 
 import express from "express";
 import http from "http";
@@ -24,7 +25,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const server = http.createServer(app); // create HTTP server
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const host = process.env.HOST || "0.0.0.0";
 
 // Stripe webhook은 express.json()보다 먼저, 단독 등록

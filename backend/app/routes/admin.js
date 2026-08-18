@@ -2,7 +2,6 @@ import express from "express";
 import { getAdmins } from "../services/admin-service.js";
 import { verifyAdminAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
-import pool from "../config/db.js";
 import { adminSignup, inviteAdmin } from "../controllers/admin.controller.js";
 import { AUTH_ERROR_STATUS } from "../constants/errors.js";
 
@@ -21,11 +20,9 @@ router.post(
   "/admin-signup",
   validateBody("name", "email", "password"),
   async (req, res) => {
-    const client = await pool.connect();
     try {
       const { name, email, password, inviteToken } = req.body;
       const { accessToken } = await adminSignup({
-        client,
         inviteToken,
         name,
         email,
@@ -41,8 +38,6 @@ router.post(
       return res.status(status).json({
         error: "Something went wrong during admin signup. Please try again.",
       });
-    } finally {
-      client.release();
     }
   },
 );

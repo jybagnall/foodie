@@ -1,3 +1,4 @@
+import pool from "../config/db.js";
 import { MENU_ERROR } from "../constants/errors.js";
 import {
   createMenu,
@@ -7,6 +8,7 @@ import {
   updateMenuImage,
 } from "../services/menu-service.js";
 import { cleanupCloudinaryAsset } from "../utils/cloudinary.js";
+import { withTransaction } from "../utils/db.js";
 
 export async function createNewMenu({ file, name, price, description }) {
   const imgSrc = file.path;
@@ -25,24 +27,19 @@ export async function createNewMenu({ file, name, price, description }) {
   }
 }
 
-export async function deleteMenuById(client, menuId) {
-  let menuInfo;
-
-  try {
-    await client.query("BEGIN");
-    menuInfo = await getSingleMenuDetail(menuId, client);
+export async function deleteMenuById(menuId) {
+  const imagePublicId = await withTransaction(pool, async (client) => {
+    const menuInfo = await getSingleMenuDetail(menuId, client);
 
     if (!menuInfo) {
       throw new Error(MENU_ERROR.MENU_NOT_FOUND);
     }
 
     await deleteMenu(menuId, client);
-    await client.query("COMMIT");
-    await cleanupCloudinaryAsset(menuInfo.image_public_id, "deleting menu");
-  } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw err;
-  }
+    return menuInfo.image_public_id;
+  });
+
+  await cleanupCloudinaryAsset(imagePublicId, "deleting menu");
 }
 
 export async function updateMenu({ menuId, column, value }) {

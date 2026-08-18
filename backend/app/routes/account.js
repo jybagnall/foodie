@@ -3,7 +3,6 @@ import { updateUserName } from "../services/account-service.js";
 import { verifyUserAuth } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
-import pool from "../config/db.js";
 import {
   changePassword,
   getMyProfile,
@@ -147,12 +146,9 @@ router.post(
   "/signup",
   validateBody("name", "email", "password"),
   async (req, res) => {
-    const client = await pool.connect();
-
     try {
       const { name, email, password } = req.body;
       const { accessToken, refreshToken, sessionIssued } = await signup({
-        client,
         name,
         email,
         password,
@@ -178,8 +174,6 @@ router.post(
       return res.status(status).json({
         error: "Something went wrong during signup. Please try again.",
       });
-    } finally {
-      client.release();
     }
   },
 );

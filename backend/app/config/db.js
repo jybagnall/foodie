@@ -12,7 +12,7 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 5432,
+  port: Number(process.env.DB_PORT) || 5432,
   ssl: useSSL ? { rejectUnauthorized: false } : undefined,
   max: 10, // 최대 10개의 DB 커넥션까지만 동시에 유지
   idleTimeoutMillis: 30000, // 30초 동안 안 쓰인 커넥션은 자동 종료
