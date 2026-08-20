@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { PAYMENT_ERROR } from "../constants/errors.js";
 
 export async function clearDefaultCard(client, userId) {
   const q = `
@@ -29,7 +30,7 @@ export async function deleteCard(cardId, userId) {
   const result = await pool.query(q, [cardId, userId]);
 
   if (result.rowCount === 0) {
-    throw new Error(`Card not found or does not belong to user ${userId}.`);
+    throw new Error(PAYMENT_ERROR.CARD_NOT_FOUND);
   }
 }
 

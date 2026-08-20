@@ -1,5 +1,5 @@
 export function validateCartBody(req, res, next) {
-  const items = req.body;
+  const { items } = req.body;
 
   if (!Array.isArray(items)) {
     return res

@@ -21,7 +21,12 @@ export default function OrderPreviewItem({ item, showPrice = false }) {
 
   return (
     <div className="flex gap-4 mb-4">
-      <img src={item.image} className="w-30 h-30 object-cover" />
+      <img
+        src={item.image}
+        className={`w-30 h-30 object-cover ${
+          item.deleted_at ? "opacity-80 grayscale" : ""
+        }`}
+      />
       <div className="flex-1">
         <p>{item.name}</p>
         {showPrice && (
@@ -34,7 +39,10 @@ export default function OrderPreviewItem({ item, showPrice = false }) {
         <div className="mt-5 flex flex-wrap gap-2">
           <button
             onClick={() => handleBuyAgain(item)}
-            className="border px-3 py-1 rounded whitespace-nowrap cursor-pointer"
+            className={`border px-3 py-1 rounded whitespace-nowrap ${
+              item.deleted_at ? "" : "cursor-pointer"
+            }`}
+            disabled={Boolean(item.deleted_at)}
           >
             Buy again
           </button>

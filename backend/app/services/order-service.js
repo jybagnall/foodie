@@ -71,6 +71,7 @@ export async function getAllOrders(userId, { cursor = null, limit = 10 }) {
           'menu_id', m.id,
           'name', m.name,
           'image', m.image,
+          'deleted_at', m.deleted_at,
           'price', oi.price,
           'qty', oi.qty
         )
@@ -127,7 +128,7 @@ export async function getExpiredPendingOrders() {
 
 export async function getOrderById(orderId) {
   const q = `
-  SELECT user_id, total_amount, status, created_at
+  SELECT id, user_id, total_amount, status, created_at
   FROM orders
   WHERE id = $1
   `;
@@ -164,6 +165,7 @@ export async function getOrderDetails(orderId, userId) {
             'name', m.name,
             'image', m.image,
             'price', oi.price,
+            'deleted_at', m.deleted_at,
             'qty', oi.qty
           )
           ORDER BY oi.id

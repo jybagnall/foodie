@@ -56,7 +56,6 @@ export default function OrderDetail() {
               <div className="lg:col-span-2 space-y-6">
                 <DeliverySummary order={order} />
 
-                {/* Delivered Section */}
                 <div className="border rounded-lg p-5">
                   {order.items.map((item) => (
                     <OrderPreviewItem key={item.name} item={item} showPrice />

@@ -6,8 +6,9 @@ import {
   cancelOrder,
   initializeOrder,
 } from "../controllers/order.controller.js";
-import { ORDER_ERROR_STATUS } from "../constants/errors.js";
+import { ORDER_ERROR, ORDER_ERROR_STATUS } from "../constants/errors.js";
 import { parseCursor } from "../utils/validators.js";
+import { parsePositiveInt } from "../utils/parsers.js";
 
 const router = express.Router();
 
@@ -37,7 +38,11 @@ router.get("/my-orders", verifyUserAuth, async (req, res, next) => {
 
 router.get("/:orderId", verifyUserAuth, async (req, res, next) => {
   try {
-    const { orderId } = req.params;
+    const orderId = parsePositiveInt(
+      req.params.orderId,
+      ORDER_ERROR.INVALID_ORDER_ID,
+    );
+
     const orderInfo = await getOrderDetails(orderId, req.user.id);
     res.status(200).json(orderInfo);
   } catch (err) {
@@ -47,7 +52,11 @@ router.get("/:orderId", verifyUserAuth, async (req, res, next) => {
 
 router.post("/:orderId/cancel-order", verifyUserAuth, async (req, res) => {
   try {
-    const { orderId } = req.params;
+    const orderId = parsePositiveInt(
+      req.params.orderId,
+      ORDER_ERROR.INVALID_ORDER_ID,
+    );
+
     await cancelOrder(orderId, req.user);
     res.status(200).json({ message: "Order canceled." });
   } catch (err) {

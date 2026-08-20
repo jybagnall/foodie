@@ -1,4 +1,3 @@
-import { stripe } from "../config/stripe.js";
 import {
   FREE_DELIVERY_THRESHOLD,
   DELIVERY_FEE,

@@ -15,7 +15,7 @@ export async function acknowledgeFailures(lastSeenTimeId) {
 export async function getDeadEventsCount() {
   const q = `
     SELECT COUNT(*)::int AS count,
-    MAX(id) AS last_seen_id
+    MAX(id)::int AS last_seen_id
     FROM stripe_events
     WHERE status = 'dead' AND notified_at IS NULL
     `;
@@ -40,7 +40,7 @@ export async function getEventTypes() {
   const result = await pool.query(q);
   return result.rows.map((row) => row.event_type);
 }
-// 결과값: [{ event_type: 'customer.created' }, ..]
+// 결과값: ['customer.created', ...]
 
 const LIMIT = 5;
 export async function getUnprocessedEvents({
@@ -50,32 +50,41 @@ export async function getUnprocessedEvents({
   page,
 }) {
   const offset = (page - 1) * LIMIT; // 이만큼 건너뛰고 그 다음 가져와
+  const filterValues = [event_type, status, created_from];
+
+  const whereClause = `
+    resolved_at IS NULL
+    AND (
+      status = 'dead'
+      OR (status = 'failed' AND retry_count >= 3)
+    )
+    AND ($1::text IS NULL OR event_type = $1)
+    AND ($2::text IS NULL OR status = $2)
+    AND ($3::timestamp IS NULL OR created_at >= $3)
+  `;
+
+  const countResult = await pool.query(
+    `SELECT COUNT(*) AS total_count 
+    FROM stripe_events 
+    WHERE ${whereClause}`,
+    filterValues,
+  );
+
+  const totalMatchingEvents = Number(countResult.rows[0].total_count);
+
   const q = `
-    SELECT id, event_type, status, retry_count, last_error, created_at, COUNT(*) OVER() AS total_count
+    SELECT id, event_type, status, retry_count, last_error, created_at
     FROM stripe_events
-    WHERE
-      resolved_at IS NULL
-      AND (
-        status = 'dead'
-        OR (status = 'failed' AND retry_count >= 3)
-      )
-      AND ($1::text IS NULL OR event_type = $1)
-      AND ($2::text IS NULL OR status = $2)
-      AND ($3::timestamp IS NULL OR created_at >= $3)
+    WHERE ${whereClause}
     ORDER BY id DESC
     LIMIT $4
     OFFSET $5
     `;
-  const values = [event_type, status, created_from, LIMIT, offset];
+  const values = [...filterValues, LIMIT, offset];
   const result = await pool.query(q, values);
-  const rows = result.rows;
-  const totalMatchingEvents = rows[0]?.total_count
-    ? Number(rows[0].total_count)
-    : 0;
-  const events = rows.map(({ total_count, ...rest }) => rest);
 
   return {
-    events,
+    events: result.rows,
     totalMatchingEvents,
     pageLimit: LIMIT,
     totalPages: Math.ceil(totalMatchingEvents / LIMIT),

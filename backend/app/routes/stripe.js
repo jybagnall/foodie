@@ -66,9 +66,9 @@ router.post(
   verifyAdminAuth,
   async (req, res, next) => {
     try {
-      const { lastSeenId } = req.body;
+      const lastSeenId = Number(req.body.lastSeenId);
 
-      if (lastSeenId == null) {
+      if (req.body.lastSeenId == null) {
         return res.status(200).json({ success: true }); // 업데이트할 게 없음
       }
 

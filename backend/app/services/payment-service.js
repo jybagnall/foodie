@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { PAYMENT_ERROR } from "../constants/errors.js";
 
 export async function updatePendingPayment(client, orderId, status) {
   const q = `
@@ -11,7 +12,7 @@ export async function updatePendingPayment(client, orderId, status) {
   const result = await client.query(q, [orderId, status]);
 
   if (result.rowCount === 0) {
-    throw new Error("PAYMENT_STATUS_CONFLICT");
+    throw new Error(PAYMENT_ERROR.PAYMENT_STATUS_CONFLICT);
   }
 }
 
@@ -71,9 +72,7 @@ export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
   const result = await client.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(
-      `No payment record found for PaymentIntent ${paymentIntentId}`,
-    );
+    throw new Error(PAYMENT_ERROR.PAYMENT_INTENT_NOT_FOUND);
   }
 }
 
@@ -87,9 +86,7 @@ export async function updatePaymentMethod(client, paymentMethodId, orderId) {
   const result = await client.query(q, values);
 
   if (result.rowCount === 0) {
-    throw new Error(
-      `No payment record found for order ${orderId} when saving payment method`,
-    );
+    throw new Error(PAYMENT_ERROR.PAYMENT_NOT_FOUND);
   }
 }
 

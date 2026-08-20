@@ -53,7 +53,7 @@ export async function createPasswordResetToken({
   `;
 
   const result = await pool.query(q, [hashedToken, expiresAt, email]);
-  if (result.rowCount === 0) return null; // 이메일 없음
+  return result.rows[0] ?? null;
 }
 
 export async function findMyProfile(id) {

@@ -11,7 +11,8 @@ import useOrderDetails from "../../../hooks/order/useOrderDetails";
 // 라우터 진입점, 3DS 복귀 처리, 주문 관련 데이터 fetch
 
 export default function OrderPaymentPage() {
-  const { orderId } = useParams();
+  const { orderId: orderIdParam } = useParams();
+  const orderId = Number(orderIdParam);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirectPaymentIntentId = searchParams.get("payment_intent");

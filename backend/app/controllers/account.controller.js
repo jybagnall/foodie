@@ -164,9 +164,10 @@ export async function resetPassword({ resetToken, password }) {
 
   const { accessToken, refreshToken } = issueAuthSession(user);
   const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
+  const hashedPw = await hashPassword(password);
 
   await withTransaction(pool, async (client) => {
-    await updatePassword(password, user.id, client);
+    await updatePassword(hashedPw, user.id, client);
     await clearPasswordResetToken(user.id, client);
     await updateUserRefreshToken(user.id, hashedRefresh, client);
   });
@@ -187,7 +188,7 @@ export async function signup({ name, email, password }) {
 
   try {
     createdUser = await withTransaction(pool, async (client) => {
-      await createAccount({ name, email, hashedPw, client });
+      return await createAccount({ name, email, hashedPw, client });
     });
   } catch (err) {
     if (err.code === "23505") {
@@ -264,9 +265,13 @@ export async function refreshAccessToken(currentRefreshToken) {
 
 export async function requestPasswordReset(email) {
   const { rawToken, hashedToken, expiresAt } = await generateHashedToken();
-  await createPasswordResetToken({ email, hashedToken, expiresAt });
+  const updatedPwResetResult = await createPasswordResetToken({
+    email,
+    hashedToken,
+    expiresAt,
+  });
 
-  if (!rawToken) return;
+  if (!updatedPwResetResult) return; // 없는 이메일, 메일 발송 안함
 
   const resetLink = `${process.env.FRONTEND_PUBLIC_URL}/reset-password?token=${rawToken}`;
 

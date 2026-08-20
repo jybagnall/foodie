@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import pool from "../config/db.js";
 import { generateHashedToken } from "../utils/auth.js";
+import { AUTH_ERROR } from "../constants/errors.js";
+import { ADMIN_INVITATION_EXPIRATION_MS } from "../constants/auth.js";
 
 export async function getAdmins() {
   const q = `
@@ -15,9 +17,9 @@ export async function getAdmins() {
 }
 
 export async function createAdminInvitation(email) {
-  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-  const { rawToken, hashedToken, expiresAt } =
-    await generateHashedToken(ONE_DAY_MS);
+  const { rawToken, hashedToken, expiresAt } = await generateHashedToken(
+    ADMIN_INVITATION_EXPIRATION_MS,
+  );
 
   const q = `
     INSERT INTO admin_invites (email, token, expires_at)
@@ -28,9 +30,7 @@ export async function createAdminInvitation(email) {
   const result = await pool.query(q, [email, hashedToken, expiresAt]);
 
   if (!result.rows[0]) {
-    throw new Error(
-      "createAdminInvitation: Failed to save admin invitation info",
-    );
+    throw new Error(AUTH_ERROR.INVITATION_CREATE_FAILED);
   }
 
   return rawToken;
@@ -45,9 +45,7 @@ export async function invalidateAdminInvitation(inviteId, client) {
   const result = await client.query(q, [inviteId]);
 
   if (result.rowCount === 0) {
-    throw new Error(
-      "invalidateAdminInvitation: Failed to invalidate admin invitation token",
-    );
+    throw new Error(AUTH_ERROR.INVITATION_INVALIDATE_FAILED);
   }
 }
 

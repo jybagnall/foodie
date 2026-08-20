@@ -46,7 +46,8 @@ CREATE TABLE menus (
   price NUMERIC(5,2) NOT NULL, -- 지금 현재 판매 가격 (바뀔 수 있음)
   description TEXT NOT NULL,
   image TEXT NOT NULL,  -- Cloudinary URL
-  image_public_id TEXT NOT NULL   -- Cloudinary public_id
+  image_public_id TEXT NOT NULL,   -- Cloudinary public_id
+  deleted_at TIMESTAMP DEFAULT NOW()
 );
 
 -- one cart per user, 
@@ -188,3 +189,8 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 -- 사용자별 주문을 최신순으로 빠르게 찾고, 커서 페이지네이션도 빠르게 하기 위한 인덱스
 CREATE INDEX idx_orders_user_cursor
 ON orders(user_id, created_at DESC, id DESC);
+
+-- 삭제되지 않은 메뉴끼리만 이름 중복 방지
+CREATE UNIQUE INDEX menus_name_active_unique
+  ON menus (name)
+  WHERE deleted_at IS NULL;

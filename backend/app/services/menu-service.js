@@ -20,26 +20,33 @@ export async function createMenu(data) {
 
 export async function deleteMenu(menuId, client) {
   const q = `
-    DELETE FROM menus
-    WHERE id = $1
+    UPDATE menus
+    SET deleted_at = NOW()
+    WHERE id = $1 AND deleted_at IS NULL
   `;
 
   const result = await client.query(q, [menuId]);
 
   if (result.rowCount === 0) {
-    throw new Error(`Failed to delete menu ID: ${menuId}.`);
+    throw new Error(MENU_ERROR.MENU_NOT_FOUND);
   }
 }
 
 export async function getMenus() {
-  const q = `SELECT * FROM menus`;
+  const q = `
+  SELECT * FROM menus
+  WHERE deleted_at IS NULL
+  `;
 
   const result = await pool.query(q);
   return result.rows ?? [];
 }
 
 export async function getSingleMenuDetail(id, db = pool) {
-  const q = `SELECT * FROM menus WHERE id = $1`;
+  const q = `
+  SELECT * FROM menus 
+  WHERE id = $1 AND deleted_at IS NULL
+  `;
 
   const result = await db.query(q, [id]);
   return result.rows[0];
@@ -49,7 +56,7 @@ export async function getMenuPrices(menuIds) {
   const q = `
   SELECT id, price
   FROM menus
-  WHERE id = ANY($1)
+  WHERE id = ANY($1) AND deleted_at IS NULL
   `;
   const result = await pool.query(q, [menuIds]);
   return result.rows;
@@ -63,7 +70,7 @@ export async function updateMenuField(menuId, column, value) {
   const q = `
     UPDATE menus
     SET ${column} = $1
-    WHERE id = $2
+    WHERE id = $2 AND deleted_at IS NULL
     `;
 
   const values = [value, menuId];
@@ -75,7 +82,7 @@ export async function updateMenuImage(menuId, imgSrc, imgPublicId) {
   const q = `
   UPDATE menus
   SET image = $1, image_public_id = $2
-  WHERE id = $3
+  WHERE id = $3 AND deleted_at IS NULL
   `;
   const values = [imgSrc, imgPublicId, menuId];
 
