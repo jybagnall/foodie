@@ -52,13 +52,13 @@ export async function getSingleMenuDetail(id, db = pool) {
   return result.rows[0];
 }
 
-export async function getMenuPrices(menuIds) {
+export async function getMenuPrices(menuIds, db = pool) {
   const q = `
   SELECT id, price
   FROM menus
   WHERE id = ANY($1) AND deleted_at IS NULL
   `;
-  const result = await pool.query(q, [menuIds]);
+  const result = await db.query(q, [menuIds]);
   return result.rows;
 }
 

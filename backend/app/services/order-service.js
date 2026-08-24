@@ -138,13 +138,16 @@ export async function getOrderById(orderId) {
 
 export async function getOrderConfirmationDetails(client, orderId) {
   const q = `
-  SELECT 
-    u.email,
-    a.full_name, a.street, a.city, a.postal_code, a.phone
-  FROM orders o
-  JOIN addresses a ON o.address_id = a.id
-  JOIN users u ON o.user_id = u.id
-  WHERE o.id = $1
+    SELECT 
+      u.email,
+      o.shipping_full_name AS full_name,
+      o.shipping_street AS street,
+      o.shipping_city AS city,
+      o.shipping_postal_code AS postal_code,
+      o.shipping_phone AS phone
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    WHERE o.id = $1
   `;
   const result = await client.query(q, [orderId]);
   return result.rows[0];
@@ -211,6 +214,7 @@ export async function updateOrderStatus(client, orderId, newStatus) {
   const ALLOWED_TRANSITIONS = {
     pending: ["paid", "canceled", "expired"],
     paid: ["canceled"],
+    preparing: ["delivered", "canceled"],
   };
 
   // 현재 상태 조회

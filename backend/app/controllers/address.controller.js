@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { ADDRESS_ERROR } from "../constants/errors.js";
 import {
   clearDefaultAddress,
   createUserAddress,
@@ -17,12 +18,19 @@ export async function editAddress(userId, addressId, payload) {
 }
 
 export async function createAddress(userId, payload) {
-  await withTransaction(pool, async (client) => {
-    if (payload.is_default) {
-      await clearDefaultAddress(client, userId);
+  try {
+    await withTransaction(pool, async (client) => {
+      if (payload.is_default) {
+        await clearDefaultAddress(client, userId);
+      }
+      await createUserAddress(client, payload, userId);
+    });
+  } catch (err) {
+    if (err.code === "23505") {
+      throw new Error(ADDRESS_ERROR.ADDRESS_ALREADY_EXISTS, { cause: err });
     }
-    await createUserAddress(client, payload, userId);
-  });
+    throw err;
+  }
 }
 
 export async function setDefaultAddress(userId, addressId) {

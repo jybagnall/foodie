@@ -40,7 +40,7 @@ export async function invalidateAdminInvitation(inviteId, client) {
   const q = `
     UPDATE admin_invites
     SET used = TRUE
-    WHERE id = $1
+    WHERE id = $1 AND used = FALSE
   `;
   const result = await client.query(q, [inviteId]);
 

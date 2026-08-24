@@ -1,12 +1,13 @@
 import pool from "../config/db.js";
 import { CART_ERROR } from "../constants/errors.js";
+import { getMenuPrices } from "./menu-service.js";
 
 export async function getCartItemsByUserId(userId) {
   const q = `
     SELECT 
       m.id, m.name, m.price, m.image, m.description, sci.qty
     FROM saved_cart_items sci
-    JOIN menus m ON m.id = sci.menu_id
+    JOIN menus m ON m.id = sci.menu_id AND m.deleted_at IS NULL
     JOIN (
       SELECT id
       FROM saved_carts 
@@ -44,12 +45,22 @@ export async function saveCurrentCartItems(client, cartId, items = []) {
 
   if (!items.length) return;
 
-  const values = [];
-  const placeholders = items.map((item, index) => {
+  for (const item of items) {
     if (!item.menuId || !Number.isInteger(item.qty) || item.qty <= 0) {
       throw new Error(CART_ERROR.INVALID_CART_ITEM);
     }
+  }
 
+  const menuIds = [...new Set(items.map((i) => i.menuId))];
+  const activeMenus = await getMenuPrices(menuIds, client);
+  const activeMenuIds = new Set(activeMenus.map((m) => m.id));
+  const validItems = items.filter((item) => activeMenuIds.has(item.menuId));
+
+  if (!validItems.length) return;
+
+  const values = [];
+
+  const placeholders = validItems.map((item, index) => {
     const baseIndex = index * 3;
     values.push(cartId, item.menuId, item.qty);
     return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;

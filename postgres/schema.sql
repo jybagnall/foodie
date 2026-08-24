@@ -34,8 +34,6 @@ CREATE TABLE addresses (
   full_name VARCHAR(50) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
   deleted_at TIMESTAMP DEFAULT NULL,
-
-  UNIQUE (user_id, street, postal_code, city, state, phone, full_name)
 );
 
 
@@ -47,7 +45,7 @@ CREATE TABLE menus (
   description TEXT NOT NULL,
   image TEXT NOT NULL,  -- Cloudinary URL
   image_public_id TEXT NOT NULL,   -- Cloudinary public_id
-  deleted_at TIMESTAMP DEFAULT NOW()
+  deleted_at TIMESTAMP DEFAULT NULL()
 );
 
 -- one cart per user, 
@@ -81,7 +79,8 @@ CREATE TABLE orders (
   shipping_phone VARCHAR(20),
   shipping_full_name VARCHAR(50)
 );
---status: pending, paid, canceled, preparing, delivered, expired
+-- status: pending, paid, canceled, expired
+-- preparing, delivered 은 안 쓰이고 있음.
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
@@ -151,9 +150,11 @@ CREATE TABLE stripe_events (
   processing_at TIMESTAMP NULL
 );
 
+-- 브랜드 이미지 전용
 CREATE TABLE app_settings (
   key TEXT PRIMARY KEY,
-  value TEXT NOT NULL
+  value TEXT NOT NULL,
+  public_id TEXT NOT NULL
 );
 
 CREATE TABLE reconciliation_state (
@@ -182,6 +183,12 @@ AND resolved_at IS NULL;
 CREATE UNIQUE INDEX one_default_per_user  
 ON addresses(user_id)  
 WHERE is_default = TRUE;
+
+-- 삭제된 주소와 똑같은 주소를 넣으면 새롭게 등록 가능
+-- deleted_at 값이 NULL 인데 똑같은 주소를 넣으면 중복 에러.
+CREATE UNIQUE INDEX addresses_unique_active
+  ON addresses (user_id, street, postal_code, city, state, phone, full_name)
+  WHERE deleted_at IS NULL;
 
 -- 특정 주문에 대한 주문 아이템을 빨리 찾기 위한 인덱스
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);

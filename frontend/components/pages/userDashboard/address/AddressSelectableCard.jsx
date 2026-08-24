@@ -3,7 +3,6 @@ import { formatPhone } from "../../../../utils/format";
 import useAddressBook from "../../../../hooks/address/useAddressBook";
 import { useState } from "react";
 import AlertModal from "../../../UI/AlertModal";
-import Button from "../../../UI/Button";
 
 export default function AddressSelectableCard({
   address,

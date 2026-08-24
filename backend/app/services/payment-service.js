@@ -1,21 +1,6 @@
 import pool from "../config/db.js";
 import { PAYMENT_ERROR } from "../constants/errors.js";
 
-export async function updatePendingPayment(client, orderId, status) {
-  const q = `
-    UPDATE payments 
-    SET payment_status = $2,
-        updated_at = NOW()
-    WHERE order_id = $1
-    AND payment_status != $2
-  `;
-  const result = await client.query(q, [orderId, status]);
-
-  if (result.rowCount === 0) {
-    throw new Error(PAYMENT_ERROR.PAYMENT_STATUS_CONFLICT);
-  }
-}
-
 export async function createPaymentRecord(
   orderId,
   paymentIntentId,
@@ -29,6 +14,18 @@ export async function createPaymentRecord(
   const values = [orderId, paymentIntentId, amount, currency];
 
   await pool.query(q, values);
+}
+
+export async function findPaymentByStripeChargeId(client, stripeChargeId) {
+  const q = `
+  SELECT 
+    id,
+    order_id
+  FROM payments
+  WHERE stripe_charge_id = $1
+  `;
+  const result = await client.query(q, [stripeChargeId]);
+  return result.rows[0];
 }
 
 export async function findUniquePaymentByOrderId(orderId) {
@@ -47,18 +44,7 @@ export async function findUniquePaymentByOrderId(orderId) {
   return result.rows[0];
 }
 
-export async function findPaymentByStripeChargeId(client, stripeChargeId) {
-  const q = `
-  SELECT 
-    id,
-    order_id
-  FROM payments
-  WHERE stripe_charge_id = $1
-  `;
-  const result = await client.query(q, [stripeChargeId]);
-  return result.rows[0];
-}
-
+// 아직 succeeded가 아닌 결제만 failed로 변경
 export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
   const q = `
     UPDATE payments
@@ -66,6 +52,7 @@ export async function markPaymentFailed(client, paymentIntentId, failureMsg) {
         failure_reason = $1,
         updated_at = NOW()
     WHERE stripe_payment_intent_id = $2
+      AND payment_status <> 'succeeded'
     `;
   const values = [failureMsg, paymentIntentId];
 
@@ -101,6 +88,21 @@ export async function updatePaymentStatus(client, newStatus, stripeChargeId) {
   const values = [newStatus, stripeChargeId];
   const result = await client.query(q, values);
   return result.rowCount;
+}
+
+export async function updatePendingPayment(client, orderId, status) {
+  const q = `
+    UPDATE payments 
+    SET payment_status = $2,
+        updated_at = NOW()
+    WHERE order_id = $1
+    AND payment_status != $2
+  `;
+  const result = await client.query(q, [orderId, status]);
+
+  if (result.rowCount === 0) {
+    throw new Error(PAYMENT_ERROR.PAYMENT_STATUS_CONFLICT);
+  }
 }
 
 // 📍webhook 상태 저장

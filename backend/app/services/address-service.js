@@ -31,20 +31,14 @@ export async function createUserAddress(client, payload, userId) {
     is_default,
   ];
 
-  const result = await client.query(q, values);
-
-  if (!result.rows[0]) {
-    throw new Error(ADDRESS_ERROR.ADDRESS_CREATE_FAILED);
-  }
-
-  return result.rows[0];
+  await client.query(q, values);
 }
 
 export async function deleteAddress(userId, addressId) {
   const q = `
     UPDATE addresses 
     SET deleted_at = NOW()
-    WHERE (user_id = $1 AND id = $2)
+    WHERE (user_id = $1 AND id = $2 AND deleted_at IS NULL)
   `;
 
   const result = await pool.query(q, [userId, addressId]);
@@ -83,8 +77,7 @@ export async function setAddressAsDefault(client, userId, addressId) {
     UPDATE addresses 
     SET 
       is_default = true
-    WHERE user_id = $1
-    AND id = $2
+    WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL
     `;
 
   const values = [userId, addressId];
@@ -100,12 +93,14 @@ export async function saveShippingInfo(client, userId, address) {
     await clearDefaultAddress(client, userId);
   } // 유저가 기본 배송지 설정을 원함
 
-  // 이미 배송 정보가 있다면 is_default만 업데이트
+  // 삭제되지 않은 배송 정보가 이미 있다면 is_default만 업데이트
   const q = `
     INSERT INTO addresses (user_id, street, postal_code, city, state, phone, full_name, is_default)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     ON CONFLICT (user_id, street, postal_code, city, state, phone, full_name)
-    DO UPDATE SET is_default = EXCLUDED.is_default
+    WHERE deleted_at IS NULL
+    DO UPDATE 
+    SET is_default = EXCLUDED.is_default
     RETURNING id
     `;
 
@@ -142,8 +137,7 @@ export async function updateUserAddress(client, payload, addressId, userId) {
       postal_code = $5,
       phone = $6,
       is_default = $7
-    WHERE user_id = $8
-    AND id = $9
+    WHERE user_id = $8 AND id = $9 AND deleted_at IS NULL
     `;
   const values = [
     full_name,
