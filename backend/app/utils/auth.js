@@ -59,14 +59,11 @@ export function generateTokens(account) {
 }
 
 export function verifyAccessToken(authHeader) {
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new Error(AUTH_ERROR.SESSION_EXPIRED);
-  }
-
+  // Bearer + 공백 + 토큰이라는 형태
   const match = authHeader.match(/^Bearer\s+(\S+)$/);
 
   if (!match) {
-    throw new Error(AUTH_ERROR.SESSION_EXPIRED);
+    throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
   }
 
   const token = match[1];
@@ -74,7 +71,9 @@ export function verifyAccessToken(authHeader) {
   let decoded;
 
   try {
-    decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, {
+      algorithms: ["HS256"],
+    });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       throw new Error(AUTH_ERROR.SESSION_EXPIRED, {
@@ -100,7 +99,9 @@ export async function verifyRefreshToken(token) {
   let decoded;
 
   try {
-    decoded = await verifyToken(token, process.env.JWT_REFRESH_TOKEN_SECRET);
+    decoded = await verifyToken(token, process.env.JWT_REFRESH_TOKEN_SECRET, {
+      algorithms: ["HS256"],
+    });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       throw new Error(AUTH_ERROR.SESSION_EXPIRED, { cause: err });

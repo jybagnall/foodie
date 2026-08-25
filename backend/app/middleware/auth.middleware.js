@@ -68,7 +68,12 @@ export function verifyAdminAuth(req, res, next) {
 
     next();
   } catch (err) {
-    console.error("Unexpected admin auth error:", err);
+    if (AUTH_ERROR_STATUS[err.message]) {
+      console.warn("Admin auth failed:", err.message);
+    } else {
+      console.error("Unexpected admin auth error:", err);
+    }
+
     return handleAuthError(err, res, next);
   }
 }
