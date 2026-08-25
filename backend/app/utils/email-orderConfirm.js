@@ -1,7 +1,4 @@
-import { stripe } from "../config/stripe.js";
-
 import { resend } from "../config/resend.js";
-
 import { getOrderConfirmationDetails } from "../services/order-service.js";
 import { formatCurrency } from "./orderCalculations.js";
 import { formatPaymentMethodDisplay } from "./paymentInfo.js";
@@ -24,16 +21,12 @@ async function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-export async function sendOrderConfirmationEmail(
-  client,
-  orderId,
-  paymentIntent,
-) {
+export async function sendOrderConfirmationEmail(orderId, paymentIntent) {
   const { amount_received, currency, latest_charge } = paymentIntent;
 
   try {
     const { email, full_name, street, city, postal_code, phone } =
-      await getOrderConfirmationDetails(client, orderId);
+      await getOrderConfirmationDetails(orderId);
 
     const charge = await retrieveStripeCharge(latest_charge);
 

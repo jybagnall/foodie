@@ -14,7 +14,11 @@ export async function createRefundRecord(
         completed_at
     )
     VALUES ($1, $2, $3, $4, $5, $6)
-    ON CONFLICT (stripe_refund_id) DO NOTHING
+    ON CONFLICT (stripe_refund_id) DO UPDATE
+    SET
+      refund_status = EXCLUDED.refund_status, 
+      completed_at = EXCLUDED.completed_at
+    WHERE refunds.refund_status <> 'succeeded'
   `;
   const values = [
     paymentId,

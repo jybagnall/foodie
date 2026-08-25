@@ -63,7 +63,13 @@ export function verifyAccessToken(authHeader) {
     throw new Error(AUTH_ERROR.SESSION_EXPIRED);
   }
 
-  const token = authHeader.split(" ")[1];
+  const match = authHeader.match(/^Bearer\s+(\S+)$/);
+
+  if (!match) {
+    throw new Error(AUTH_ERROR.SESSION_EXPIRED);
+  }
+
+  const token = match[1];
 
   let decoded;
 

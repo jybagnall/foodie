@@ -1,3 +1,4 @@
+import { sendOrderConfirmationEmail } from "../../utils/email-orderConfirm.js";
 import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
@@ -6,9 +7,16 @@ import {
 
 export async function handleStripeEvent(client, event) {
   switch (event.type) {
-    case "payment_intent.succeeded":
-      await handlePaymentIntentSucceeded(client, event.data.object);
-      return { ignored: false };
+    case "payment_intent.succeeded": {
+      const { orderId, paymentIntent } = await handlePaymentIntentSucceeded(
+        client,
+        event.data.object,
+      );
+      return {
+        ignored: false,
+        afterCommit: () => sendOrderConfirmationEmail(orderId, paymentIntent),
+      };
+    }
     case "payment_intent.payment_failed":
       await handlePaymentIntentFailed(client, event.data.object);
       return { ignored: false };

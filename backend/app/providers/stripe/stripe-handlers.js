@@ -6,7 +6,6 @@ import {
   updatePaymentStatus,
 } from "../../services/payment-service.js";
 import { updateOrderStatus } from "../../services/order-service.js";
-import { sendOrderConfirmationEmail } from "../../utils/email-orderConfirm.js";
 import {
   clearDefaultCard,
   saveCardToDb,
@@ -49,6 +48,23 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
     );
   }
 
+  // Stripe 조회는 DB 작업 시작 전에 미리 끝내둠
+  let stripePaymentMethod = null;
+
+  if (saveCard) {
+    try {
+      stripePaymentMethod = await retrieveStripePaymentMethod(
+        paymentIntent.payment_method,
+      );
+      // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
+    } catch (err) {
+      console.error(
+        `Failed to retrieve payment method for order ${orderId}, user ${userId}:`,
+        err,
+      );
+    }
+  }
+
   await upsertPaymentFromIntent(client, {
     order_id: orderId,
     stripe_payment_intent_id: paymentIntent.id,
@@ -61,13 +77,9 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
 
   await updateOrderStatus(client, orderId, "paid");
 
-  if (saveCard) {
+  if (saveCard && stripePaymentMethod) {
     try {
       await client.query("SAVEPOINT save_card");
-      const stripePaymentMethod = await retrieveStripePaymentMethod(
-        paymentIntent.payment_method,
-      );
-      // { id(stripe_payment_method_id), type, card, customer } = stripePaymentMethod;
 
       if (setAsDefault) {
         await clearDefaultCard(client, userId);
@@ -90,14 +102,7 @@ export async function handlePaymentIntentSucceeded(client, paymentIntent) {
     }
   }
 
-  try {
-    await sendOrderConfirmationEmail(client, orderId, paymentIntent);
-  } catch (err) {
-    console.error(
-      `Failed to send confirmation email for order ${orderId}:`,
-      err,
-    );
-  }
+  return { orderId, paymentIntent };
 }
 
 export async function handlePaymentIntentFailed(client, paymentIntent) {

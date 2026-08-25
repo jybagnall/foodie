@@ -28,7 +28,7 @@ import {
   createPaymentRecord,
   findUniquePaymentByOrderId,
 } from "../services/payment-service.js";
-import { identifyCardByUserId } from "../services/payment.methods-service.js";
+import { findUniqueStripeMethodId } from "../services/payment.methods-service.js";
 import { isValidOrderId } from "../utils/validators.js";
 
 // PaymentIntent 생성 및 DB 저장
@@ -187,8 +187,8 @@ export async function getOrCreateClientSecret(orderId, user) {
 }
 
 export async function processSavedCardPayment(orderId, cardId, userId) {
-  const card = await identifyCardByUserId(cardId, userId);
-  if (!card) {
+  const methodId = await findUniqueStripeMethodId(cardId, userId);
+  if (!methodId) {
     throw new Error(PAYMENT_ERROR.FORBIDDEN);
   } // 카드 검증
 
@@ -209,7 +209,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
 
   const confirmedPaymentIntent = await confirmStripePaymentIntent({
     paymentIntentId: existingPaymentIntent.id,
-    paymentMethodId: card.stripe_payment_method_id,
+    paymentMethodId: methodId,
     returnUrl: getStripePaymentReturnUrl(orderId),
   });
 

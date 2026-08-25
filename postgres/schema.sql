@@ -137,7 +137,7 @@ CREATE TABLE refunds (
 -- 나중에 worker가 여러개라면 'processing_by TEXT' 도 넣으면 좋음.
 -- pending | processing | dead | ignored | success (이벤트 수신 상태)
 CREATE TABLE stripe_events (
-  id TEXT PRIMARY KEY,
+  id BIGINT PRIMARY KEY,
   stripe_event_id TEXT UNIQUE NOT NULL,
   event_type TEXT NOT NULL,
   payload JSONB NOT NULL,

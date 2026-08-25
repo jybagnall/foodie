@@ -136,7 +136,7 @@ export async function getOrderById(orderId) {
   return result.rows[0];
 }
 
-export async function getOrderConfirmationDetails(client, orderId) {
+export async function getOrderConfirmationDetails(orderId) {
   const q = `
     SELECT 
       u.email,
@@ -149,7 +149,7 @@ export async function getOrderConfirmationDetails(client, orderId) {
     JOIN users u ON o.user_id = u.id
     WHERE o.id = $1
   `;
-  const result = await client.query(q, [orderId]);
+  const result = await pool.query(q, [orderId]);
   return result.rows[0];
 }
 

@@ -87,6 +87,12 @@ async function startStripeWorker() {
           );
 
           await client.query("COMMIT");
+
+          // 커밋 이후 실행, 실패해도 이미 처리된 이벤트엔 영향 없음
+          if (result.afterCommit) {
+            await result.afterCommit();
+          }
+
           await sleep(200); // DB 부하 방지용
         } catch (err) {
           // Stripe 결제 자체는 성공했으나 서버에서 저장에 실패함

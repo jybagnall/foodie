@@ -1,10 +1,31 @@
 import { verifyAccessToken } from "../utils/auth.js";
 import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors.js";
 
+function handleAuthError(err, res, next) {
+  const status = AUTH_ERROR_STATUS[err.message];
+
+  if (status) {
+    return res
+      .status(status)
+      .json({ error: "Your session has expired. Please sign in again." });
+  }
+  return next(err);
+}
+
 export function verifyUserAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     const decoded = verifyAccessToken(authHeader);
+
+    if (
+      typeof decoded !== "object" ||
+      decoded === null ||
+      !decoded.id ||
+      !decoded.role ||
+      !decoded.email
+    ) {
+      throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
+    }
 
     // id, role, email → JWT 발급 시 항상 존재
     // stripe_customer_id → JWT 갱신 전에는 없을 수 있음
@@ -12,22 +33,12 @@ export function verifyUserAuth(req, res, next) {
       id: decoded.id,
       role: decoded.role,
       email: decoded.email,
-      stripe_customer_id: decoded.stripe_customer_id || null,
+      stripe_customer_id: decoded.stripe_customer_id ?? null,
     };
 
     next();
   } catch (err) {
-    if (
-      err.message === AUTH_ERROR.SESSION_EXPIRED ||
-      err.message === AUTH_ERROR.INVALID_ACCESS_TOKEN
-    ) {
-      const status = AUTH_ERROR_STATUS[err.message] ?? 401;
-      return res.status(status).json({
-        error: "Your session has expired. Please sign in again.",
-      });
-    }
-
-    return next(err);
+    return handleAuthError(err, res, next);
   }
 }
 
@@ -35,6 +46,16 @@ export function verifyAdminAuth(req, res, next) {
   try {
     const authHeader = req.headers["authorization"];
     const decoded = verifyAccessToken(authHeader);
+
+    if (
+      typeof decoded !== "object" ||
+      decoded === null ||
+      !decoded.id ||
+      !decoded.role ||
+      !decoded.email
+    ) {
+      throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
+    }
 
     if (decoded.role !== "admin") {
       return res.status(403).json({ error: "Access denied: Admins only" });
@@ -47,18 +68,7 @@ export function verifyAdminAuth(req, res, next) {
 
     next();
   } catch (err) {
-    if (
-      err.message === AUTH_ERROR.SESSION_EXPIRED ||
-      err.message === AUTH_ERROR.INVALID_ACCESS_TOKEN
-    ) {
-      console.warn("Admin auth failed (expired/invalid token)");
-      const status = AUTH_ERROR_STATUS[err.message] ?? 401;
-      return res.status(status).json({
-        error: "Invalid or expired token. Please log in again.",
-      });
-    }
-
     console.error("Unexpected admin auth error:", err);
-    return next(err); // 전역 에러 핸들러로 넘김
+    return handleAuthError(err, res, next);
   }
 }
