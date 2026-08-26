@@ -4,6 +4,9 @@ const US_STATE_CODES = new Set(US_STATES.map((state) => state.value));
 
 // rules.name === rules["name"]
 const rules = {
+  resetToken: (v) => {
+    if (!v || typeof v !== "string") return "resetToken is required.";
+  },
   currentPassword: (v) => {
     if (!v || typeof v !== "string") return "currentPassword is required.";
   },

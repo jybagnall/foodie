@@ -9,12 +9,25 @@ import {
 } from "../constants/auth.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 
+function validateAccessTokenPayload(decoded) {
+  if (
+    typeof decoded !== "object" ||
+    decoded === null ||
+    !decoded.id ||
+    !decoded.role ||
+    !decoded.email ||
+    decoded.tokenType !== "access"
+  ) {
+    throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
+  }
+}
+
 export async function hashPassword(password) {
   const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   return hashedPassword;
 }
 
-export async function hashRawPasswordToken(token) {
+export function hashRawPasswordToken(token) {
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
   return hashedToken;
 }
@@ -36,31 +49,47 @@ export async function generateHashedToken(expiresInMs = 10 * 60 * 1000) {
 }
 
 export function generateTokens(account) {
-  const data = {
+  const accessPayload = {
     id: account.id,
     role: account.role,
     name: account.name,
     email: account.email,
-    stripe_customer_id: account.stripe_customer_id || null,
+    stripe_customer_id: account.stripe_customer_id ?? null,
+    tokenType: "access",
+  };
+
+  const refreshPayload = {
+    id: account.id,
+    tokenType: "refresh",
   };
 
   return {
     accessToken: jwt.sign(
-      { ...data, tokenType: "access" },
+      { ...accessPayload },
       process.env.JWT_ACCESS_TOKEN_SECRET,
-      { expiresIn: ACCESS_TOKEN_EXPIRES_IN },
+      {
+        expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+        algorithm: "HS256",
+        issuer: "foodie-api",
+        audience: "foodie-client",
+      },
     ),
     refreshToken: jwt.sign(
-      { ...data, tokenType: "refresh" },
+      { ...refreshPayload },
       process.env.JWT_REFRESH_TOKEN_SECRET,
-      { expiresIn: REFRESH_TOKEN_EXPIRES_IN },
+      {
+        expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+        algorithm: "HS256",
+        issuer: "foodie-api",
+        audience: "foodie-client",
+      },
     ), // 서버가 토큰 검증을 할 때 사용함. 신뢰할 날짜인가
   };
 }
 
 export function verifyAccessToken(authHeader) {
   // Bearer + 공백 + 토큰이라는 형태
-  const match = authHeader.match(/^Bearer\s+(\S+)$/);
+  const match = authHeader?.match(/^Bearer\s+(\S+)$/);
 
   if (!match) {
     throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
@@ -73,6 +102,8 @@ export function verifyAccessToken(authHeader) {
   try {
     decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET, {
       algorithms: ["HS256"],
+      issuer: "foodie-api",
+      audience: "foodie-client",
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -86,9 +117,7 @@ export function verifyAccessToken(authHeader) {
     });
   }
 
-  if (decoded.tokenType !== "access") {
-    throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
-  }
+  validateAccessTokenPayload(decoded);
 
   return decoded;
 }
@@ -101,6 +130,8 @@ export async function verifyRefreshToken(token) {
   try {
     decoded = await verifyToken(token, process.env.JWT_REFRESH_TOKEN_SECRET, {
       algorithms: ["HS256"],
+      issuer: "foodie-api",
+      audience: "foodie-client",
     });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -111,7 +142,12 @@ export async function verifyRefreshToken(token) {
     // JsonWebTokenError (서명 불일치, malformed 등) — 조작/무효 토큰
   }
 
-  if (decoded.tokenType !== "refresh") {
+  if (
+    typeof decoded !== "object" ||
+    decoded === null ||
+    !decoded.id ||
+    decoded.tokenType !== "refresh"
+  ) {
     throw new Error(AUTH_ERROR.INVALID_REFRESH_TOKEN);
   }
 

@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useContext, useEffect, useRef, useState } from "react";
 import AuthContext from "../../contexts/AuthContext";
 import AccountService from "../../services/account.service";
@@ -16,9 +16,12 @@ export default function Login() {
   const abortControllerRef = useRef(null);
   const [isLoginProcessing, setIsLoginProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
 
@@ -27,6 +30,19 @@ export default function Login() {
 
     return () => abortControllerRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (!location.state?.reset) return;
+
+    reset();
+    setErrorMsg("");
+
+    // '/login' 페이지에 reset 정보를 전달한다
+    navigate("/login", {
+      replace: true, // 방금 받은 reset: true 정보를 주소 기록에서 없앰
+      state: null,
+    });
+  }, [location.state, navigate, reset]);
 
   const onLogin = async ({ email, password }) => {
     if (isLoginProcessing) return;

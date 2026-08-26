@@ -120,7 +120,7 @@ router.post("/refresh-access-token", async (req, res) => {
 
 router.post(
   "/reset-password",
-  validateBody("password"),
+  validateBody("password", "resetToken"),
   async (req, res, next) => {
     try {
       const { resetToken, password } = req.body;

@@ -1,5 +1,5 @@
 import { verifyAccessToken } from "../utils/auth.js";
-import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors.js";
+import { AUTH_ERROR_STATUS } from "../constants/errors.js";
 
 function handleAuthError(err, res, next) {
   const status = AUTH_ERROR_STATUS[err.message];
@@ -16,16 +16,6 @@ export function verifyUserAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     const decoded = verifyAccessToken(authHeader);
-
-    if (
-      typeof decoded !== "object" ||
-      decoded === null ||
-      !decoded.id ||
-      !decoded.role ||
-      !decoded.email
-    ) {
-      throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
-    }
 
     // id, role, email → JWT 발급 시 항상 존재
     // stripe_customer_id → JWT 갱신 전에는 없을 수 있음
@@ -46,16 +36,6 @@ export function verifyAdminAuth(req, res, next) {
   try {
     const authHeader = req.headers["authorization"];
     const decoded = verifyAccessToken(authHeader);
-
-    if (
-      typeof decoded !== "object" ||
-      decoded === null ||
-      !decoded.id ||
-      !decoded.role ||
-      !decoded.email
-    ) {
-      throw new Error(AUTH_ERROR.INVALID_ACCESS_TOKEN);
-    }
 
     if (decoded.role !== "admin") {
       return res.status(403).json({ error: "Access denied: Admins only" });

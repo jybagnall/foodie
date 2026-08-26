@@ -33,8 +33,13 @@ export default function PasswordField({ register, errors, watch, getValues }) {
         id="confirmPassword"
         register={register("confirmPassword", {
           required: "Please confirm your password.",
-          validate: (value) =>
-            value === getValues("password") || "Passwords do not match.",
+          validate: (value) => {
+            if (/\s/.test(value)) {
+              return "Password cannot contain spaces.";
+            }
+
+            return value === getValues("password") || "Passwords do not match.";
+          },
         })}
         error={errors.confirmPassword}
       />

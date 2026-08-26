@@ -43,6 +43,17 @@ export default function UserName() {
     }
   };
 
+  const handleLoginClick = (e) => {
+    e.preventDefault(); // /login으로 이동하는 것을 막음
+
+    // 직접 이동시킴
+    navigate("/login", {
+      state: {
+        reset: Date.now(),
+      },
+    });
+  };
+
   const handleLogout = async () => {
     await syncCartToServer(createCartSyncPayload(items)).catch(() => {}); // 에러가 생겨도 무시
 
@@ -61,6 +72,7 @@ export default function UserName() {
       {!isLoggedIn || !decodedUser ? (
         <Link
           to="/login"
+          onClick={handleLoginClick}
           className="text-yellow-300 hover:text-yellow-400 transition-colors whitespace-nowrap"
         >
           Login

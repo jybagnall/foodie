@@ -29,6 +29,12 @@ export const PASSWORD_RULES = [
     validate: (value) => /[@$!%*?&]/.test(value),
     message: "At least one special character (@$!%*?&).",
   },
+  {
+    key: "noWhitespace",
+    label: "No spaces",
+    validate: (value) => !/\s/.test(value),
+    message: "Password cannot contain spaces.",
+  },
 ];
 
 export const PASSWORD_STRENGTH_CONFIG = [
