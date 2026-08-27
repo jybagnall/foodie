@@ -1,6 +1,5 @@
-import bcrypt from "bcrypt";
 import pool from "../config/db.js";
-import { generateHashedToken } from "../utils/auth.js";
+import { generateHashedToken, hashToken } from "../utils/auth.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 import { ADMIN_INVITATION_EXPIRATION_MS } from "../constants/auth.js";
 
@@ -50,21 +49,17 @@ export async function invalidateAdminInvitation(inviteId, client) {
 }
 
 export async function verifyAdminInvitation(token, email) {
+  const hashedToken = hashToken(token);
+
   const q = `
     SELECT * FROM admin_invites
     WHERE email = $1
+    AND token = $2
     AND used = FALSE
     AND expires_at > NOW()
   `;
 
-  const result = await pool.query(q, [email]);
-  const inviteRecords = result.rows; // 같은 이메일이 몇 번의 초대를 받을 수 있음
+  const result = await pool.query(q, [email, hashedToken]);
 
-  for (const inviteRecord of inviteRecords) {
-    const isMatching = await bcrypt.compare(token, inviteRecord.token);
-
-    if (isMatching) return inviteRecord;
-  }
-
-  return null;
+  return result.rows[0] ?? null;
 }

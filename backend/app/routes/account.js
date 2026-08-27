@@ -95,7 +95,11 @@ router.post("/refresh-access-token", async (req, res) => {
       accessToken: accessToken,
     });
   } catch (err) {
-    if (err.message === AUTH_ERROR.SESSION_EXPIRED) {
+    if (err.message === AUTH_ERROR.MISSING_REFRESH_TOKEN) {
+      console.warn(
+        "No refresh token present (normal for logged-out or first-time visitors)",
+      );
+    } else if (err.message === AUTH_ERROR.SESSION_EXPIRED) {
       console.warn(
         "Refresh token expired (normal):",
         err.cause?.message ?? err.message,
@@ -161,7 +165,8 @@ router.post(
         });
       }
 
-      setRefreshTokenCookie(res, refreshToken); // refreshToken을 브라우저 쿠키에 저장
+      // refreshToken을 브라우저 쿠키에 저장
+      setRefreshTokenCookie(res, refreshToken);
 
       res.status(201).json({
         message: "Account created successfully",

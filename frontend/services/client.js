@@ -9,46 +9,73 @@ export class RefreshTokenExpiredError extends Error {
   }
 }
 
+// 현재 진행 중인 Refresh 요청을 저장하는 변수
+// 모든 Client 인스턴스가 공유함
+let onGoingRenewPromise = null;
+
+// 원래 브라우저는 서버에 요청 보낼 때 쿠키를 안 보냄.
+// refreshToken이 JS에서는 접근이 불가하므로 브라우저가 쿠키를 서버에 보냄.
+// 📌“쿠키를 포함해서 refresh token 재발급 요청을 보내자”
+
+// HttpOnly Cookie에 저장된 Refresh Token을 서버로 보내서
+// 새로운 Access Token을 발급받음
+async function performRefresh() {
+  try {
+    const res = await axios.post(
+      "/api/accounts/refresh-access-token",
+      {}, // body (보낼 데이터, 쿠키는 HttpOnly Cookie에 있음)
+      { withCredentials: true }, // 브라우저에게 '쿠키도 보내!' 말함 →
+    );
+    // 서버는 req.cookies.refreshToken으로 읽음
+    // 갱신 요청에는 Access Token이 필요 없으므로
+    // 인증 interceptor가 설정된 this.axios 대신 기본 axios를 사용
+
+    const { accessToken } = res.data; // 서버가 새로 발급해줌
+    emitTokenRefreshed(accessToken); // 앱 전체에 딱 한 번만 알림
+
+    return accessToken;
+  } catch (err) {
+    // Refresh Token 자체가 만료됐거나 폐기됐을 가능성
+    if (err?.response?.status === 401 || err?.response?.status === 403) {
+      emitSessionExpired(); // 앱 전체에 세션이 만료됐음을 알림
+      throw new RefreshTokenExpiredError();
+    } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
+
+    throw err; // 네트워크나 서버 오류
+  }
+}
+
+// 여러 Client가 Refresh Token을 요청할 때 하나의 Refresh 요청을 공유하게 함
+function getRenewedAccessTokenOnce() {
+  // Refresh 요청이 없다면 실행
+  if (!onGoingRenewPromise) {
+    onGoingRenewPromise = performRefresh().finally(() => {
+      onGoingRenewPromise = null;
+    }); // 성공이든 실패든 다음을 위해 null로 저장
+  }
+
+  return onGoingRenewPromise;
+}
+
 // 요청마다 독립된 Axios 객체를 생성함
 class Client {
   constructor(signal, getAccessToken) {
     this.getAccessToken = getAccessToken;
-    this.refreshedToken = null;
+    this.renewedAccessToken = null;
     this.axios = axios.create({
       ...(signal && { signal }),
     });
 
-    // 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
+    // 인증이 필요한 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
     this.axios.interceptors.request.use((config) => {
+      // 인증이 필요한 요청인가
       if (!config.skipAuth && this.getAccessToken) {
-        const token = this.refreshedToken ?? this.getAccessToken();
+        const token = this.renewedAccessToken ?? this.getAccessToken();
 
         if (token) config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
-  }
-
-  // 원래 브라우저는 서버에 요청 보낼 때 쿠키를 안 보냄.
-  // refreshToken이 JS에서는 접근이 불가하므로 브라우저가 쿠키를 서버에 보냄.
-  // 📌“쿠키를 포함해서 refresh token 재발급 요청을 보내자”
-  async refreshAccessToken() {
-    try {
-      const res = await this.axios.post(
-        "/api/accounts/refresh-access-token",
-        {}, // body (보낼 데이터, refresh token은 쿠키에 있음)
-        { withCredentials: true, skipAuth: true }, // 브라우저에게 '쿠키도 보내!' 말함 →
-      ); // 서버는 req.cookies.refreshToken으로 읽음
-      // accessToken이 이미 만료된 상태라서 axios.create 인스턴스 안 씀
-
-      const { accessToken } = res.data;
-      return accessToken; // Client는 토큰을 저장 안함, 저장 책임은 AuthContext
-    } catch (err) {
-      if (err?.response?.status === 401 || err?.response?.status === 403) {
-        throw new RefreshTokenExpiredError();
-      } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
-      throw err; // 네트워크/서버 오류
-    }
   }
 
   // 공통 요청 함수
@@ -66,7 +93,7 @@ class Client {
             });
 
     const res = await this.makeRequest(requestFn);
-    return res.data;
+    return res.data; // API의 데이터만 반환
   }
 
   // makeRequest → 401 → get new token → retry calling API
@@ -80,13 +107,11 @@ class Client {
 
       if (!isRetry && shouldRefresh) {
         try {
-          const newToken = await this.refreshAccessToken();
-          this.refreshedToken = newToken;
-          emitTokenRefreshed(newToken);
+          const newAccessToken = await getRenewedAccessTokenOnce();
+          this.renewedAccessToken = newAccessToken;
           return await this.makeRequest(requestFn, true);
         } catch (refreshErr) {
           console.error("Refresh failed", refreshErr.message);
-          emitSessionExpired();
           throw refreshErr;
         }
       }

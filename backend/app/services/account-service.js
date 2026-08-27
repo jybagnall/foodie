@@ -136,6 +136,22 @@ export async function updateLastLogin(userId, db = pool) {
   }
 }
 
+export async function updateRefreshTokenIfMatch(
+  userId,
+  oldHashedToken,
+  newHashedToken,
+) {
+  const q = `
+    UPDATE users
+    SET current_refresh_token = $1
+    WHERE id = $2 AND current_refresh_token = $3
+    RETURNING id
+    `;
+  const values = [newHashedToken, userId, oldHashedToken];
+  const result = await pool.query(q, values);
+  return result.rowCount > 0; // 거짓이면 다른 요청이 이미 업데이트함
+}
+
 export async function updateUserName(userId, name) {
   const q = `
     UPDATE users

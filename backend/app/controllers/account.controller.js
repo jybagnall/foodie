@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import pool from "../config/db.js";
 import {
   clearPasswordResetToken,
@@ -11,6 +10,7 @@ import {
   findUserByPasswordResetToken,
   updateLastLogin,
   updatePassword,
+  updateRefreshTokenIfMatch,
   updateUserRefreshToken,
   updateUserStripeId,
 } from "../services/account-service.js";
@@ -20,16 +20,15 @@ import {
   generateHashedToken,
   generateTokens,
   hashPassword,
-  hashRawPasswordToken,
+  hashToken,
   verifyPassword,
   verifyRefreshToken,
 } from "../utils/auth.js";
 import { sendPasswordResetEmail } from "../utils/email.js";
-import { BCRYPT_SALT_ROUNDS } from "../constants/auth.js";
 import { withTransaction } from "../utils/db.js";
 
 async function hashAndSaveRefreshToken(userId, refreshToken, client) {
-  const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
+  const hashedRefresh = hashToken(refreshToken);
   await updateUserRefreshToken(userId, hashedRefresh, client);
 }
 
@@ -135,10 +134,7 @@ export async function logout(refreshToken) {
 
     if (dbUser?.current_refresh_token) {
       // DB에 저장된 refreshToken과 일치 여부 확인
-      const isMatch = await bcrypt.compare(
-        refreshToken,
-        dbUser.current_refresh_token,
-      );
+      const isMatch = hashToken(refreshToken) === dbUser.current_refresh_token;
 
       if (isMatch) {
         try {
@@ -157,13 +153,13 @@ export async function logout(refreshToken) {
 }
 
 export async function resetPassword({ resetToken, password }) {
-  const hashedPwResetToken = await hashRawPasswordToken(resetToken);
+  const hashedPwResetToken = hashToken(resetToken);
   const user = await findUserByPasswordResetToken(hashedPwResetToken);
 
   if (!user) throw new Error(AUTH_ERROR.INVALID_RESET_TOKEN);
 
   const { accessToken, refreshToken } = issueAuthSession(user);
-  const hashedRefresh = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
+  const hashedRefresh = hashToken(refreshToken);
   const hashedPw = await hashPassword(password);
 
   await withTransaction(pool, async (client) => {
@@ -245,11 +241,8 @@ export async function refreshAccessToken(currentRefreshToken) {
   }
 
   // DB에 저장된 refreshToken과 일치 여부 확인
-  const isMatch = await bcrypt.compare(
-    currentRefreshToken,
-    dbUser.current_refresh_token,
-  );
-  if (!isMatch) {
+  const hashedOldToken = hashToken(currentRefreshToken);
+  if (hashedOldToken !== dbUser.current_refresh_token) {
     throw new Error(AUTH_ERROR.SESSION_REVOKED);
   }
 
@@ -258,7 +251,18 @@ export async function refreshAccessToken(currentRefreshToken) {
     dbUser.stripe_customer_id,
   );
 
-  await hashAndSaveRefreshToken(dbUser.id, refreshToken);
+  const hashedNewToken = hashToken(refreshToken);
+
+  const didUpdate = await updateRefreshTokenIfMatch(
+    dbUser.id,
+    hashedOldToken,
+    hashedNewToken,
+  );
+
+  if (!didUpdate) {
+    // 경쟁에서 진 요청 — 다른 요청이 먼저 회전시킴
+    throw new Error(AUTH_ERROR.SESSION_REVOKED);
+  }
 
   return { accessToken, refreshToken };
 }
