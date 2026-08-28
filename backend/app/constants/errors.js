@@ -183,3 +183,33 @@ export const PAYMENT_ERROR_STATUS = {
   PAYMENT_SERVICE_UNAVAILABLE: 502,
   REFUND_FAILED: 502,
 };
+
+export const REFRESH_LOG_CONFIG = {
+  [AUTH_ERROR.MISSING_REFRESH_TOKEN]: {
+    level: "warn",
+    message:
+      "No refresh token present (normal for logged-out or first-time visitors)",
+    clientMessage: "Please sign in again.",
+  },
+  [AUTH_ERROR.SESSION_EXPIRED]: {
+    level: "warn",
+    message: "Refresh token expired (normal)",
+    clientMessage:
+      "For your security, you've been logged out. Please sign in again.",
+  },
+  [AUTH_ERROR.INVALID_REFRESH_TOKEN]: {
+    level: "warn",
+    message: "Invalid/tampered refresh token",
+    clientMessage:
+      "For your security, you've been logged out. Please sign in again.",
+  },
+  [AUTH_ERROR.SESSION_REVOKED]: {
+    level: "warn",
+    message: "Invalid refresh token",
+    clientMessage:
+      "For your security, you've been logged out. Please sign in again.",
+  },
+};
+
+export const LOGOUT_MESSAGE =
+  "For your security, you've been logged out. Please sign in again.";

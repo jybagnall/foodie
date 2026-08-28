@@ -2,7 +2,11 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import Client, { RefreshTokenExpiredError } from "../services/client";
+import {
+  NoRefreshTokenError,
+  RefreshTokenExpiredError,
+  getRenewedAccessTokenOnce,
+} from "../services/client";
 import AccountService from "../services/account.service";
 import { authEvents } from "../utils/authEvents";
 
@@ -23,7 +27,6 @@ export function AuthContextProvider({ children }) {
   const hasTriedRestoreRef = useRef(false);
   const refreshTimerRef = useRef(null);
   const logoutAbortRef = useRef(null);
-  const restoreSessionAbortRef = useRef(null);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -50,7 +53,7 @@ export function AuthContextProvider({ children }) {
 
       navigate(decoded.role === "admin" ? "/admin" : "/");
     },
-    [applyAccessToken],
+    [applyAccessToken, navigate],
   );
 
   const clearSession = useCallback(() => {
@@ -73,7 +76,7 @@ export function AuthContextProvider({ children }) {
       clearSession();
       navigate("/");
     }
-  }, [clearSession]);
+  }, [clearSession, navigate]);
 
   // 액세스 토큰이 있다 = 로그인 상태,
   // 액세스 토큰이 없는데 refresh 성공 = 로그인 유지
@@ -81,17 +84,18 @@ export function AuthContextProvider({ children }) {
 
   // ❗앱 시작시 액세스 토큰이 없다면 자동 실행
   const restoreUserSession = useCallback(async () => {
-    restoreSessionAbortRef.current?.abort();
-    restoreSessionAbortRef.current = new AbortController();
-    const client = new Client(restoreSessionAbortRef.signal, () => accessToken);
-
     try {
-      const newAccessToken = await client.refreshAccessToken();
+      const newAccessToken = await getRenewedAccessTokenOnce();
       applyAccessToken(newAccessToken);
     } catch (err) {
-      if (err instanceof RefreshTokenExpiredError) {
+      if (
+        err instanceof RefreshTokenExpiredError ||
+        err instanceof NoRefreshTokenError
+      ) {
         setAccessToken(null);
         setDecodedUser(null);
+      } else {
+        console.error("Session restore failed:", err);
       }
     } finally {
       setIsAuthLoading(false);
@@ -127,7 +131,7 @@ export function AuthContextProvider({ children }) {
 
       return () => clearTimeout(refreshTimerRef.current);
     }
-  }, [accessToken]);
+  }, [accessToken, restoreUserSession]);
 
   useEffect(() => {
     const onTokenRefreshed = (e) => applyAccessToken(e.detail);
@@ -144,12 +148,11 @@ export function AuthContextProvider({ children }) {
       authEvents.removeEventListener("tokenRefreshed", onTokenRefreshed);
       authEvents.removeEventListener("sessionExpired", onSessionExpired);
     };
-  }, [applyAccessToken, clearSession]);
+  }, [applyAccessToken, clearSession, navigate]);
 
   useEffect(() => {
     return () => {
       logoutAbortRef.current?.abort();
-      restoreSessionAbortRef.current?.abort();
     };
   }, []);
 

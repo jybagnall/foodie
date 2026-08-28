@@ -54,10 +54,10 @@ class AccountService {
     );
   }
 
-  async regenerateAccessToken() {
-    const data = await this.client.post("/api/accounts/refresh-access-token");
-    return data;
-  }
+  // async regenerateAccessToken() {
+  //   const data = await this.client.post("/api/accounts/refresh-access-token");
+  //   return data;
+  // }
 
   async resetPasswordRequest(resetToken, password) {
     const data = await this.client.rawPost("/api/accounts/reset-password", {

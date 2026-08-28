@@ -13,7 +13,12 @@ import {
   resetPassword,
   signup,
 } from "../controllers/account.controller.js";
-import { AUTH_ERROR, AUTH_ERROR_STATUS } from "../constants/errors.js";
+import {
+  AUTH_ERROR,
+  AUTH_ERROR_STATUS,
+  REFRESH_LOG_CONFIG,
+  LOGOUT_MESSAGE,
+} from "../constants/errors.js";
 
 const router = express.Router();
 
@@ -84,40 +89,36 @@ router.post("/logout", async (req, res) => {
 router.post("/refresh-access-token", async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
+
     const { accessToken, refreshToken: newRefreshToken } =
       await refreshAccessToken(refreshToken);
 
-    // 브라우저 쿠키 저장소에 새 refreshToken 저장
-    setRefreshTokenCookie(res, newRefreshToken);
+    if (newRefreshToken) {
+      setRefreshTokenCookie(res, newRefreshToken);
+    }
 
     res.status(200).json({
       message: "Access token refreshed successfully.",
       accessToken: accessToken,
     });
   } catch (err) {
-    if (err.message === AUTH_ERROR.MISSING_REFRESH_TOKEN) {
-      console.warn(
-        "No refresh token present (normal for logged-out or first-time visitors)",
-      );
-    } else if (err.message === AUTH_ERROR.SESSION_EXPIRED) {
-      console.warn(
-        "Refresh token expired (normal):",
-        err.cause?.message ?? err.message,
-      );
-    } else if (err.message === AUTH_ERROR.INVALID_REFRESH_TOKEN) {
-      console.warn(
-        "Invalid/tampered refresh token:",
-        err.cause?.message ?? err.message,
-      );
-    } else if (err.message === AUTH_ERROR.SESSION_REVOKED) {
-      console.warn("Invalid refresh token");
+    const errorLogConfig = REFRESH_LOG_CONFIG[err.message];
+
+    if (errorLogConfig) {
+      const causeMessage = err.cause?.message;
+
+      const logMessage = causeMessage
+        ? `${errorLogConfig.message}: ${causeMessage}`
+        : errorLogConfig.message;
+
+      console[errorLogConfig.level](logMessage);
     } else {
       console.error("Unexpected refresh error:", err);
     }
 
     const status = AUTH_ERROR_STATUS[err.message] ?? 401;
     return res.status(status).json({
-      error: "For your security, you've been logged out. Please sign in again.",
+      error: errorLogConfig?.clientMessage ?? LOGOUT_MESSAGE,
     });
   }
 });

@@ -9,6 +9,13 @@ export class RefreshTokenExpiredError extends Error {
   }
 }
 
+export class NoRefreshTokenError extends Error {
+  constructor() {
+    super("No refresh token present");
+    this.name = "NoRefreshTokenError";
+  }
+}
+
 // 현재 진행 중인 Refresh 요청을 저장하는 변수
 // 모든 Client 인스턴스가 공유함
 let onGoingRenewPromise = null;
@@ -35,18 +42,25 @@ async function performRefresh() {
 
     return accessToken;
   } catch (err) {
+    const status = err?.response?.status;
+
     // Refresh Token 자체가 만료됐거나 폐기됐을 가능성
-    if (err?.response?.status === 401 || err?.response?.status === 403) {
+    if (status === 401 || status === 403) {
       emitSessionExpired(); // 앱 전체에 세션이 만료됐음을 알림
       throw new RefreshTokenExpiredError();
     } // refreshToken 문제를 명확히 밝혀서 AuthContext로 넘김.
+
+    // 로그인한 적 없거나 이미 로그아웃된 정상 상태 — 에러 아님
+    if (status === 400) {
+      throw new NoRefreshTokenError();
+    }
 
     throw err; // 네트워크나 서버 오류
   }
 }
 
 // 여러 Client가 Refresh Token을 요청할 때 하나의 Refresh 요청을 공유하게 함
-function getRenewedAccessTokenOnce() {
+export function getRenewedAccessTokenOnce() {
   // Refresh 요청이 없다면 실행
   if (!onGoingRenewPromise) {
     onGoingRenewPromise = performRefresh().finally(() => {
@@ -61,7 +75,6 @@ function getRenewedAccessTokenOnce() {
 class Client {
   constructor(signal, getAccessToken) {
     this.getAccessToken = getAccessToken;
-    this.renewedAccessToken = null;
     this.axios = axios.create({
       ...(signal && { signal }),
     });
@@ -69,8 +82,12 @@ class Client {
     // 인증이 필요한 모든 API 요청에 자동으로 Authorization 헤더를 붙여라.
     this.axios.interceptors.request.use((config) => {
       // 인증이 필요한 요청인가
-      if (!config.skipAuth && this.getAccessToken) {
-        const token = this.renewedAccessToken ?? this.getAccessToken();
+      if (
+        !config.skipAuth &&
+        !config.headers?.Authorization &&
+        this.getAccessToken
+      ) {
+        const token = this.getAccessToken();
 
         if (token) config.headers.Authorization = `Bearer ${token}`;
       }
@@ -80,26 +97,34 @@ class Client {
 
   // 공통 요청 함수
   async request(method, endpoint, payload, options = {}) {
-    const requestFn =
+    const buildConfig = (accessToken) =>
+      accessToken
+        ? {
+            ...options,
+            headers: {
+              ...options.headers,
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        : options;
+
+    const requestFn = (accessToken) =>
       method === "delete"
         ? () =>
             this.axios.delete(endpoint, {
-              ...options,
+              ...buildConfig(accessToken),
               ...(payload && { data: payload }),
             })
-        : () =>
-            this.axios[method](endpoint, payload, {
-              ...options,
-            });
+        : () => this.axios[method](endpoint, payload, buildConfig(accessToken));
 
     const res = await this.makeRequest(requestFn);
     return res.data; // API의 데이터만 반환
   }
 
   // makeRequest → 401 → get new token → retry calling API
-  async makeRequest(requestFn, isRetry = false) {
+  async makeRequest(requestFn, retryAccessToken = null, isRetry = false) {
     try {
-      const res = await requestFn();
+      const res = await requestFn(retryAccessToken);
       return res;
     } catch (err) {
       const status = err?.response?.status;
@@ -108,8 +133,7 @@ class Client {
       if (!isRetry && shouldRefresh) {
         try {
           const newAccessToken = await getRenewedAccessTokenOnce();
-          this.renewedAccessToken = newAccessToken;
-          return await this.makeRequest(requestFn, true);
+          return await this.makeRequest(requestFn, newAccessToken, true);
         } catch (refreshErr) {
           console.error("Refresh failed", refreshErr.message);
           throw refreshErr;

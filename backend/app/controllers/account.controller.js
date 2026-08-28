@@ -233,6 +233,7 @@ export async function refreshAccessToken(currentRefreshToken) {
   // 토큰 검증
   const decodedToken = await verifyRefreshToken(currentRefreshToken);
 
+  // 토큰 안의 유저가 실제로 존재하는가
   const dbUser = await findUserById(decodedToken.id);
   if (!dbUser) throw new Error(AUTH_ERROR.USER_NOT_FOUND);
 
@@ -259,9 +260,12 @@ export async function refreshAccessToken(currentRefreshToken) {
     hashedNewToken,
   );
 
+  // 경쟁에서 진 요청 — 다른 요청이 먼저 회전시킴
+  // accessToken은 유효하므로 반환,
+  // refreshToken은 DB와 어긋나니 버림(쿠키 갱신 안 함)
   if (!didUpdate) {
-    // 경쟁에서 진 요청 — 다른 요청이 먼저 회전시킴
-    throw new Error(AUTH_ERROR.SESSION_REVOKED);
+    console.warn(`Refresh race lost for user ${dbUser.id} (benign)`);
+    return { accessToken, refreshToken: null };
   }
 
   return { accessToken, refreshToken };
