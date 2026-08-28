@@ -33,10 +33,10 @@ export function AuthContextProvider({ children }) {
 
   // Cookies.set("refreshToken")은 XSS 공격 시 탈취될 수 있음.
   // 토큰 갱신 시 적용됨.
-  const applyAccessToken = useCallback((accessToken) => {
+  const applyAccessToken = useCallback((newAccessToken) => {
     try {
-      const decoded = jwtDecode(accessToken);
-      setAccessToken(accessToken);
+      const decoded = jwtDecode(newAccessToken);
+      setAccessToken(newAccessToken);
       setDecodedUser(decoded);
       return decoded;
     } catch (err) {
@@ -47,8 +47,8 @@ export function AuthContextProvider({ children }) {
   }, []);
 
   const handleLoginSuccess = useCallback(
-    async (accessToken) => {
-      const decoded = applyAccessToken(accessToken);
+    async (newAccessToken) => {
+      const decoded = applyAccessToken(newAccessToken);
       if (!decoded) return;
 
       navigate(decoded.role === "admin" ? "/admin" : "/");

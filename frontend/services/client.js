@@ -18,7 +18,7 @@ export class NoRefreshTokenError extends Error {
 
 // 현재 진행 중인 Refresh 요청을 저장하는 변수
 // 모든 Client 인스턴스가 공유함
-let onGoingRenewPromise = null;
+let ongoingRenewPromise = null;
 
 // 원래 브라우저는 서버에 요청 보낼 때 쿠키를 안 보냄.
 // refreshToken이 JS에서는 접근이 불가하므로 브라우저가 쿠키를 서버에 보냄.
@@ -62,13 +62,13 @@ async function performRefresh() {
 // 여러 Client가 Refresh Token을 요청할 때 하나의 Refresh 요청을 공유하게 함
 export function getRenewedAccessTokenOnce() {
   // Refresh 요청이 없다면 실행
-  if (!onGoingRenewPromise) {
-    onGoingRenewPromise = performRefresh().finally(() => {
-      onGoingRenewPromise = null;
+  if (!ongoingRenewPromise) {
+    ongoingRenewPromise = performRefresh().finally(() => {
+      ongoingRenewPromise = null;
     }); // 성공이든 실패든 다음을 위해 null로 저장
   }
 
-  return onGoingRenewPromise;
+  return ongoingRenewPromise;
 }
 
 // 요청마다 독립된 Axios 객체를 생성함
@@ -110,12 +110,11 @@ class Client {
 
     const requestFn = (accessToken) =>
       method === "delete"
-        ? () =>
-            this.axios.delete(endpoint, {
-              ...buildConfig(accessToken),
-              ...(payload && { data: payload }),
-            })
-        : () => this.axios[method](endpoint, payload, buildConfig(accessToken));
+        ? this.axios.delete(endpoint, {
+            ...buildConfig(accessToken),
+            ...(payload && { data: payload }),
+          })
+        : this.axios[method](endpoint, payload, buildConfig(accessToken));
 
     const res = await this.makeRequest(requestFn);
     return res.data; // API의 데이터만 반환
