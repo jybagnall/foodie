@@ -111,17 +111,16 @@ export function AuthContextProvider({ children }) {
     if (!accessToken) {
       restoreUserSession();
     }
-  }, [restoreUserSession]);
+  }, [restoreUserSession, accessToken]);
 
   // ❗As long as an accessToken exists, a timer is set so that
   // restoreUserSession() is automatically executed right before the token expires.
   useEffect(() => {
     // After logout or before login, accessToken doesn't exist.
     // Don't set the timer.
-    if (!accessToken) return;
+    if (!accessToken || !decodedUser) return;
 
-    const decoded = jwtDecode(accessToken);
-    const timeout = decoded.exp * 1000 - Date.now() - 30_000;
+    const timeout = decodedUser.exp * 1000 - Date.now() - 30_000;
     // 30 secs before token expires
 
     if (timeout > 0) {
@@ -131,7 +130,7 @@ export function AuthContextProvider({ children }) {
 
       return () => clearTimeout(refreshTimerRef.current);
     }
-  }, [accessToken, restoreUserSession]);
+  }, [accessToken, decodedUser, restoreUserSession]);
 
   useEffect(() => {
     const onTokenRefreshed = (e) => applyAccessToken(e.detail);
@@ -140,7 +139,6 @@ export function AuthContextProvider({ children }) {
       navigate("/login");
     };
 
-    // 이벤트를 구독해서 로그인 상태를 자동으로 관리
     authEvents.addEventListener("tokenRefreshed", onTokenRefreshed);
     authEvents.addEventListener("sessionExpired", onSessionExpired);
 
