@@ -7,6 +7,7 @@ import CartContext from "../../../../contexts/CartContext";
 import UserDropdown from "./UserDropdown";
 import useMyProfile from "../../../../hooks/profile/useMyProfile";
 import useServerCart from "../../../../hooks/cart/useServerCart";
+import useGuestCartActions from "../../../../hooks/cart/useGuestCartActions";
 import { createCartSyncPayload } from "../../../../utils/calculateCart";
 
 export default function UserName() {
@@ -15,10 +16,11 @@ export default function UserName() {
   const abortControllerRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useMyProfile();
-  const { items, setItems, switchToGuestMode } = useContext(CartContext);
+  const { items, switchToGuestMode } = useContext(CartContext);
   const { accessToken, logout, decodedUser, isAuthLoading } =
     useContext(AuthContext);
   const { syncCartToServer, isUpdatingServerCart } = useServerCart();
+  const { clearCart } = useGuestCartActions();
 
   const isLoggedIn = !!accessToken;
 
@@ -57,7 +59,7 @@ export default function UserName() {
   const handleLogout = async () => {
     await syncCartToServer(createCartSyncPayload(items)).catch(() => {}); // 에러가 생겨도 무시
 
-    setItems([]);
+    clearCart();
     setIsMenuOpen(false);
     switchToGuestMode();
     logout();

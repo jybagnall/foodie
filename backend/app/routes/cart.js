@@ -18,7 +18,7 @@ router.get("/get-cart", verifyUserAuth, async (req, res) => {
   }
 });
 
-// req.body:
+// req.body.items:
 // [
 //   { "menuId": 1, "qty": 2 },
 //   { "menuId": 5, "qty": 1 }
@@ -30,7 +30,7 @@ router.post(
   validateCartBody,
   async (req, res, next) => {
     try {
-      const updateCartItems = await saveCart(req.body, req.user.id);
+      const updateCartItems = await saveCart(req.body.items, req.user.id);
       res.status(201).json(updateCartItems);
     } catch (err) {
       return next(err);

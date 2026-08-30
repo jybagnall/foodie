@@ -29,6 +29,10 @@ export const PASSWORD_RULES = [
     validate: (value) => /[@$!%*?&]/.test(value),
     message: "At least one special character (@$!%*?&).",
   },
+];
+
+export const PASSWORD_REQUIREMENTS = [
+  ...PASSWORD_RULES,
   {
     key: "noWhitespace",
     label: "No spaces",
@@ -59,12 +63,12 @@ export const PASSWORD_STRENGTH_CONFIG = [
     barColor: "bg-yellow-400",
   },
   {
-    label: "Strong",
+    label: "Almost there",
     textColor: "text-blue-400",
     barColor: "bg-blue-400",
   },
   {
-    label: "Very Strong",
+    label: "Strong",
     textColor: "text-green-400",
     barColor: "bg-green-400",
   },

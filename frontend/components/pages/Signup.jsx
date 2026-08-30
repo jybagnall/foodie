@@ -58,7 +58,7 @@ export default function Signup() {
         return;
       }
 
-      await authContext.handleLoginSuccess(accessToken);
+      authContext.handleLoginSuccess(accessToken);
     } catch (err) {
       console.error(err);
       const message = getUserErrorMessage(err);

@@ -19,18 +19,15 @@ const CartContext = createContext({
   setSelectedItemIds: () => {},
   mode: "guest",
   switchToServerMode: () => {},
+  switchToGuestMode: () => {},
   totalItemCount: 0,
   checkedItemQty: 0,
   subTotalAmount: 0,
   deliveryFee: 0,
   totalAmount: 0,
-  toggleCheckedItem: (id) => {},
+  toggleCheckedItem: () => {},
   toggleAllSelections: () => {},
 });
-
-// setItems()가 실행되면 items가 바뀌고 →
-// 컴포넌트가 다시 렌더링됨 → 그 안의 함수들도 다시 만들어짐.
-// Context를 사용하는 모든 컴포넌트가 리렌더링됨 ⚠️
 
 export function CartContextProvider({ children }) {
   const [items, setItems] = useState(() => loadCart()); // once
@@ -57,32 +54,25 @@ export function CartContextProvider({ children }) {
     [items],
   );
 
-  const checkedItemQty = useMemo(
-    () =>
-      items
-        .filter((i) => selectedItemIds.has(i.id))
-        .reduce((sum, i) => (sum += i.qty), 0),
+  const checkedItems = useMemo(
+    () => items.filter((i) => selectedItemIds.has(i.id)),
     [items, selectedItemIds],
+  );
+
+  const checkedItemQty = useMemo(
+    () => checkedItems.reduce((sum, i) => sum + i.qty, 0),
+    [checkedItems],
   );
 
   const subTotalAmount = useMemo(
-    () =>
-      items
-        .filter((i) => selectedItemIds.has(i.id))
-        .reduce((sum, i) => (sum += i.price * i.qty), 0),
-    [items, selectedItemIds],
+    () => checkedItems.reduce((sum, i) => sum + i.price * i.qty, 0),
+    [checkedItems],
   );
 
-  const deliveryFee = useMemo(
-    () =>
-      subTotalAmount >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_FEE,
-    [subTotalAmount],
-  );
+  const deliveryFee =
+    subTotalAmount >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_FEE;
 
-  const totalAmount = useMemo(
-    () => subTotalAmount + deliveryFee,
-    [subTotalAmount, deliveryFee],
-  );
+  const totalAmount = subTotalAmount + deliveryFee;
 
   const toggleCheckedItem = useCallback((id) => {
     setSelectedItemIds((prev) => {
@@ -104,28 +94,42 @@ export function CartContextProvider({ children }) {
     [items],
   );
 
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        setItems,
-        selectedItemIds,
-        setSelectedItemIds,
-        mode,
-        switchToServerMode,
-        switchToGuestMode,
-        totalItemCount,
-        checkedItemQty,
-        subTotalAmount,
-        deliveryFee,
-        totalAmount,
-        toggleCheckedItem,
-        toggleAllSelections,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+  const value = useMemo(
+    () => ({
+      items,
+      setItems,
+      selectedItemIds,
+      setSelectedItemIds,
+      mode,
+      switchToServerMode,
+      switchToGuestMode,
+      totalItemCount,
+      checkedItemQty,
+      subTotalAmount,
+      deliveryFee,
+      totalAmount,
+      toggleCheckedItem,
+      toggleAllSelections,
+    }),
+    [
+      items,
+      setItems,
+      selectedItemIds,
+      setSelectedItemIds,
+      mode,
+      switchToServerMode,
+      switchToGuestMode,
+      totalItemCount,
+      checkedItemQty,
+      subTotalAmount,
+      deliveryFee,
+      totalAmount,
+      toggleCheckedItem,
+      toggleAllSelections,
+    ],
   );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export default CartContext;

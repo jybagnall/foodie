@@ -1,4 +1,4 @@
-import { PASSWORD_RULES } from "../../constants/passwordRules";
+import { PASSWORD_REQUIREMENTS } from "../../constants/passwordRules";
 import Input from "./Input";
 import PasswordStrengthBar from "./PasswordStrengthBar";
 
@@ -6,7 +6,7 @@ export default function PasswordField({ register, errors, watch, getValues }) {
   const password = watch("password", "");
 
   const passwordValidationRules = Object.fromEntries(
-    PASSWORD_RULES.map((rule) => [
+    PASSWORD_REQUIREMENTS.map((rule) => [
       rule.key,
       (value) => rule.validate(value) || rule.message,
     ]),
@@ -25,6 +25,12 @@ export default function PasswordField({ register, errors, watch, getValues }) {
         error={errors.password}
       />
 
+      {password && (
+        <p className="text-sm font-small text-gray-400">
+          Use at least 8 characters, including uppercase, lowercase, a number,
+          and a special character. No spaces.
+        </p>
+      )}
       {password && <PasswordStrengthBar password={password} />}
 
       <Input

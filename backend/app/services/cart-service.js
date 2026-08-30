@@ -53,8 +53,10 @@ export async function saveCurrentCartItems(client, cartId, items = []) {
 
   const menuIds = [...new Set(items.map((i) => i.menuId))];
   const activeMenus = await getMenuPrices(menuIds, client);
-  const activeMenuIds = new Set(activeMenus.map((m) => m.id));
-  const validItems = items.filter((item) => activeMenuIds.has(item.menuId));
+  const activeMenuIds = new Set(activeMenus.map((m) => Number(m.id)));
+  const validItems = items.filter((item) =>
+    activeMenuIds.has(Number(item.menuId)),
+  );
 
   if (!validItems.length) return;
 

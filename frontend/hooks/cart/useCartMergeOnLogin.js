@@ -16,6 +16,12 @@ export function useCartMergeOnLogin(accessToken) {
   } = useServerCart();
 
   useEffect(() => {
+    if (!accessToken) {
+      hasInitializedCartRef.current = false;
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
     if (!accessToken) return;
     if (!isServerCartReady) return; // 도착한 서버 데이터
     if (serverCartItems == null) return;
