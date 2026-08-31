@@ -102,10 +102,7 @@ export default function AdminInvite() {
             />
 
             <div className="mt-4">
-              <Button
-                type="submit"
-                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
-              >
+              <Button type="submit" variant="primary">
                 Send invite
               </Button>
             </div>

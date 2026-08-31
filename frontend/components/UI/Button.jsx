@@ -1,35 +1,41 @@
 export default function Button({
   children,
-  textOnly,
+  variant = "default",
   type = "button",
   disabled = false,
   className = "",
   ...props
 }) {
-  const baseStyle = textOnly
-    ? "cursor-pointer bg-transparent border-0 transition-colors inline-flex items-center justify-center"
-    : "cursor-pointer rounded-md font-semibold shadow-md hover:shadow-lg transition-all duration-200 py-1 px-3 inline-flex items-center justify-center";
+  const baseStyle =
+    "cursor-pointer inline-flex items-center justify-center rounded-md font-semibold transition-all duration-200 py-1 px-3";
+
+  const variants = {
+    default: "shadow-md hover:shadow-lg",
+    text: "bg-transparent border-0 shadow-none",
+    primary:
+      "bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg",
+    accent:
+      "bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400 shadow-md hover:shadow-lg",
+    outline:
+      "bg-gray-50 text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-100",
+    danger:
+      "bg-rose-500 hover:bg-rose-600 text-gray-50 shadow-md hover:shadow-lg",
+  };
 
   const disabledStyle =
-    "bg-gray-300 text-gray-500 cursor-not-allowed shadow-md pointer-events-none";
+    "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none pointer-events-none";
 
   const styleToApply = [
     baseStyle,
+    disabled ? disabledStyle : variants[variant],
     !disabled && className,
-    disabled && disabledStyle,
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <button type={type} disabled={disabled} className={styleToApply} {...props}>
+    <button {...props} type={type} disabled={disabled} className={styleToApply}>
       {children}
     </button>
   );
 }
-
-// text-only 일 때 넘겨야 하는 값:
-//  text-yellow-300 hover:text-yellow-400
-
-// 버튼에 테두리가 있어야 할 때 넘겨야 하는 값:
-// py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400

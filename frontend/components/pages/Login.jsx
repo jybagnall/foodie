@@ -118,7 +118,8 @@ export default function Login() {
             <div className="mt-4">
               <Button
                 type="submit"
-                className="py-1 px-3 bg-blue-200 hover:bg-blue-300 text-gray-600"
+                variant="primary"
+                disabled={isLoginProcessing}
               >
                 Sign In
               </Button>

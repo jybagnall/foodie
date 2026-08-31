@@ -50,7 +50,7 @@ export default function UserDropdown({ onLogout, isUpdatingServerCart }) {
             <button
               onClick={onLogout}
               disabled={isUpdatingServerCart}
-              className="w-full flex items-center gap-x-3 rounded-md p-2 text-sm text-yellow-400 transition-colors font-semibold cursor-pointer"
+              className="w-full flex items-center gap-x-3 rounded-md p-2 text-sm text-yellow-400 transition-colors font-semibold cursor-pointer hover:bg-gray-700"
             >
               <ArrowRightStartOnRectangleIcon className="size-6 text-yellow-400" />
               Logout

@@ -4,6 +4,7 @@ import OrderHeader from "./OrderHeader";
 import OrderPreviewItem from "./OrderPreviewItem";
 import OrderActions from "./OrderActions";
 import useCancelOrder from "../../../../hooks/order/useCancelOrder";
+import Button from "../../../UI/Button";
 
 export default function OrderCard({ order }) {
   const { cancelOrder, isCanceling, isCancelError } = useCancelOrder(order.id);
@@ -23,15 +24,19 @@ export default function OrderCard({ order }) {
           ))}
 
           {order.item_count > 3 && (
-            <button
+            <Button
+              type="button"
+              variant="text"
               onClick={() => setExpanded((prev) => !prev)}
-              className="mt-4 ml-4 inline-flex items-center gap-1 whitespace-nowrap text-gray-200 hover:text-yellow-400 cursor-pointer"
+              className="mt-4 ml-4 gap-1 whitespace-nowrap text-gray-200 hover:text-yellow-400"
             >
               {expanded ? "Show less" : `See all ${order.item_count} items`}
               <ChevronDownIcon
-                className={`w-4 h-4 mt-1 transition-transform ${expanded ? "rotate-180" : ""}`}
+                className={`w-4 h-4 mt-1 transition-transform ${
+                  expanded ? "rotate-180" : ""
+                }`}
               />
-            </button>
+            </Button>
           )}
         </div>
 

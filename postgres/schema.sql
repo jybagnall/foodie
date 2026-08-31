@@ -190,6 +190,7 @@ CREATE UNIQUE INDEX addresses_unique_active
   ON addresses (user_id, street, postal_code, city, state, phone, full_name)
   WHERE deleted_at IS NULL;
 
+
 -- 특정 주문에 대한 주문 아이템을 빨리 찾기 위한 인덱스
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 

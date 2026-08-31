@@ -73,8 +73,8 @@ export default function EditNameForm() {
           <div className="flex items-center gap-4 mt-1">
             <Button
               type="button"
-              textOnly
-              className="text-gray-300"
+              variant="text"
+              className="text-gray-100 hover:bg-gray-500"
               onClick={onCancelSubmit}
             >
               Cancel
@@ -82,7 +82,7 @@ export default function EditNameForm() {
             <Button
               type="submit"
               disabled={isUpdatingName || !isDirty}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
+              variant="accent"
             >
               {isUpdatingName ? <SpinnerMini /> : "Save"}
             </Button>

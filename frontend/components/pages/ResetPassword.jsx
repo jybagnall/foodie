@@ -93,11 +93,7 @@ export default function ResetPassword() {
           />
 
           <div className="flex items-center gap-4 mt-1">
-            <Button
-              type="submit"
-              disabled={isProcessing}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
-            >
+            <Button type="submit" disabled={isProcessing} variant="accent">
               {isProcessing ? <SpinnerMini /> : "Save"}
             </Button>
           </div>

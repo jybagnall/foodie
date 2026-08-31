@@ -111,8 +111,8 @@ export default function EditPasswordForm() {
           <div className="flex items-center gap-4 mt-1">
             <Button
               type="button"
-              textOnly
-              className="text-gray-300"
+              variant="text"
+              className="text-gray-200 hover:text-gray-300"
               onClick={onCancelSubmit}
             >
               Cancel
@@ -120,7 +120,7 @@ export default function EditPasswordForm() {
             <Button
               type="submit"
               disabled={isUpdatingPassword || !isDirty}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
+              variant="accent"
             >
               {isUpdatingPassword ? <SpinnerMini /> : "Save"}
             </Button>

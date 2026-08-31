@@ -114,7 +114,8 @@ export default function Signup() {
             <div className="mt-8">
               <Button
                 type="submit"
-                className="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+                variant="primary"
+                disabled={isSignupProcessing}
               >
                 Create your Foodie account
               </Button>

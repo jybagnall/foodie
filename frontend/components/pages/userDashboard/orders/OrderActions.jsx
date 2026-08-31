@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import AlertModal from "../../../UI/AlertModal";
 import { canRetryPayment } from "../../../../utils/orderHelpers";
 import { CANCELLABLE_DAYS } from "../../../../constants/order";
+import Button from "../../../UI/Button";
 
 export default function OrderActions({ order, cancelOrder, isCanceling }) {
   const [showAlert, setShowAlert] = useState(false);
@@ -39,13 +40,14 @@ export default function OrderActions({ order, cancelOrder, isCanceling }) {
       )}
 
       {canCancelOrder && (
-        <button
+        <Button
+          type="button"
           onClick={() => setShowAlert(true)}
           disabled={isCanceling}
-          className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-gray-300 text-base cursor-pointer"
+          className="flex-1 sm:flex-none border border-gray-300 shadow-md rounded-sm p-3 text-gray-300 text-base"
         >
           Cancel Order
-        </button>
+        </Button>
       )}
 
       {showAlert && (

@@ -81,7 +81,7 @@ export default function EditMenuDetails() {
 
                   <Button
                     onClick={() => setIsDeleteModalOpen(true)}
-                    className="py-1 px-3 bg-red-500 text-gray-100 border-red-300 hover:bg-red-600"
+                    variant="danger"
                   >
                     Delete Menu
                   </Button>

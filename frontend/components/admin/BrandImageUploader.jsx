@@ -73,11 +73,7 @@ export default function BrandImageUploader({ label, assetType }) {
         </div>
       )}
 
-      <Button
-        type="submit"
-        className="py-1 px-3 bg-blue-400 hover:bg-blue-500 text-white"
-        disabled={!file || isUploading}
-      >
+      <Button type="submit" variant="primary" disabled={!file || isUploading}>
         {isUploading ? <SpinnerMini /> : "Upload Image"}
       </Button>
 

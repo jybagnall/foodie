@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { formatPhone } from "../../../../utils/format";
 import AlertModal from "../../../UI/AlertModal";
+import Button from "../../../UI/Button";
 
 export default function AddressCard({
   info,
@@ -37,21 +38,24 @@ export default function AddressCard({
           Edit
         </Link>
 
-        <button
+        <Button
+          type="button"
           onClick={() => setShowAlert(true)}
           disabled={isDeleting}
-          className="px-3 py-1 border rounded cursor-pointer"
+          variant="outline"
         >
           Remove
-        </button>
+        </Button>
 
         {!is_default && (
-          <button
+          <Button
+            type="button"
             onClick={() => setDefaultAddress(id)}
-            className="ml-auto text-yellow-600 underline text-sm cursor-pointer"
+            variant="text"
+            className="ml-auto text-yellow-600 underline text-sm"
           >
             Set as default
-          </button>
+          </Button>
         )}
       </div>
 

@@ -107,17 +107,13 @@ export default function PaymentForm({ orderId, stripe, elements }) {
           <div className="flex justify-between items-center mt-8">
             <Button
               type="button"
-              textOnly
-              className="text-gray-300 hover:text-gray-400"
+              variant="text"
+              className="text-gray-200 hover:text-gray-300"
               onClick={onCancelSubmit}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isPayProcessing}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
-            >
+            <Button type="submit" disabled={isPayProcessing} variant="accent">
               Place an order
             </Button>
           </div>

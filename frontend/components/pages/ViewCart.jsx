@@ -97,15 +97,15 @@ export default function ViewCart() {
                     <Button
                       onClick={goToCheckout}
                       disabled={!anyChecked}
-                      className="w-full h-11 rounded-xl bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="accent"
+                      className="w-full h-11 rounded-xl"
                     >
                       Proceed to Checkout
                     </Button>
 
                     <Button
                       onClick={actions.clearCart}
-                      variant="outline"
-                      className="w-full h-11 rounded-xl border-gray-300 text-gray-200 bg-gray-500 hover:bg-gray-600"
+                      className="w-full h-11 rounded-xl border border-gray-300 text-gray-100 bg-gray-500 hover:bg-gray-600"
                     >
                       Clear Cart
                     </Button>

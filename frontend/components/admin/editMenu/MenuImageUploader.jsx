@@ -76,7 +76,7 @@ export default function MenuImageUploader({ menuId, onCancel }) {
       <div className="">
         <Button
           type="submit"
-          className="py-1 px-3 bg-gray-400 hover:bg-gray-500 text-white"
+          variant="primary"
           disabled={!file || isImageUpdating}
         >
           {isImageUpdating ? <SpinnerMini /> : "Upload Image"}

@@ -44,10 +44,7 @@ export default function MenuItemView({ menuItem, onAdd }) {
           </div>
 
           <div className="mt-4">
-            <Button
-              onClick={() => handleAddToCart(menuItem)}
-              className="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
-            >
+            <Button onClick={() => handleAddToCart(menuItem)} variant="accent">
               Add to Cart
             </Button>
           </div>

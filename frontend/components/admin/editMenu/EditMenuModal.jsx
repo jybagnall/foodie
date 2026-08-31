@@ -1,5 +1,6 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import Button from "../../UI/Button";
 
 export default function EditMenuModal({ modalIsOpen, onCancel, children }) {
   return (
@@ -17,14 +18,15 @@ export default function EditMenuModal({ modalIsOpen, onCancel, children }) {
           >
             <div className="mt-1 sm:mt-2">
               <div className="mt-5 flex gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="text"
                   onClick={onCancel}
-                  className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  className="gap-2 px-2 py-1 text-sm text-gray-400 hover:bg-gray-700 hover:text-white"
                 >
                   <ArrowLeftIcon className="h-4 w-4" />
                   Close
-                </button>
+                </Button>
               </div>
 
               <div className="mt-8">{children}</div>

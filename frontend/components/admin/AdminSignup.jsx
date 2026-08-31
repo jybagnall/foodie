@@ -134,10 +134,7 @@ export default function AdminSignup() {
             />
 
             <div className="mt-8">
-              <Button
-                type="submit"
-                className="py-1 px-3 bg-yellow-300 text-gray-800 border-yellow-300 hover:bg-yellow-400"
-              >
+              <Button type="submit" variant="primary">
                 Create your Foodie admin account
               </Button>
             </div>

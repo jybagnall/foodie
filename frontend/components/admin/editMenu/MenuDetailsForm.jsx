@@ -61,7 +61,7 @@ export default function MenuDetailsForm({ menu, onCancel, editingField }) {
             <Button
               type="submit"
               disabled={isMenuUpdating || !isDirty || !isValid}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
+              variant="accent"
             >
               {isMenuUpdating ? <SpinnerMini /> : "Save"}
             </Button>

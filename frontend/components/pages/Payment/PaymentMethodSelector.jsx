@@ -139,10 +139,7 @@ export default function PaymentMethodSelector({ order, orderId }) {
                     />
                   ))}
 
-                  <Button
-                    onClick={() => setUseNewCard(true)}
-                    className="text-yellow-300 hover:text-yellow-400 bg-gray-500"
-                  >
+                  <Button onClick={() => setUseNewCard(true)} variant="accent">
                     or pay with a new card
                   </Button>
                 </div>

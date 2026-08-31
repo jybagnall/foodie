@@ -63,12 +63,13 @@ export default function ForgotPassword() {
             We&apos;ve sent you a password reset link. Please check your inbox.
           </p>
 
-          <button
+          <Button
+            type="button"
             onClick={() => setSubmitted(false)}
-            className="w-full bg-indigo-400 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg transition duration-200"
+            className="w-full bg-indigo-400 hover:bg-indigo-500 text-white py-2 px-4 rounded-lg"
           >
             Didn’t receive the email? Try again
-          </button>
+          </Button>
         </div>
       </div>
     );

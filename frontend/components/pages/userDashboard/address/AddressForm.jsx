@@ -122,8 +122,8 @@ export default function AddressForm() {
             <div className="flex justify-between items-center mt-8">
               <Button
                 type="button"
-                textOnly
-                className="text-gray-100 hover:text-gray-700"
+                variant="text"
+                className="text-gray-100 hover:text-gray-400"
                 onClick={onCancelSubmit}
               >
                 Cancel
@@ -131,7 +131,7 @@ export default function AddressForm() {
               <Button
                 type="submit"
                 disabled={isCreating || isUpdating || (isEditMode && !isDirty)}
-                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md transition"
+                variant="accent"
               >
                 {isCreating || isUpdating ? <SpinnerMini /> : "Save"}
               </Button>

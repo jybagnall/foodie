@@ -204,7 +204,7 @@ export async function processSavedCardPayment(orderId, cardId, userId) {
 
   // 이미 succeeded/canceled된 PaymentIntent를 다시 confirm하면 에러임
   if (!CONFIRMABLE_PAYMENT_STATUSES.includes(existingPaymentIntent.status)) {
-    throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_STATUS);
+    throw new Error(PAYMENT_ERROR.INVALID_PAYMENT_INTENT);
   }
 
   const confirmedPaymentIntent = await confirmStripePaymentIntent({

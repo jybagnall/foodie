@@ -12,6 +12,7 @@ import usePaymentMethod from "../../../../hooks/paymentMethod/usePaymentMethod";
 import useServerCartActions from "../../../../hooks/cart/useServerCartActions";
 import useServerCart from "../../../../hooks/cart/useServerCart";
 import useOrderDetails from "../../../../hooks/order/useOrderDetails";
+import Button from "../../../UI/Button";
 
 // 주문 status가 더 많아질 수도 있음
 // orders.status      → 주문이 지금 어디 있는지  (준비중, 배달중, 배달완료 등)
@@ -65,13 +66,14 @@ export default function OrderDetail() {
 
               {/* RIGHT SIDE */}
               <div className="lg:col-span-1 space-y-6">
-                <button
-                  onClick={() => handleReorder()}
+                <Button
+                  type="button"
+                  onClick={handleReorder}
                   disabled={isUpdatingServerCart}
-                  className="w-full border rounded-lg py-3 font-medium cursor-pointer"
+                  className="w-full border rounded-lg py-3 font-medium hover:bg-gray-600"
                 >
                   Reorder
-                </button>
+                </Button>
 
                 <OrderSummary order={order} />
 

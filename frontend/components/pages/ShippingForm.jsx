@@ -158,7 +158,7 @@ export default function ShippingForm() {
             <div className="flex justify-between items-center mt-3">
               <Button
                 type="button"
-                textOnly
+                variant="text"
                 className="text-gray-200 hover:text-gray-300"
                 onClick={exitAddressForm}
               >
@@ -167,7 +167,7 @@ export default function ShippingForm() {
               <Button
                 type="submit"
                 disabled={isOrderProcessing || !isAddressReady}
-                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-md px-5 py-2 transition"
+                variant="accent"
               >
                 {isOrderProcessing ? <SpinnerMini /> : "Next"}
               </Button>

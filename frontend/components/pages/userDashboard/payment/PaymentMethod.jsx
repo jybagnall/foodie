@@ -7,6 +7,7 @@ import SavedCard from "../../Payment/SavedCard";
 import AlertModal from "../../../UI/AlertModal";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import PageError from "../../../user_feedback/PageError";
+import Button from "../../../UI/Button";
 
 export default function PaymentMethods() {
   const {
@@ -57,13 +58,14 @@ export default function PaymentMethods() {
             />
           ))}
           {selectedCardId && (
-            <button
+            <Button
+              type="button"
               onClick={() => setShowAlert(true)}
               disabled={isDeleting}
-              className="px-3 py-1 border rounded cursor-pointer hover:bg-gray-800"
+              className="border hover:bg-gray-700"
             >
               Remove
-            </button>
+            </Button>
           )}
         </div>
 
