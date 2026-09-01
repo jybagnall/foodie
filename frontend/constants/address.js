@@ -24,11 +24,15 @@ export const addressFieldConfigs = {
 export const addressValidationRules = {
   full_name: {
     required: true,
-    minLength: 5,
-    maxLength: 20,
+    maxLength: {
+      value: 20,
+      message: "Name cannot exceed 20 characters.",
+    },
     validate: {
       noSpacesOnly: (value) =>
         value.trim().length > 0 || "Name cannot be blank or spaces only.",
+      minTrimmedLength: (value) =>
+        value.trim().length >= 2 || "Name must be at least 2 characters.",
     },
   },
   phone: {
@@ -77,4 +81,14 @@ export const addressValidationRules = {
         value.trim().length > 0 || "City cannot be blank or spaces only.",
     },
   },
+};
+
+export const DEFAULT_ADDRESS_VALUES = {
+  full_name: "",
+  street: "",
+  city: "",
+  state: "",
+  postal_code: "",
+  phone: "",
+  is_default: false,
 };

@@ -12,8 +12,16 @@ export const signupFieldConfigs = {
 export const signupValidationRules = {
   name: {
     required: true,
-    minLength: 2,
-    maxLength: 32,
+    maxLength: {
+      value: 20,
+      message: "Name cannot exceed 20 characters.",
+    },
+    validate: {
+      noSpacesOnly: (value) =>
+        value.trim().length > 0 || "Name cannot be blank or spaces only.",
+      minTrimmedLength: (value) =>
+        value.trim().length >= 2 || "Name must be at least 2 characters.",
+    },
   },
   email: {
     required: "Email is required",

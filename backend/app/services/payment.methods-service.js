@@ -55,19 +55,6 @@ export async function getCardsInfo(userId) {
   return result.rows ?? [];
 }
 
-export async function getStripePaymentMethodIdsByUserId(userId) {
-  const q = `
-    SELECT stripe_payment_method_id
-    FROM payment_methods
-    WHERE user_id = $1
-  `;
-
-  const result = await pool.query(q, [userId]);
-  return result.rows.map(
-    ({ stripe_payment_method_id }) => stripe_payment_method_id,
-  );
-}
-
 export async function saveCardToDb(
   client,
   stripePaymentMethod,

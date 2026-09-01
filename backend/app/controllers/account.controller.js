@@ -5,6 +5,7 @@ import {
   createPasswordResetToken,
   deleteUserAccount,
   findMyProfile,
+  findPasswordAndStripeCustomerId,
   findPasswordById,
   findUserByEmail,
   findUserById,
@@ -15,7 +16,10 @@ import {
   updateUserRefreshToken,
   updateUserStripeId,
 } from "../services/account-service.js";
-import { createStripeCustomer } from "../integrations/stripe/customer.js";
+import {
+  createStripeCustomer,
+  deleteStripeCustomer,
+} from "../integrations/stripe/customer.js";
 import { AUTH_ERROR } from "../constants/errors.js";
 import {
   generateHashedToken,
@@ -28,11 +32,8 @@ import {
 import { sendPasswordResetEmail } from "../utils/email.js";
 import { withTransaction } from "../utils/db.js";
 import { deleteUserAddresses } from "../services/address-service.js";
-import {
-  deleteUserPaymentMethods,
-  getStripePaymentMethodIdsByUserId,
-} from "../services/payment.methods-service.js";
-import { detachStripePaymentMethodForAccountDeletion } from "../integrations/stripe/payment-method.js";
+import { deleteUserPaymentMethods } from "../services/payment.methods-service.js";
+import { deleteUserSavedCart } from "../services/cart-service.js";
 
 async function hashAndSaveRefreshToken(userId, refreshToken, client) {
   const hashedRefresh = hashToken(refreshToken);
@@ -76,38 +77,27 @@ export async function changePassword(currentPassword, password, userId) {
 }
 
 export async function cleanupUserData(userId, currentPassword) {
-  const pwInDb = await findPasswordById(userId);
+  const user = await findPasswordAndStripeCustomerId(userId);
+  if (!user) throw new Error(AUTH_ERROR.USER_NOT_FOUND);
 
-  if (!pwInDb) {
-    throw new Error(AUTH_ERROR.USER_NOT_FOUND);
-  }
-
-  const passwordMatches = await verifyPassword(
-    currentPassword,
-    pwInDb.password,
-  );
+  const passwordMatches = await verifyPassword(currentPassword, user.password);
 
   if (!passwordMatches) {
     throw new Error(AUTH_ERROR.INCORRECT_PASSWORD);
   }
 
-  const methodIds = await getStripePaymentMethodIdsByUserId(userId);
-
   await withTransaction(pool, async (client) => {
     await deleteUserAccount(userId, client);
     await deleteUserAddresses(userId, client);
     await deleteUserPaymentMethods(userId, client);
+    await deleteUserSavedCart(userId, client);
   });
 
-  for (const methodId of methodIds) {
+  if (user.stripe_customer_id) {
     try {
-      await detachStripePaymentMethodForAccountDeletion(methodId);
+      await deleteStripeCustomer(user.stripe_customer_id);
     } catch (err) {
-      console.error(
-        `Failed to detach Stripe payment method ${methodId} during account deletion`,
-        err,
-      );
-      // 계정 삭제는 이미 끝났으니 이 실패가 흐름을 막지 않음
+      console.error(`Failed to delete Stripe customer for user ${userId}`, err);
     }
   }
 }

@@ -2,6 +2,7 @@ import { stripe } from "../../config/stripe.js";
 import { PAYMENT_ERROR } from "../../constants/errors.js";
 import {
   STRIPE_ERROR_CODE,
+  STRIPE_ERROR_TYPE,
   STRIPE_METADATA_USER_ID,
 } from "../../constants/stripe.js";
 
@@ -25,6 +26,21 @@ export async function createStripeCustomer(user) {
     throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, {
       cause: err,
     });
+  }
+}
+
+export async function deleteStripeCustomer(customerId) {
+  try {
+    await stripe.customers.del(customerId);
+  } catch (err) {
+    if (err.type === STRIPE_ERROR_TYPE.INVALID_REQUEST) {
+      console.warn("Stripe customer already deleted or missing", {
+        customerId,
+        code: err.code,
+      });
+      return;
+    }
+    throw err; // 진짜 예상 못한 에러만 호출부로 올림
   }
 }
 

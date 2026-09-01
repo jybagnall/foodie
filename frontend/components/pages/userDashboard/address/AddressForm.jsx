@@ -7,6 +7,7 @@ import SpinnerMini from "../../../user_feedback/SpinnerMini";
 import Button from "../../../UI/Button";
 import ErrorAlert from "../../../user_feedback/ErrorAlert";
 import { getAddressFormError } from "../../../../utils/addressErrors";
+import { DEFAULT_ADDRESS_VALUES } from "../../../../constants/address";
 
 export default function AddressForm() {
   const { id } = useParams();
@@ -15,8 +16,8 @@ export default function AddressForm() {
 
   const isEditMode = Boolean(id);
   const address = state?.address;
+  const methods = useForm({ defaultValues: DEFAULT_ADDRESS_VALUES });
 
-  const methods = useForm();
   const {
     register,
     handleSubmit,
@@ -130,7 +131,8 @@ export default function AddressForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={isCreating || isUpdating || (isEditMode && !isDirty)}
+                disabled={isCreating || isUpdating || !isDirty}
+                // disabled={isCreating || isUpdating || (isEditMode && !isDirty)}
                 variant="accent"
               >
                 {isCreating || isUpdating ? <SpinnerMini /> : "Save"}

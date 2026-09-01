@@ -63,6 +63,7 @@ export async function deleteUserAccount(userId, client) {
       name = 'Deleted User',
       email = 'deleted-user-' || id || '@deleted.local',
       password = '',
+      stripe_customer_id = NULL,
       current_refresh_token = NULL,
       password_reset_token = NULL,
       password_reset_expires_at = NULL,
@@ -84,6 +85,15 @@ export async function findMyProfile(id) {
   `;
 
   const result = await pool.query(q, [id]);
+  return result.rows[0];
+}
+
+export async function findPasswordAndStripeCustomerId(userId) {
+  const q = `
+    SELECT password, stripe_customer_id FROM users
+    WHERE id = $1
+  `;
+  const result = await pool.query(q, [userId]);
   return result.rows[0];
 }
 

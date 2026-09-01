@@ -2,6 +2,14 @@ import pool from "../config/db.js";
 import { CART_ERROR } from "../constants/errors.js";
 import { getMenuPrices } from "./menu-service.js";
 
+export async function deleteUserSavedCart(userId, client) {
+  const q = `
+    DELETE FROM saved_carts 
+    WHERE user_id = $1
+    `;
+  await client.query(q, [userId]);
+}
+
 export async function getCartItemsByUserId(userId) {
   const q = `
     SELECT 

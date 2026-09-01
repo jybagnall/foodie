@@ -21,22 +21,6 @@ export async function detachStripePaymentMethod(methodId, cardId) {
   }
 }
 
-export async function detachStripePaymentMethodForAccountDeletion(methodId) {
-  try {
-    return await stripe.paymentMethods.detach(methodId);
-  } catch (err) {
-    if (err.type === STRIPE_ERROR_TYPE.INVALID_REQUEST) {
-      // 이미 detach됐거나 존재하지 않는 pm_id — 계정 삭제 흐름에선 무시해도 됨
-      console.warn("PaymentMethod detach skipped", {
-        methodId,
-        code: err.code,
-      });
-      return null;
-    }
-    throw new Error(PAYMENT_ERROR.PAYMENT_SERVICE_UNAVAILABLE, { cause: err });
-  }
-}
-
 export async function retrieveStripePaymentMethod(stripePaymentMethodId) {
   try {
     return await stripe.paymentMethods.retrieve(stripePaymentMethodId);
