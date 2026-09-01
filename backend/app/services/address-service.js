@@ -48,6 +48,22 @@ export async function deleteAddress(userId, addressId) {
   }
 }
 
+export async function deleteUserAddresses(userId, client) {
+  const q = `
+    UPDATE addresses
+    SET
+      street = '',
+      postal_code = '',
+      city = '',
+      state = '',
+      phone = '',
+      full_name = '',
+      deleted_at = NOW()
+    WHERE user_id = $1 AND deleted_at IS NULL
+  `;
+  await client.query(q, [userId]);
+}
+
 export async function getAllAddresses(userId) {
   const q = `
     SELECT id, street, postal_code, city, state, phone, full_name, is_default

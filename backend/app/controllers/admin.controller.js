@@ -58,7 +58,7 @@ export async function adminSignup({ inviteToken, name, email, password }) {
 
 export async function inviteAdmin(email) {
   const existingAdmin = await findUserByEmail(email);
-  if (existingAdmin) {
+  if (existingAdmin?.role === "admin") {
     throw new Error(AUTH_ERROR.EMAIL_ALREADY_IN_USE);
   }
 

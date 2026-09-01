@@ -19,7 +19,8 @@ CREATE TABLE users (
   stripe_customer_id VARCHAR(100),
   password_reset_token TEXT,
   password_reset_expires_at TIMESTAMP,
-  current_refresh_token TEXT
+  current_refresh_token TEXT,
+  deleted_at TIMESTAMP
 );
 
 CREATE TABLE addresses (
@@ -90,10 +91,11 @@ CREATE TABLE order_items (
   price NUMERIC(8,2) NOT NULL -- 유저가 실제로 결제했던 그 시점의 가격
 );
 
+-- stripe_payment_method_id: Stripe가 준 카드 ID, 유저가 저장을 원함
 CREATE TABLE payment_methods (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL, -- Stripe가 준 카드 ID
+  stripe_payment_method_id VARCHAR(100) UNIQUE NOT NULL, 
   brand VARCHAR(20) NOT NULL,  
   last4 VARCHAR(4) NOT NULL,
   exp_month SMALLINT NOT NULL CHECK (exp_month BETWEEN 1 AND 12),
@@ -103,6 +105,7 @@ CREATE TABLE payment_methods (
 );
 
 -- stripe_payment_intent_id: Stripe 결제의 진짜 고유 ID, 절대 두번 결제되면 안 됨
+-- stripe_payment_method_id: 실제로 쓰인 카드
 -- payment_status: requires_payment, requires_confirmation, requires_action, failed, processing, canceled, succeeded, refunded, refund_pending, refund_failed, expired
 CREATE TABLE payments (
   id SERIAL PRIMARY KEY,

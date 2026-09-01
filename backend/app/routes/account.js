@@ -5,6 +5,7 @@ import { validateBody } from "../middleware/validateBody.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
 import {
   changePassword,
+  cleanupUserData,
   getMyProfile,
   login,
   logout,
@@ -183,6 +184,21 @@ router.post(
     }
   },
 );
+
+router.patch("/delete-account", verifyUserAuth, async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    await cleanupUserData(req.user.id, currentPassword);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    const status = AUTH_ERROR_STATUS[err.message] ?? 500;
+    const message =
+      err.message === AUTH_ERROR.INCORRECT_PASSWORD
+        ? "The password you entered is incorrect."
+        : "Something went wrong. Please try again.";
+    return res.status(status).json({ error: message });
+  }
+});
 
 router.patch(
   "/update-name",

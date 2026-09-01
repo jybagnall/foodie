@@ -14,8 +14,10 @@ class AccountService {
     return data;
   }
 
-  async deleteAccount() {
-    await this.client.delete("/api/accounts/delete-account");
+  async deleteAccount(currentPassword) {
+    await this.client.patch("/api/accounts/delete-account", {
+      currentPassword,
+    });
   }
 
   async forgotPassword(email) {

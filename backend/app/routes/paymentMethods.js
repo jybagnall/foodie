@@ -23,7 +23,7 @@ router.get("/:stripePaymentMethodId", verifyUserAuth, async (req, res) => {
     const { stripePaymentMethodId } = req.params;
     const paymentMethod = await getPaymentMethodByStripeId(
       stripePaymentMethodId,
-      req.user,
+      req.user.id,
     );
     return res.status(200).json({
       brand: paymentMethod.card.brand,

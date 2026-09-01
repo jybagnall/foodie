@@ -56,6 +56,27 @@ export async function createPasswordResetToken({
   return result.rows[0] ?? null;
 }
 
+export async function deleteUserAccount(userId, client) {
+  const q = `
+    UPDATE users
+    SET
+      name = 'Deleted User',
+      email = 'deleted-user-' || id || '@deleted.local',
+      password = '',
+      current_refresh_token = NULL,
+      password_reset_token = NULL,
+      password_reset_expires_at = NULL,
+      deleted_at = NOW()
+    WHERE id = $1 AND deleted_at IS NULL
+    RETURNING id
+  `;
+  const result = await client.query(q, [userId]);
+
+  if (result.rowCount === 0) {
+    throw new Error(AUTH_ERROR.USER_NOT_FOUND);
+  }
+}
+
 export async function findMyProfile(id) {
   const q = `
   SELECT id, name, email, created_at FROM users

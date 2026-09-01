@@ -11,16 +11,6 @@ export async function clearDefaultCard(client, userId) {
   await client.query(q, [userId]);
 }
 
-export async function findUniqueStripeMethodId(cardId, userId) {
-  const q = `
-    SELECT stripe_payment_method_id
-    FROM payment_methods
-    WHERE id = $1 AND user_id = $2
-    `;
-  const result = await pool.query(q, [cardId, userId]);
-  return result.rows[0]?.stripe_payment_method_id ?? null;
-}
-
 export async function deleteCard(cardId, userId) {
   const q = `
     DELETE FROM payment_methods
@@ -34,6 +24,25 @@ export async function deleteCard(cardId, userId) {
   }
 }
 
+export async function deleteUserPaymentMethods(userId, client) {
+  const q = `
+    DELETE FROM payment_methods
+    WHERE user_id = $1 
+  `;
+
+  await client.query(q, [userId]);
+}
+
+export async function findUniqueStripeMethodId(cardId, userId) {
+  const q = `
+    SELECT stripe_payment_method_id
+    FROM payment_methods
+    WHERE id = $1 AND user_id = $2
+    `;
+  const result = await pool.query(q, [cardId, userId]);
+  return result.rows[0]?.stripe_payment_method_id ?? null;
+}
+
 export async function getCardsInfo(userId) {
   const q = `
   SELECT 
@@ -44,6 +53,19 @@ export async function getCardsInfo(userId) {
 
   const result = await pool.query(q, [userId]);
   return result.rows ?? [];
+}
+
+export async function getStripePaymentMethodIdsByUserId(userId) {
+  const q = `
+    SELECT stripe_payment_method_id
+    FROM payment_methods
+    WHERE user_id = $1
+  `;
+
+  const result = await pool.query(q, [userId]);
+  return result.rows.map(
+    ({ stripe_payment_method_id }) => stripe_payment_method_id,
+  );
 }
 
 export async function saveCardToDb(
@@ -77,4 +99,21 @@ export async function saveCardToDb(
   ];
   const { rows } = await client.query(q, values);
   return rows[0]?.id;
+}
+
+export async function userOwnsStripePaymentMethod(
+  stripePaymentMethodId,
+  userId,
+) {
+  const q = `
+    SELECT 1 FROM payment_methods
+    WHERE stripe_payment_method_id = $1 AND user_id = $2
+    UNION
+    SELECT 1 FROM payments p
+    JOIN orders o ON o.id = p.order_id
+    WHERE p.stripe_payment_method_id = $1 AND o.user_id = $2
+    LIMIT 1
+  `;
+  const result = await pool.query(q, [stripePaymentMethodId, userId]);
+  return result.rowCount > 0;
 }

@@ -37,6 +37,18 @@ export default function useMyProfileMutations() {
     },
   });
 
+  const {
+    mutate: deleteAccount,
+    isPending: isDeletingAccount,
+    error: deleteAccountError,
+  } = useMutation({
+    mutationFn: ({ currentPassword }) => {
+      return new AccountService(null, () => accessToken).deleteAccount(
+        currentPassword,
+      );
+    },
+  });
+
   return {
     updateName,
     isUpdatingName,
@@ -44,5 +56,8 @@ export default function useMyProfileMutations() {
     updatePassword,
     isUpdatingPassword,
     updatePasswordError,
+    deleteAccount,
+    isDeletingAccount,
+    deleteAccountError,
   };
 }

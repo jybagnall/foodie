@@ -42,7 +42,7 @@ export default function AddressCard({
           type="button"
           onClick={() => setShowAlert(true)}
           disabled={isDeleting}
-          variant="outline"
+          className="px-3 py-1 border rounded cursor-pointer"
         >
           Remove
         </Button>
