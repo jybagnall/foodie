@@ -107,7 +107,7 @@ export default function StripeEventMonitor() {
 
   return (
     <main className="min-h-screen bg-gray-700 py-10 px-4 sm:px-6">
-      <div className="w-full max-w-5xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
         {errors.length > 0 && (
           <div className="mb-4">
             <ErrorAlert
@@ -131,7 +131,7 @@ export default function StripeEventMonitor() {
             onReset={resetFilters}
           />
 
-          <div className="mt-6 overflow-x-auto">
+          <div className="mt-6">
             {totalMatchingEvents === 0 ? (
               <EmptyEventState
                 title="No results found"

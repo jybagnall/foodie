@@ -38,8 +38,46 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-gray-700 px-4 py-3 sm:px-6">
-      <div className="flex flex-1 items-center justify-between">
+    <div className="border-t border-gray-200 bg-gray-700 px-4 py-3 sm:px-6">
+      {/* Mobile */}
+      <div className="flex items-center justify-between sm:hidden">
+        <button
+          type="button"
+          disabled={currentPage === 1}
+          onClick={prevPage}
+          className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium ${
+            currentPage === 1
+              ? "cursor-default text-gray-500"
+              : "cursor-pointer text-gray-200 hover:bg-gray-600"
+          }`}
+        >
+          <ChevronLeftIcon aria-hidden="true" className="size-5" />
+          <span>Previous</span>
+        </button>
+
+        <span className="text-sm text-gray-200">
+          <span className="font-medium">{currentPage}</span>
+          <span className="mx-1 text-gray-400">/</span>
+          <span>{totalPages}</span>
+        </span>
+
+        <button
+          type="button"
+          disabled={currentPage === totalPages}
+          onClick={nextPage}
+          className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium ${
+            currentPage === totalPages
+              ? "cursor-default text-gray-500"
+              : "cursor-pointer text-gray-200 hover:bg-gray-600"
+          }`}
+        >
+          <span>Next</span>
+          <ChevronRightIcon aria-hidden="true" className="size-5" />
+        </button>
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden sm:flex sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-200">
             Showing <span className="font-medium">{startPage}</span>
@@ -60,9 +98,14 @@ export default function Pagination({
             className="isolate inline-flex -space-x-px rounded-md shadow-xs"
           >
             <button
+              type="button"
               disabled={currentPage === 1}
               onClick={prevPage}
-              className={`relative inline-flex items-center rounded-l-md px-2 py-2 inset-ring inset-ring-gray-300 focus:z-20 focus:outline-offset-0 ${currentPage === 1 ? "cursor-default text-gray-200" : "cursor-pointer hover:bg-gray-50 text-gray-500"}`}
+              className={`relative inline-flex items-center rounded-l-md px-2 py-2 inset-ring inset-ring-gray-300 focus:z-20 focus:outline-offset-0 ${
+                currentPage === 1
+                  ? "cursor-default text-gray-200"
+                  : "cursor-pointer text-gray-500 hover:bg-gray-50"
+              }`}
             >
               <span className="sr-only">Previous</span>
               <ChevronLeftIcon aria-hidden="true" className="size-5" />
@@ -73,7 +116,7 @@ export default function Pagination({
                 return (
                   <span
                     key={`...-${index}`}
-                    className="cursor-default relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-200"
+                    className="relative inline-flex cursor-default items-center px-4 py-2 text-sm font-semibold text-gray-200"
                   >
                     ...
                   </span>
@@ -81,18 +124,19 @@ export default function Pagination({
               }
 
               const isActive = page === currentPage;
+
               return (
                 <button
+                  type="button"
                   key={`${page}-${index}`}
                   disabled={isActive}
                   aria-current={isActive ? "page" : undefined}
                   onClick={() => handlePageChange(page)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold
-              ${
-                isActive
-                  ? "bg-indigo-500 text-white cursor-default"
-                  : "text-gray-200 hover:bg-gray-400 cursor-pointer"
-              }`}
+                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "cursor-default bg-indigo-500 text-white"
+                      : "cursor-pointer text-gray-200 hover:bg-gray-400"
+                  }`}
                 >
                   {page}
                 </button>
@@ -100,9 +144,14 @@ export default function Pagination({
             })}
 
             <button
+              type="button"
               disabled={currentPage === totalPages}
               onClick={nextPage}
-              className={`relative inline-flex items-center rounded-r-md px-2 py-2 inset-ring inset-ring-gray-300 focus:z-20 focus:outline-offset-0 ${currentPage === totalPages ? "cursor-default text-gray-200" : "cursor-pointer hover:bg-gray-50 text-gray-500"}`}
+              className={`relative inline-flex items-center rounded-r-md px-2 py-2 inset-ring inset-ring-gray-300 focus:z-20 focus:outline-offset-0 ${
+                currentPage === totalPages
+                  ? "cursor-default text-gray-200"
+                  : "cursor-pointer text-gray-500 hover:bg-gray-50"
+              }`}
             >
               <span className="sr-only">Next</span>
               <ChevronRightIcon aria-hidden="true" className="size-5" />
